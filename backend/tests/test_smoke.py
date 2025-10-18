@@ -16,4 +16,3 @@ def test_root_index():
     r = client.get("/")
     assert r.status_code == 200
     assert r.json().get("service") == "chrona-backend"
-
