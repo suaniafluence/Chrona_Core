@@ -43,7 +43,7 @@ async def login_for_access_token(
     user = result.scalar_one_or_none()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials")
-    token = create_access_token(subject=str(user.id), role=user.role)
+    token = create_access_token({"sub": str(user.id), "role": user.role})
     return Token(access_token=token)
 
 
