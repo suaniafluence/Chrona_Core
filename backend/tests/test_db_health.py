@@ -13,4 +13,3 @@ def test_health_reports_db_status_sqlite(monkeypatch) -> None:
         body = r.json()
         assert body["status"] == "ok"
         assert body.get("db") in {"ok", "down"}
-

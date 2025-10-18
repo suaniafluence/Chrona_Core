@@ -35,4 +35,3 @@ def test_register_login_me_flow(tmp_path, monkeypatch) -> None:
         body = r3.json()
         assert body["email"] == "alice@example.com"
         assert body["role"] == "user"
-

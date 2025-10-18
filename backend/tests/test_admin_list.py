@@ -30,7 +30,9 @@ def test_admin_list_and_detail(tmp_path, monkeypatch) -> None:
 
         # For simplicity: login as A (role=user), expect forbidden when listing
         token_a = _login(client, "a@example.com", "aaa11111")
-        r_forbidden = client.get("/admin/users", headers={"Authorization": f"Bearer {token_a}"})
+        r_forbidden = client.get(
+            "/admin/users", headers={"Authorization": f"Bearer {token_a}"}
+        )
         assert r_forbidden.status_code in (401, 403)
 
         # Note: the success path is covered in test_admin_promote.py
@@ -45,7 +47,11 @@ def test_admin_list_with_real_admin(tmp_path, monkeypatch) -> None:
         _register(client, "x@example.com", "xxx11111")
         user_id = _register(client, "y@example.com", "yyy22222")
         token_user = _login(client, "y@example.com", "yyy22222")
-        res = client.get("/admin/users", headers={"Authorization": f"Bearer {token_user}"})
+        res = client.get(
+            "/admin/users", headers={"Authorization": f"Bearer {token_user}"}
+        )
         assert res.status_code in (401, 403)
-        res2 = client.get(f"/admin/users/{user_id}", headers={"Authorization": f"Bearer {token_user}"})
+        res2 = client.get(
+            f"/admin/users/{user_id}", headers={"Authorization": f"Bearer {token_user}"}
+        )
         assert res2.status_code in (401, 403)

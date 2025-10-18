@@ -52,6 +52,8 @@ def test_admin_ping_requires_admin(tmp_path, monkeypatch) -> None:
         token_admin = r3.json()["access_token"]
 
         # Now admin route should succeed
-        r_ok = client.get("/admin/ping", headers={"Authorization": f"Bearer {token_admin}"})
+        r_ok = client.get(
+            "/admin/ping", headers={"Authorization": f"Bearer {token_admin}"}
+        )
         assert r_ok.status_code == 200, r_ok.text
         assert r_ok.json().get("pong") is True

@@ -18,7 +18,6 @@ def _database_url() -> str:
     return os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./app.db")
 
 
-
 class _EngineProxy:
     """Proxy used so tests importing ``engine`` see runtime updates."""
 

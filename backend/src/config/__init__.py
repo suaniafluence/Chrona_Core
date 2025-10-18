@@ -10,7 +10,9 @@ class Settings:
 
     def __init__(self) -> None:
         self.SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
-        self.ACCESS_TOKEN_EXPIRE_MINUTES = self._get_int("ACCESS_TOKEN_EXPIRE_MINUTES", 60)
+        self.ACCESS_TOKEN_EXPIRE_MINUTES = self._get_int(
+            "ACCESS_TOKEN_EXPIRE_MINUTES", 60
+        )
         self.ALGORITHM = os.getenv("ALGORITHM", "HS256")
         self.BCRYPT_ROUNDS = self._get_int("BCRYPT_ROUNDS", 12)
 

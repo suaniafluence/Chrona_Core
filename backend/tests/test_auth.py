@@ -23,4 +23,3 @@ def test_register_and_login_sqlite(tmp_path, monkeypatch) -> None:
         assert r2.status_code == 200, r2.text
         token = r2.json().get("access_token")
         assert token and isinstance(token, str)
-

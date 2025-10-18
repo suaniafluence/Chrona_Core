@@ -62,7 +62,5 @@ def test_admin_can_promote_user(tmp_path, monkeypatch) -> None:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         token_b = r_login_b.json()["access_token"]
-        r_me = client.get(
-            "/auth/me", headers={"Authorization": f"Bearer {token_b}"}
-        )
+        r_me = client.get("/auth/me", headers={"Authorization": f"Bearer {token_b}"})
         assert r_me.json()["role"] == "manager"
