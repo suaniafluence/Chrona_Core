@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 
 
@@ -26,7 +27,11 @@ def _setup_engine() -> None:
     if engine is not None:
         # Disposal will be handled on shutdown, keep here for safety
         pass
-    engine = create_async_engine(_database_url(), future=True)
+    url = _database_url()
+    if url.endswith(":memory:"):
+        engine = create_async_engine(url, future=True, poolclass=StaticPool)
+    else:
+        engine = create_async_engine(url, future=True)
     SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
