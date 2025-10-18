@@ -1,5 +1,7 @@
 # TODOs / Next Steps
 
+Ce fichier est la source de vérité du projet (priorités, décisions, état d’avancement). Mettez‑le à jour à chaque étape clé.
+
 - [ ] AuthN/AuthZ: OAuth2 (JWT), rôles (admin, employé), rotation `SECRET_KEY`.
 - [ ] DB & Migrations: SQLAlchemy/SQLModel + Alembic; scripts `alembic upgrade head`.
 - [ ] API Schemas: Pydantic models (QR signé, attestation appareil), validation stricte.

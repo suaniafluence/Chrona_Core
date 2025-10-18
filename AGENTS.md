@@ -48,6 +48,11 @@
   - `fetch('/api/health')` → proxie vers `http://localhost:8000/health`.
 - Lancement via Docker (si `package.json` présent): `docker compose up backoffice kiosk`.
 
+## Source de Vérité
+- Backlog et priorités: `docs/TODO.md` fait foi (tenir à jour en premier).
+- Ce guide (`AGENTS.md`) sert de référence locale pour le setup et les pratiques.
+- Ne créez pas d’issues externes sans répliquer les décisions dans `docs/TODO.md`.
+
 ## Coding Style & Naming Conventions
 - Python: indent 4 espaces; outils suggérés `black`, `isort`, `flake8` si configurés.
 - JS/TS: indent 2 espaces; `eslint` + `prettier` si présents.
