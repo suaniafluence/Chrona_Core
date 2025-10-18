@@ -17,7 +17,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.get("/ping")
 async def ping_admin(_current: Annotated[User, Depends(require_roles("admin"))]):
-    return {"message": "Admin access OK"}
+    return {"pong": True}
 
 
 class SetRoleRequest(BaseModel):
