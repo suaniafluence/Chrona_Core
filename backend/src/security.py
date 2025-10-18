@@ -3,10 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-
-
-pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
+from passlib.hash import bcrypt_sha256
 
 
 def get_secret_key() -> str:
@@ -21,11 +18,11 @@ def get_token_exp_minutes() -> int:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt_sha256.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt_sha256.hash(password)
 
 
 def create_access_token(subject: str, role: str, expires_delta: Optional[timedelta] = None) -> str:
