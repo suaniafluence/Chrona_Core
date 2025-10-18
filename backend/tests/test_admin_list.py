@@ -24,9 +24,9 @@ def test_admin_list_and_detail(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_file}")
     with TestClient(app) as client:
         # Create three users
-        a = _register(client, "a@example.com", "aaa11111")
-        b = _register(client, "b@example.com", "bbb22222")
-        c = _register(client, "c@example.com", "ccc33333")
+        _register(client, "a@example.com", "aaa11111")
+        _register(client, "b@example.com", "bbb22222")
+        _register(client, "c@example.com", "ccc33333")
 
         # For simplicity: login as A (role=user), expect forbidden when listing
         token_a = _login(client, "a@example.com", "aaa11111")
@@ -39,8 +39,10 @@ def test_admin_list_and_detail(tmp_path, monkeypatch) -> None:
 
 
 def test_admin_list_with_real_admin(tmp_path, monkeypatch) -> None:
-    # Full flow using role change via admin endpoint after initial DB bootstrap from earlier tests is not shared across tests.
-    # So we perform minimal check: listing requires admin and detail requires admin (403 for user)
+    # Full flow using role change via admin endpoint after initial DB bootstrap
+    # from earlier tests is not shared across tests.
+    # So we perform minimal check: listing requires admin and detail requires
+    # admin (403 for user)
     db_file = tmp_path / "test2.db"
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_file}")
     with TestClient(app) as client:
