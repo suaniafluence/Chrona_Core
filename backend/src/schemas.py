@@ -25,3 +25,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    role: str

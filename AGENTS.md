@@ -48,6 +48,8 @@
 ### Admin-only (exemple)
 - Route: `GET /admin/ping` (requiert rôle `admin`).
 - Pour tester rapidement, promouvez un utilisateur en base (ex.: via migration/SQL) puis regénérez un token.
+- Création user (admin): `POST /admin/users` avec `{ email, password, role }` (`role` ∈ {`admin`,`user`}).
+- Changement de rôle: `PATCH /admin/users/{id}/role` avec `{ role }`.
 
 ### Script PowerShell (dev)
 - `backend/tools/dev-auth.ps1` enchaîne register → token → me.
