@@ -13,3 +13,4 @@ aiosqlite>=0.19
 passlib[bcrypt]>=1.7
 python-jose[cryptography]>=3.3
 email-validator>=2.0
+python-multipart>=0.0.9
