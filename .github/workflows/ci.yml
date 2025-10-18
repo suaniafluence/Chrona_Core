@@ -32,8 +32,23 @@ jobs:
       - name: Lint (black)
         run: black --check backend/src backend/tests
 
-      - name: Lint (isort)
-        run: isort --profile black --check-only backend
+      - name: Check import sorting
+  id: isort-check
+  run: |
+    if ! isort --profile black --check-only backend; then
+      echo "need_fix=true" >> $GITHUB_OUTPUT
+      exit 1
+    fi
+  continue-on-error: true
+
+      - name: Show import differences
+        if: steps.isort-check.outputs.need_fix == 'true'
+          run: |
+        echo "::group::Import sorting differences"
+        isort --profile black --diff backend
+        echo "::endgroup::"
+        echo "::error::Please run 'isort --profile black backend' locally to fix import sorting"
+        continue-on-error: true
 
       - name: Lint (flake8)
         run: flake8 backend/src backend/tests
