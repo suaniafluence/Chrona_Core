@@ -76,15 +76,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node (only if app exists)
         uses: actions/setup-node@v4
+        if: ${{ hashFiles(format('apps/{0}/package.json', matrix.app)) != '' }}
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: apps/${{ matrix.app }}/package-lock.json
 
       - name: Build app (if present)
         shell: bash
+        if: ${{ hashFiles(format('apps/{0}/package.json', matrix.app)) != '' }}
         run: |
           APP="${{ matrix.app }}"
           if [ -f "apps/$APP/package.json" ]; then
@@ -94,3 +94,7 @@ jobs:
           else
             echo "No package.json in apps/$APP — skipping"
           fi
+
+      - name: Skip notice
+        if: ${{ hashFiles(format('apps/{0}/package.json', matrix.app)) == '' }}
+        run: echo "Skipping ${{ matrix.app }} — no package.json present"
