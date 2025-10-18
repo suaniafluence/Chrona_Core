@@ -6,7 +6,7 @@ from src.main import app
 client = TestClient(app)
 
 
-def test_cors_allows_default_origin_on_get():
+def test_cors_allows_default_origin_on_get() -> None:
     origin = "http://localhost:3000"
     r = client.get("/health", headers={"Origin": origin})
     assert r.status_code == 200
@@ -14,7 +14,7 @@ def test_cors_allows_default_origin_on_get():
     assert r.headers.get("access-control-allow-origin") in (origin, "*")
 
 
-def test_cors_preflight_options():
+def test_cors_preflight_options() -> None:
     origin = "http://localhost:3000"
     r = client.options(
         "/",
@@ -25,4 +25,3 @@ def test_cors_preflight_options():
     )
     assert r.status_code in (200, 204)
     assert r.headers.get("access-control-allow-origin") in (origin, "*")
-

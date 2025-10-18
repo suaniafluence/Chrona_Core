@@ -1,2 +1,1 @@
-# Makes 'src' a package for reliable imports in CI
-
+"""Marks src as a package for reliable imports in CI."""
