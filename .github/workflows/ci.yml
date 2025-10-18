@@ -64,7 +64,8 @@ jobs:
         continue-on-error: true
 
       - name: Lint (flake8)
-        run: flake8 backend/src backend/tests
+        working-directory: backend
+        run: flake8 src tests
 
   backend-docker-build:
     name: Backend • Docker build
