@@ -11,7 +11,6 @@ from src.routers.auth import require_roles
 from src.schemas import AdminUserCreate, UserRead
 from src.security import get_password_hash
 
-
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 

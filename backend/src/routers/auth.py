@@ -16,7 +16,6 @@ from src.security import (
     verify_password,
 )
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 router = APIRouter(prefix="/auth", tags=["auth"])
 

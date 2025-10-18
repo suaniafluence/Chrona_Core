@@ -5,9 +5,9 @@ Revises: 0001_init_user
 Create Date: 2025-10-18
 """
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision = "0002_auth_fields"
 down_revision = "0001_init_user"

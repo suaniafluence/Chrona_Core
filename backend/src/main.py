@@ -4,10 +4,10 @@ from typing import List
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .db import db_health, lifespan
-from .routers.auth import router as auth_router
-from .routers.admin import router as admin_router
 
+from .db import db_health, lifespan
+from .routers.admin import router as admin_router
+from .routers.auth import router as auth_router
 
 load_dotenv()
 
