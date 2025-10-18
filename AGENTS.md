@@ -28,6 +28,23 @@
   - CORS: `ALLOWED_ORIGINS=http://localhost:3000`, `ALLOW_CREDENTIALS=false`, `ALLOWED_METHODS=*`, `ALLOWED_HEADERS=*`
   - Secrets: `SECRET_KEY=change-me`
 
+## Base de données & Migrations
+- ORM: SQLModel/SQLAlchemy (async). URL: `DATABASE_URL` (ex.: Postgres via asyncpg, ou SQLite `sqlite+aiosqlite:///./app.db`).
+- Démarrage local (SQLite): aucune action, le schéma minimal est créé au lancement.
+- Migrations Alembic:
+  - `cd Chrona_Core/backend`
+  - `alembic upgrade head` (applique les migrations sur `DATABASE_URL`)
+  - Générer de nouvelles migrations: `alembic revision -m "message" --autogenerate`
+
+## Auth Quickstart
+- Inscription: `POST /auth/register` avec `{ email, password }` (JSON).
+- Token: `POST /auth/token` (form URL-encoded), champs: `username=<email>`, `password=<pass>`.
+- Me: `GET /auth/me` avec `Authorization: Bearer <token>`.
+- Exemples curl:
+  - `curl -X POST http://localhost:8000/auth/register -H "Content-Type: application/json" -d '{"email":"dev@example.com","password":"Passw0rd!"}'`
+  - `curl -X POST http://localhost:8000/auth/token -H "Content-Type: application/x-www-form-urlencoded" -d 'username=dev@example.com&password=Passw0rd!'`
+  - `curl http://localhost:8000/auth/me -H "Authorization: Bearer <token>"`
+
 ## Docker Compose
 - Depuis `Chrona_Core/`:
   - `docker compose up -d --build`

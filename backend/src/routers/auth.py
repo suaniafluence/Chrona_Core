@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Callable
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -9,7 +9,12 @@ from sqlmodel import select
 from src.db import get_session
 from src.models.user import User
 from src.schemas import Token, UserCreate, UserRead
-from src.security import create_access_token, get_password_hash, verify_password
+from src.security import (
+    create_access_token,
+    decode_token,
+    get_password_hash,
+    verify_password,
+)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
@@ -41,3 +46,31 @@ async def login_for_access_token(
     token = create_access_token(subject=str(user.id), role=user.role)
     return Token(access_token=token)
 
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> User:
+    payload = decode_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token")
+    user_id = int(payload["sub"])
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found")
+    return user
+
+
+def require_roles(*roles: str) -> Callable[[User], User]:
+    async def _dep(current: Annotated[User, Depends(get_current_user)]) -> User:
+        if roles and current.role not in roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+        return current
+
+    return _dep
+
+
+@router.get("/me", response_model=UserRead)
+async def read_me(current: Annotated[User, Depends(get_current_user)]):
+    return UserRead.model_validate(current)
