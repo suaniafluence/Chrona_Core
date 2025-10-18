@@ -29,6 +29,8 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: backend
+        env:
+          PYTHONPATH: .
         run: pytest -q --cov=src --cov-report=xml
 
       - name: Upload coverage artifact
