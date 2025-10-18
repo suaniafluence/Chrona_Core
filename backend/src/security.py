@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 
 
 def get_secret_key() -> str:
@@ -41,4 +41,3 @@ def decode_token(token: str) -> Optional[dict]:
         return jwt.decode(token, get_secret_key(), algorithms=["HS256"])
     except JWTError:
         return None
-
