@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: chrona
+      POSTGRES_USER: chrona
+      POSTGRES_PASSWORD: chrona
+    ports:
+      - "5432:5432"
+    volumes:
+      - chrona_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chrona -d chrona"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      ALLOW_CREDENTIALS: "false"
+      ALLOWED_METHODS: "*"
+      ALLOWED_HEADERS: "*"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backoffice:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./apps/backoffice:/app
+    command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in backoffice; skipping' && sleep 3600; fi"
+    environment:
+      VITE_API_URL: http://backend:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  kiosk:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./apps/kiosk:/app
+    command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in kiosk; skipping' && sleep 3600; fi"
+    environment:
+      VITE_API_URL: http://backend:8000
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+
+volumes:
+  chrona_pg:
