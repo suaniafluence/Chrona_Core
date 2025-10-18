@@ -53,7 +53,7 @@ jobs:
         run: black --check backend/src backend/tests
 
       - name: Lint (isort)
-        run: isort --profile black --check-only backend
+        run: isort --check-only backend
 
       - name: Lint (flake8)
         run: flake8 backend/src backend/tests
