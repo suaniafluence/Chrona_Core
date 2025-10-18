@@ -24,14 +24,14 @@ class SetRoleRequest(BaseModel):
     role: str
 
 
-@router.patch("/users/{user_id}/role", response_model=UserRead)
+@router.api_route("/users/{user_id}/role", methods=["PATCH", "POST"], response_model=UserRead)
 async def set_user_role(
     user_id: int,
     payload: SetRoleRequest,
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    allowed = {"admin", "user"}
+    allowed = {"admin", "user", "manager"}
     role = payload.role.strip().lower()
     if role not in allowed:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role")
@@ -80,7 +80,7 @@ async def create_user_with_role(
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    allowed = {"admin", "user"}
+    allowed = {"admin", "user", "manager"}
     role = payload.role.strip().lower()
     if role not in allowed:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role")
