@@ -1,9 +1,12 @@
 import os
 from typing import List
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+from .db import db_health, lifespan
+from .routers.auth import router as auth_router
+from .routers.admin import router as admin_router
 
 
 load_dotenv()
@@ -32,7 +35,7 @@ def _get_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-app = FastAPI(title="Chrona Backend")
+app = FastAPI(title="Chrona Backend", lifespan=lifespan)
 
 allowed_origins = _get_allowed_origins()
 allow_credentials = _get_bool("ALLOW_CREDENTIALS", False)
@@ -46,10 +49,13 @@ app.add_middleware(
     allow_headers=allowed_headers,
 )
 
+app.include_router(auth_router)
+app.include_router(admin_router)
+
 
 @app.get("/health")
-def health() -> dict:
-    return {"status": "ok"}
+async def health() -> dict:
+    return {"status": "ok", "db": "ok" if await db_health() else "down"}
 
 
 @app.get("/")

@@ -4,7 +4,7 @@ import sys
 from fastapi.testclient import TestClient
 
 
-def test_allow_credentials_true(monkeypatch):
+def test_allow_credentials_true(monkeypatch) -> None:
     monkeypatch.setenv("ALLOWED_ORIGINS", "http://localhost:3000")
     monkeypatch.setenv("ALLOW_CREDENTIALS", "true")
     # Force reload to apply new env config

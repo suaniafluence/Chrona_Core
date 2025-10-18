@@ -1,0 +1,10 @@
+[tool.isort]
+profile = "black"
+known_first_party = ["src"]
+src_paths = ["backend/src"]
+line_length = 88
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
