@@ -34,6 +34,13 @@ jobs:
         run: pytest -vv -k test_admin_ping_requires_admin
         continue-on-error: true
 
+      - name: Debug first failure (full suite, stop early)
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+        run: pytest -vv --maxfail=1
+        continue-on-error: true
+
       - name: Run tests with coverage
         working-directory: backend
         env:
