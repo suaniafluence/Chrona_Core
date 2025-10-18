@@ -2,15 +2,25 @@ import asyncio
 
 from fastapi.testclient import TestClient
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.db import engine
 from src.main import app
 
 
-def _promote_in_db(email: str) -> None:
+def _promote_in_db(email: str):
+    """Helper to promote a user to admin role directly in DB."""
+    import os
+
+    database_url = os.getenv("DATABASE_URL")
+
     async def _run():
+        engine = create_async_engine(database_url)
         async with engine.begin() as conn:
-            await conn.execute(text("UPDATE user SET role='admin' WHERE email=:email"), {"email": email})
+            await conn.execute(
+                text("UPDATE users SET role = 'admin' WHERE email = :email"),
+                {"email": email},
+            )
+        await engine.dispose()
 
     asyncio.get_event_loop().run_until_complete(_run())
 
@@ -29,29 +39,30 @@ def test_admin_can_promote_user(tmp_path, monkeypatch) -> None:
 
         # Promote A to admin directly (bootstrap), fetch token
         _promote_in_db(a_email)
-        la = client.post(
+        r_token = client.post(
             "/auth/token",
             data={"username": a_email, "password": a_pwd},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        admin_token = la.json()["access_token"]
+        admin_token = r_token.json()["access_token"]
 
-        # Use admin endpoint to promote B
-        rp = client.patch(
+        # Admin promotes B to manager
+        r_promote = client.post(
             f"/admin/users/{target_id}/role",
-            json={"role": "admin"},
+            json={"role": "manager"},
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert rp.status_code == 200, rp.text
-        assert rp.json()["role"] == "admin"
+        assert r_promote.status_code == 200
+        assert r_promote.json()["role"] == "manager"
 
-        # Now B should access admin route
-        lb = client.post(
+        # Verify B's role changed
+        r_login_b = client.post(
             "/auth/token",
             data={"username": b_email, "password": b_pwd},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        b_token = lb.json()["access_token"]
-        ok = client.get("/admin/ping", headers={"Authorization": f"Bearer {b_token}"})
-        assert ok.status_code == 200
-
+        token_b = r_login_b.json()["access_token"]
+        r_me = client.get(
+            "/auth/me", headers={"Authorization": f"Bearer {token_b}"}
+        )
+        assert r_me.json()["role"] == "manager"

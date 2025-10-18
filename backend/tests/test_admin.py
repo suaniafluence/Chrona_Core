@@ -10,7 +10,10 @@ from src.main import app
 def _promote_to_admin(email: str) -> None:
     async def _run():
         async with engine.begin() as conn:
-            await conn.execute(text("UPDATE user SET role='admin' WHERE email=:email"), {"email": email})
+            await conn.execute(
+                text("UPDATE users SET role='admin' WHERE email=:email"),
+                {"email": email},
+            )
 
     asyncio.get_event_loop().run_until_complete(_run())
 
