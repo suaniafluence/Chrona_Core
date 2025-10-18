@@ -45,6 +45,14 @@
   - `curl -X POST http://localhost:8000/auth/token -H "Content-Type: application/x-www-form-urlencoded" -d 'username=dev@example.com&password=Passw0rd!'`
   - `curl http://localhost:8000/auth/me -H "Authorization: Bearer <token>"`
 
+### Admin-only (exemple)
+- Route: `GET /admin/ping` (requiert rôle `admin`).
+- Pour tester rapidement, promouvez un utilisateur en base (ex.: via migration/SQL) puis regénérez un token.
+
+### Script PowerShell (dev)
+- `backend/tools/dev-auth.ps1` enchaîne register → token → me.
+- Exemple: `pwsh ./backend/tools/dev-auth.ps1 -Email dev@example.com -Password Passw0rd! -Api http://localhost:8000`
+
 ## Docker Compose
 - Depuis `Chrona_Core/`:
   - `docker compose up -d --build`
