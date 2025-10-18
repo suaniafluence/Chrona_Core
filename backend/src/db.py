@@ -19,6 +19,13 @@ SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=
 async def lifespan(app):  # type: ignore[no-untyped-def]
     # On startup, ensure metadata exists for SQLite (optional best-effort)
     if _database_url().startswith("sqlite+"):
+        # Import models to register tables in metadata
+        try:
+            import importlib
+
+            importlib.import_module("src.models.user")
+        except Exception:
+            pass
         async with engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
     yield

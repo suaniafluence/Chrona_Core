@@ -10,3 +10,5 @@ sqlmodel>=0.0.16
 alembic>=1.13
 asyncpg>=0.29
 aiosqlite>=0.19
+passlib[bcrypt]>=1.7
+python-jose[cryptography]>=3.3

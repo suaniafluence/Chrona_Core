@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .db import db_health, lifespan
+from .routers.auth import router as auth_router
 
 
 load_dotenv()
@@ -46,6 +47,8 @@ app.add_middleware(
     allow_methods=allowed_methods,
     allow_headers=allowed_headers,
 )
+
+app.include_router(auth_router)
 
 
 @app.get("/health")
