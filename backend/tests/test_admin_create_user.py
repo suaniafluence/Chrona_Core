@@ -10,7 +10,10 @@ from src.main import app
 def _promote_in_db(email: str) -> None:
     async def _run():
         async with engine.begin() as conn:
-            await conn.execute(text("UPDATE user SET role='admin' WHERE email=:email"), {"email": email})
+            await conn.execute(
+                text("UPDATE users SET role='admin' WHERE email=:email"),
+                {"email": email},
+            )
 
     asyncio.get_event_loop().run_until_complete(_run())
 
@@ -30,14 +33,21 @@ def test_admin_can_create_user_with_role(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_file}")
     with TestClient(app) as client:
         # bootstrap admin
-        client.post("/auth/register", json={"email": "admin@example.com", "password": "adminpass"})
+        client.post(
+            "/auth/register",
+            json={"email": "admin@example.com", "password": "adminpass"},
+        )
         _promote_in_db("admin@example.com")
         admin_token = _login(client, "admin@example.com", "adminpass")
 
         # create user with role admin via endpoint
         r = client.post(
             "/admin/users",
-            json={"email": "new@example.com", "password": "newpass123", "role": "admin"},
+            json={
+                "email": "new@example.com",
+                "password": "newpass123",
+                "role": "admin",
+            },
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert r.status_code == 201, r.text
@@ -53,7 +63,10 @@ def test_admin_create_user_invalid_role(tmp_path, monkeypatch) -> None:
     db_file = tmp_path / "test2.db"
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_file}")
     with TestClient(app) as client:
-        client.post("/auth/register", json={"email": "admin2@example.com", "password": "adminpass"})
+        client.post(
+            "/auth/register",
+            json={"email": "admin2@example.com", "password": "adminpass"},
+        )
         _promote_in_db("admin2@example.com")
         admin_token = _login(client, "admin2@example.com", "adminpass")
 
@@ -63,4 +76,3 @@ def test_admin_create_user_invalid_role(tmp_path, monkeypatch) -> None:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert r.status_code == 400
-

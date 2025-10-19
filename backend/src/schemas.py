@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr
+
 try:
     # Pydantic v2
     from pydantic import ConfigDict  # type: ignore

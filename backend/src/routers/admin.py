@@ -11,35 +11,40 @@ from src.routers.auth import require_roles
 from src.schemas import AdminUserCreate, UserRead
 from src.security import get_password_hash
 
-
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/ping")
-async def ping_admin(current: Annotated[User, Depends(require_roles("admin"))]):
-    return {"pong": True, "role": current.role}
+async def ping_admin(_current: Annotated[User, Depends(require_roles("admin"))]):
+    return {"pong": True}
 
 
 class SetRoleRequest(BaseModel):
     role: str
 
 
-@router.patch("/users/{user_id}/role", response_model=UserRead)
+@router.api_route(
+    "/users/{user_id}/role", methods=["PATCH", "POST"], response_model=UserRead
+)
 async def set_user_role(
     user_id: int,
     payload: SetRoleRequest,
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    allowed = {"admin", "user"}
+    allowed = {"admin", "user", "manager"}
     role = payload.role.strip().lower()
     if role not in allowed:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role"
+        )
 
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found"
+        )
 
     user.role = role
     await session.commit()
@@ -70,7 +75,9 @@ async def get_user(
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found"
+        )
     return UserRead.model_validate(user)
 
 
@@ -80,16 +87,24 @@ async def create_user_with_role(
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
-    allowed = {"admin", "user"}
+    allowed = {"admin", "user", "manager"}
     role = payload.role.strip().lower()
     if role not in allowed:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role")
-    user = User(email=payload.email, hashed_password=get_password_hash(payload.password), role=role)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_role"
+        )
+    user = User(
+        email=payload.email,
+        hashed_password=get_password_hash(payload.password),
+        role=role,
+    )
     session.add(user)
     try:
         await session.commit()
         await session.refresh(user)
     except Exception:
         await session.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="email_already_registered")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="email_already_registered"
+        )
     return UserRead.model_validate(user)

@@ -16,14 +16,17 @@ from src.security import (
     verify_password,
 )
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserRead, status_code=201)
-async def register_user(payload: UserCreate, session: Annotated[AsyncSession, Depends(get_session)]):
-    user = User(email=payload.email, hashed_password=get_password_hash(payload.password))
+async def register_user(
+    payload: UserCreate, session: Annotated[AsyncSession, Depends(get_session)]
+):
+    user = User(
+        email=payload.email, hashed_password=get_password_hash(payload.password)
+    )
     session.add(user)
     try:
         await session.commit()
@@ -42,8 +45,10 @@ async def login_for_access_token(
     result = await session.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
     if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials")
-    token = create_access_token(subject=str(user.id), role=user.role)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials"
+        )
+    token = create_access_token({"sub": str(user.id), "role": user.role})
     return Token(access_token=token)
 
 
@@ -53,19 +58,25 @@ async def get_current_user(
 ) -> User:
     payload = decode_token(token)
     if not payload or "sub" not in payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token"
+        )
     user_id = int(payload["sub"])
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found"
+        )
     return user
 
 
 def require_roles(*roles: str) -> Callable[[User], User]:
     async def _dep(current: Annotated[User, Depends(get_current_user)]) -> User:
         if roles and current.role not in roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="forbidden"
+            )
         return current
 
     return _dep
