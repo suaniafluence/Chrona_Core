@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -22,12 +20,17 @@ services:
       context: ./backend
     environment:
       DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174
       ALLOW_CREDENTIALS: "false"
       ALLOWED_METHODS: "*"
       ALLOWED_HEADERS: "*"
+      JWT_PRIVATE_KEY_PATH: /app/jwt_private_key.pem
+      JWT_PUBLIC_KEY_PATH: /app/jwt_public_key.pem
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/jwt_private_key.pem:/app/jwt_private_key.pem:ro
+      - ./backend/jwt_public_key.pem:/app/jwt_public_key.pem:ro
     depends_on:
       db:
         condition: service_healthy
