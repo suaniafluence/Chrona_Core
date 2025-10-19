@@ -51,6 +51,11 @@
 - Création user (admin): `POST /admin/users` avec `{ email, password, role }` (`role` ∈ {`admin`,`user`}).
 - Changement de rôle: `PATCH /admin/users/{id}/role` avec `{ role }`.
 
+### Notes MDP (hashing)
+- Les mots de passe sont hachés via Passlib (`bcrypt_sha256`) avec troncature sûre à 72 octets (compat. bcrypt).
+- La même troncature est appliquée au hash et à la vérification; les mots de passe longs restent utilisables.
+- Recommandations: passphrases ≥ 12 caractères; pas de stockage/echo côté logs.
+
 ### Script PowerShell (dev)
 - `backend/tools/dev-auth.ps1` enchaîne register → token → me.
 - Exemple: `pwsh ./backend/tools/dev-auth.ps1 -Email dev@example.com -Password Passw0rd! -Api http://localhost:8000`

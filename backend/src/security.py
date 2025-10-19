@@ -17,12 +17,23 @@ def get_token_exp_minutes() -> int:
         return 60
 
 
+MAX_PASSWORD_BYTES = 72
+
+
+def _truncate_password(password: str) -> str:
+    data = password.encode("utf-8")
+    if len(data) <= MAX_PASSWORD_BYTES:
+        return password
+    # Truncate to 72 bytes boundary; drop partial multibyte char tails
+    return data[:MAX_PASSWORD_BYTES].decode("utf-8", errors="ignore")
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt_sha256.verify(plain_password, hashed_password)
+    return bcrypt_sha256.verify(_truncate_password(plain_password), hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    return bcrypt_sha256.hash(password)
+    return bcrypt_sha256.hash(_truncate_password(password))
 
 
 def create_access_token(subject: str, role: str, expires_delta: Optional[timedelta] = None) -> str:
