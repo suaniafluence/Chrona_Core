@@ -27,7 +27,9 @@ jobs:
           pip install -r backend/requirements.txt
           pip install black isort flake8
 
-      
+      - name: Generate JWT RS256 keys for tests
+        working-directory: backend
+        run: python tools/generate_keys.py
 
       - name: Run tests with coverage
         working-directory: backend

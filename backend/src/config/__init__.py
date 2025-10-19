@@ -19,11 +19,11 @@ class Settings:
         # RS256 Keys
         self.JWT_PRIVATE_KEY_PATH = os.getenv(
             "JWT_PRIVATE_KEY_PATH",
-            str(Path(__file__).parent.parent.parent / "jwt_private_key.pem")
+            str(Path(__file__).parent.parent.parent / "jwt_private_key.pem"),
         )
         self.JWT_PUBLIC_KEY_PATH = os.getenv(
             "JWT_PUBLIC_KEY_PATH",
-            str(Path(__file__).parent.parent.parent / "jwt_public_key.pem")
+            str(Path(__file__).parent.parent.parent / "jwt_public_key.pem"),
         )
 
         # Load keys if using RS256
