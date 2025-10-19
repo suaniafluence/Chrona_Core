@@ -84,7 +84,8 @@ def create_ephemeral_qr_token(
     Args:
         user_id: User ID
         device_id: Device ID
-        expires_seconds: Token expiration in seconds (default: EPHEMERAL_TOKEN_EXPIRE_SECONDS)
+        expires_seconds: Token expiration in seconds
+            (default: EPHEMERAL_TOKEN_EXPIRE_SECONDS)
 
     Returns:
         Tuple of (encoded JWT string, payload dict with nonce and jti)
