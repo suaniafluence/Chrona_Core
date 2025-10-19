@@ -1,6 +1,6 @@
 """Device management endpoints for employee device registration and revocation."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -56,7 +56,8 @@ async def register_device(
         )
 
     # Create new device
-    now = datetime.now(timezone.utc)
+    # Use naive UTC to match TIMESTAMP WITHOUT TIME ZONE columns
+    now = datetime.utcnow()
     device = Device(
         user_id=current_user.id,
         device_fingerprint=device_data.device_fingerprint,

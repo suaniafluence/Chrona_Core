@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
 from jose import JWTError, jwt
@@ -64,10 +64,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         Encoded JWT token string
     """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
+    # Use naive UTC datetimes for consistency with DB and token handling
+    now = datetime.utcnow()
+    expire = now + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire, "iat": now})
     encoded_jwt = jwt.encode(
         to_encode,
         _get_signing_key(),
@@ -94,7 +94,8 @@ def create_ephemeral_qr_token(
     jti = str(uuid.uuid4())  # Unique token ID for single-use enforcement
 
     expires = expires_seconds or settings.EPHEMERAL_TOKEN_EXPIRE_SECONDS
-    now = datetime.now(timezone.utc)
+    # Use naive UTC datetimes
+    now = datetime.utcnow()
     expire = now + timedelta(seconds=expires)
 
     # JWT payload with timestamps (for encoding)
