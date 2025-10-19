@@ -112,7 +112,7 @@ async def list_my_devices(
     query = select(Device).where(Device.user_id == current_user.id)
 
     if not include_revoked:
-        query = query.where(Device.is_revoked == False)
+        query = query.where(Device.is_revoked.is_(False))
 
     result = await session.execute(query.order_by(Device.registered_at.desc()))
     devices = result.scalars().all()
