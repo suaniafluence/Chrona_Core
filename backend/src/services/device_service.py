@@ -100,9 +100,7 @@ async def revoke_device(
         HTTPException 400: Device already revoked
     """
     # Fetch device
-    result = await session.execute(
-        select(Device).where(Device.id == device_id)
-    )
+    result = await session.execute(select(Device).where(Device.id == device_id))
     device = result.scalar_one_or_none()
 
     if not device:

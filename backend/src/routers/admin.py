@@ -257,9 +257,7 @@ async def create_kiosk(
 
     # Check for duplicate device_fingerprint
     result = await session.execute(
-        select(Kiosk).where(
-            Kiosk.device_fingerprint == kiosk_data.device_fingerprint
-        )
+        select(Kiosk).where(Kiosk.device_fingerprint == kiosk_data.device_fingerprint)
     )
     if result.scalar_one_or_none():
         raise HTTPException(

@@ -58,9 +58,7 @@ async def generate_ephemeral_token(
         )
 
     # Generate ephemeral JWT token
-    qr_token, payload = create_ephemeral_qr_token(
-        user_id=user_id, device_id=device.id
-    )
+    qr_token, payload = create_ephemeral_qr_token(user_id=user_id, device_id=device.id)
 
     # Store token tracking record for single-use enforcement
     token_tracking = TokenTracking(
@@ -190,9 +188,7 @@ async def validate_token_and_punch(
         )
 
     # 5. Verify device exists and is not revoked
-    result = await session.execute(
-        select(Device).where(Device.id == device_id)
-    )
+    result = await session.execute(select(Device).where(Device.id == device_id))
     device = result.scalar_one_or_none()
 
     if not device:
@@ -208,9 +204,7 @@ async def validate_token_and_punch(
         )
 
     # 6. Verify kiosk exists and is active
-    result = await session.execute(
-        select(Kiosk).where(Kiosk.id == kiosk_id)
-    )
+    result = await session.execute(select(Kiosk).where(Kiosk.id == kiosk_id))
     kiosk = result.scalar_one_or_none()
 
     if not kiosk:
