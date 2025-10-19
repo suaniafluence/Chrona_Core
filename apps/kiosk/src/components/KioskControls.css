@@ -1,0 +1,82 @@
+.kiosk-controls {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1000;
+  transition: opacity 0.3s ease;
+}
+
+.kiosk-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.kiosk-control-btn .icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.kiosk-control-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.kiosk-control-btn:active {
+  transform: translateY(0);
+}
+
+.kiosk-enter-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.kiosk-enter-btn:hover {
+  background: linear-gradient(135deg, #7c8ff0 0%, #8b5bb8 100%);
+}
+
+.fullscreen-btn {
+  background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
+  color: white;
+}
+
+.fullscreen-btn:hover {
+  background: linear-gradient(135deg, #5ed4ff 0%, #8596e0 100%);
+}
+
+.exit-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.exit-btn:hover {
+  background: linear-gradient(135deg, #ffa3ff 0%, #ff6b7e 100%);
+}
+
+/* Hide controls in fullscreen kiosk mode when showExitButton is false */
+.kiosk-mode-active .kiosk-controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .kiosk-controls {
+    flex-direction: column;
+  }
+
+  .kiosk-control-btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
