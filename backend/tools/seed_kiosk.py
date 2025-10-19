@@ -5,8 +5,10 @@ This is useful for testing the kiosk app during development.
 
 import asyncio
 import os
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
 from src.models import Kiosk
 
 
