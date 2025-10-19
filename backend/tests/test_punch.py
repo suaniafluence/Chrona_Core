@@ -92,6 +92,7 @@ async def test_validate_punch_success(
     test_device: Device,
     test_kiosk: Kiosk,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test successful punch validation."""
     # Request QR token
@@ -110,6 +111,7 @@ async def test_validate_punch_success(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_in",
         },
+        headers=kiosk_headers,
     )
 
     assert validate_response.status_code == status.HTTP_200_OK
@@ -125,6 +127,7 @@ async def test_validate_punch_success(
 async def test_validate_punch_invalid_token(
     async_client: AsyncClient,
     test_kiosk: Kiosk,
+    kiosk_headers: dict,
 ):
     """Test punch validation with invalid JWT token."""
     response = await async_client.post(
@@ -134,6 +137,7 @@ async def test_validate_punch_invalid_token(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_in",
         },
+        headers=kiosk_headers,
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -146,6 +150,7 @@ async def test_validate_punch_replay_attack(
     test_device: Device,
     test_kiosk: Kiosk,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test that replay attacks are prevented."""
     # Request QR token
@@ -164,6 +169,7 @@ async def test_validate_punch_replay_attack(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_in",
         },
+        headers=kiosk_headers,
     )
     assert first_response.status_code == status.HTTP_200_OK
 
@@ -175,6 +181,7 @@ async def test_validate_punch_replay_attack(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_out",
         },
+        headers=kiosk_headers,
     )
 
     assert second_response.status_code == status.HTTP_400_BAD_REQUEST
@@ -188,6 +195,7 @@ async def test_validate_punch_inactive_kiosk(
     test_kiosk: Kiosk,
     test_db,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test punch validation with inactive kiosk."""
     # Request QR token
@@ -211,6 +219,7 @@ async def test_validate_punch_inactive_kiosk(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_in",
         },
+        headers=kiosk_headers,
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -224,6 +233,7 @@ async def test_validate_punch_revoked_device(
     test_kiosk: Kiosk,
     test_db,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test punch validation with revoked device after token generation."""
     # Request QR token
@@ -247,6 +257,7 @@ async def test_validate_punch_revoked_device(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_in",
         },
+        headers=kiosk_headers,
     )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -260,6 +271,7 @@ async def test_get_punch_history_success(
     test_device: Device,
     test_kiosk: Kiosk,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test getting punch history."""
     # Create multiple punches
@@ -278,7 +290,8 @@ async def test_get_punch_history_success(
                 "kiosk_id": test_kiosk.id,
                 "punch_type": punch_type,
             },
-        )
+        headers=kiosk_headers,
+    )
 
     # Get history
     response = await async_client.get(
@@ -302,6 +315,7 @@ async def test_get_punch_history_pagination(
     test_device: Device,
     test_kiosk: Kiosk,
     auth_headers: dict,
+    kiosk_headers: dict,
 ):
     """Test punch history pagination."""
     # Create 5 punches
@@ -320,7 +334,8 @@ async def test_get_punch_history_pagination(
                 "kiosk_id": test_kiosk.id,
                 "punch_type": "clock_in" if i % 2 == 0 else "clock_out",
             },
-        )
+        headers=kiosk_headers,
+    )
 
     # Get first 2 punches
     response1 = await async_client.get(

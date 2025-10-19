@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
+# Module-level storage for test kiosk API keys
+_kiosk_api_keys = {}
+
 
 def pytest_configure() -> None:
     """Set default env vars for tests early without tripping flake8 E402."""
@@ -84,6 +87,12 @@ async def admin_headers(test_admin) -> dict:
 
 
 @pytest_asyncio.fixture
+async def kiosk_headers(test_kiosk) -> dict:
+    """Headers for kiosk API key authentication."""
+    return {"X-Kiosk-API-Key": _kiosk_api_keys[test_kiosk.id]}
+
+
+@pytest_asyncio.fixture
 async def test_device(test_db: AsyncSession, test_user):
     from datetime import datetime, timezone
     from src.models.device import Device
@@ -105,17 +114,26 @@ async def test_device(test_db: AsyncSession, test_user):
 async def test_kiosk(test_db: AsyncSession):
     from datetime import datetime, timezone
     from src.models.kiosk import Kiosk
+    from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
+
+    # Generate API key for test kiosk
+    api_key = generate_kiosk_api_key()
 
     kiosk = Kiosk(
         kiosk_name="Test Kiosk",
         location="Office Entrance",
         device_fingerprint="kiosk-fp-456",
+        api_key_hash=hash_kiosk_api_key(api_key),
         is_active=True,
         created_at=datetime.now(timezone.utc),
     )
     test_db.add(kiosk)
     await test_db.commit()
     await test_db.refresh(kiosk)
+
+    # Store the plain API key in module-level dictionary
+    _kiosk_api_keys[kiosk.id] = api_key
+
     return kiosk
 
 

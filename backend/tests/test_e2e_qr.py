@@ -13,6 +13,7 @@ async def test_e2e_qr_flow(
     test_kiosk,
     auth_headers: dict,
     admin_headers: dict,
+    kiosk_headers: dict,
 ):
     """Validate the full QR flow: request -> validate -> replay blocked."""
 
@@ -33,14 +34,14 @@ async def test_e2e_qr_flow(
         "kiosk_id": test_kiosk.id,
         "punch_type": "clock_in",
     }
-    r2 = await async_client.post("/punch/validate", json=val_payload)
+    r2 = await async_client.post("/punch/validate", json=val_payload, headers=kiosk_headers)
     assert r2.status_code == status.HTTP_200_OK
     v = r2.json()
     assert v.get("success") is True
     assert v.get("punch_id") is not None
 
     # 3) Replay attempt with same token must fail
-    r3 = await async_client.post("/punch/validate", json=val_payload)
+    r3 = await async_client.post("/punch/validate", json=val_payload, headers=kiosk_headers)
     assert r3.status_code == status.HTTP_400_BAD_REQUEST
 
     # 4) Admin can see audit log for punch_validated
