@@ -145,32 +145,45 @@ This creates a trusted device binding that prevents unauthorized device usage.
 
 **Clock-in/Clock-out sequence**:
 
-1. **Mobile generates ephemeral QR code**:
-   - JWT signed with RS256 algorithm
-   - Contains: employee ID, timestamp, nonce (anti-replay), jti (single-use token ID), device fingerprint
-   - Short expiration (15-30 seconds)
+1. **Mobile requests ephemeral QR token**:
+   - Mobile app calls `POST /punch/request-token` with authenticated user + device_id
+   - Backend generates JWT signed with RS256 (private key stored securely)
+   - JWT payload contains: `employee_id`, `device_id`, `nonce` (random), `jti` (unique ID), `iat`, `exp` (15-30s), `kiosk_scope`
+   - Backend stores nonce and jti in tracking table/cache (Redis) with TTL
+   - Backend returns JWT token to mobile
 
-2. **Employee scans QR at kiosk tablet**:
-   - Kiosk validates JWT signature using backend public key
+2. **Mobile displays QR code**:
+   - Mobile receives JWT string from backend
+   - Mobile generates QR code from JWT string (visual representation only)
+   - QR code displayed on screen for employee to scan at kiosk
+   - Short expiration (15-30 seconds) limits attack window
+
+3. **Kiosk scans and validates QR code**:
+   - Kiosk scans QR code, extracts JWT string
+   - Kiosk sends JWT to backend via `POST /punch/validate` with `kiosk_id`
    - Backend verifies:
-     - Signature validity (RS256)
-     - Nonce uniqueness (prevent replay)
-     - Token not already used (jti check)
+     - JWT signature validity (RS256 with public key)
+     - Token not expired (`exp` claim)
+     - Nonce uniqueness (check against tracking table, mark as used)
+     - JTI not already used (single-use enforcement)
      - Device is registered and not revoked
-     - Kiosk is authorized
-     - Timestamp within acceptable window
+     - Kiosk is authorized (kiosk_id in whitelist)
+   - Backend atomically marks nonce/jti as used to prevent race conditions
 
-3. **Backend records attendance event**:
-   - Stores timestamp, employee, kiosk location, device ID
-   - Creates immutable audit log entry
-   - Returns confirmation to both mobile and kiosk (dual-channel validation)
+4. **Backend records attendance event**:
+   - Creates record in `punches` table: timestamp, employee_id, device_id, kiosk_id, punch_type (in/out)
+   - Creates immutable audit log entry in `audit_logs` table
+   - Returns success confirmation to kiosk
+   - Optionally notifies mobile via push notification (dual-channel confirmation)
 
 **Security validations**:
-- Nonce prevents replay attacks
-- Single-use jti prevents token reuse
-- Device binding prevents unauthorized phones
-- Short expiration limits attack window
-- Dual-channel confirmation ensures both parties receive confirmation
+- RS256 signature: Private key never leaves backend, public key can be distributed to kiosks
+- Nonce prevents replay attacks (each token has unique random value)
+- Single-use jti prevents token reuse (marked as consumed after first validation)
+- Device binding prevents unauthorized phones (device_id checked against registered devices)
+- Short expiration (15-30s) limits attack window
+- Kiosk whitelist prevents rogue scanning devices
+- Atomic nonce/jti marking prevents race conditions
 
 ## Authentication Flow
 
@@ -207,6 +220,182 @@ pwsh ./backend/tools/dev-auth.ps1 -Email dev@example.com -Password Passw0rd! -Ap
 - Use passphrases ≥ 12 characters
 - Never log or echo passwords
 - Both implementations use constant-time comparison for verification
+
+## Database Schema
+
+The PostgreSQL database uses the following key tables:
+
+### Core Tables
+
+**`users`** - Employee accounts
+- `id`: Primary key (integer)
+- `email`: Unique email address (indexed)
+- `hashed_password`: bcrypt_sha256 hash
+- `role`: User role (user/admin, indexed)
+- `created_at`: Account creation timestamp
+
+**`devices`** - Registered employee devices
+- `id`: Primary key (integer)
+- `user_id`: Foreign key to users
+- `device_fingerprint`: Unique device identifier (hashed)
+- `device_name`: Human-readable name (e.g., "iPhone 13")
+- `attestation_data`: JSON blob with SafetyNet/DeviceCheck data
+- `registered_at`: Device registration timestamp
+- `last_seen_at`: Last activity timestamp
+- `is_revoked`: Boolean flag for revoked devices
+
+**`kiosks`** - Authorized kiosk tablets
+- `id`: Primary key (integer)
+- `kiosk_name`: Unique identifier (e.g., "Entrance-Floor1")
+- `location`: Physical location description
+- `device_fingerprint`: Kiosk hardware identifier
+- `public_key`: Optional RS256 public key for validation
+- `is_active`: Boolean flag
+- `created_at`: Registration timestamp
+
+**`punches`** - Attendance events (clock-in/out)
+- `id`: Primary key (integer)
+- `user_id`: Foreign key to users
+- `device_id`: Foreign key to devices
+- `kiosk_id`: Foreign key to kiosks
+- `punch_type`: Enum ('clock_in', 'clock_out')
+- `punched_at`: Timestamp of the punch (indexed)
+- `jwt_jti`: JTI from validated JWT (for traceability)
+- `created_at`: Record creation timestamp
+
+**`token_tracking`** - Nonce and JTI single-use enforcement
+- `jti`: Unique token ID (primary key, string)
+- `nonce`: Random nonce value (indexed)
+- `user_id`: Foreign key to users
+- `device_id`: Foreign key to devices
+- `issued_at`: Token issue timestamp
+- `expires_at`: Token expiration (indexed for cleanup)
+- `consumed_at`: Timestamp when token was used (null if unused)
+- `consumed_by_kiosk_id`: Foreign key to kiosks (null if unused)
+
+**`audit_logs`** - Immutable security audit trail
+- `id`: Primary key (integer, append-only)
+- `event_type`: Type of event (e.g., 'punch_validated', 'device_revoked', 'login_failed')
+- `user_id`: Foreign key to users (nullable)
+- `device_id`: Foreign key to devices (nullable)
+- `kiosk_id`: Foreign key to kiosks (nullable)
+- `event_data`: JSON blob with event details
+- `ip_address`: Source IP address
+- `user_agent`: Client user agent
+- `created_at`: Event timestamp (indexed)
+
+### Security Notes
+- Use PostgreSQL `pgcrypto` extension for column-level encryption of sensitive fields
+- Implement row-level security (RLS) policies for multi-tenant isolation
+- Token tracking table should have automatic cleanup job (delete expired entries after grace period)
+- Audit logs should be write-once (no updates/deletes) with database triggers
+
+## API Endpoints
+
+### Authentication Endpoints (`/auth`)
+
+**`POST /auth/register`** - Register new user account
+- Body: `{ "email": "user@example.com", "password": "..." }`
+- Returns: `UserRead` with user details
+- Status: 201 Created
+
+**`POST /auth/token`** - Login and obtain JWT access token
+- Body: Form-urlencoded `username=<email>&password=<password>`
+- Returns: `{ "access_token": "...", "token_type": "bearer" }`
+- Status: 200 OK
+
+**`GET /auth/me`** - Get current authenticated user
+- Headers: `Authorization: Bearer <token>`
+- Returns: `UserRead` with user details
+- Status: 200 OK
+
+### Device Management Endpoints (`/devices`)
+
+**`POST /devices/register`** - Register new device for authenticated user
+- Headers: `Authorization: Bearer <token>`
+- Body: `{ "device_fingerprint": "...", "device_name": "...", "attestation_data": {...} }`
+- Returns: Device registration confirmation
+- Status: 201 Created
+
+**`GET /devices/me`** - List authenticated user's registered devices
+- Headers: `Authorization: Bearer <token>`
+- Returns: List of devices
+- Status: 200 OK
+
+**`POST /devices/{device_id}/revoke`** - Revoke a device (admin or owner)
+- Headers: `Authorization: Bearer <token>`
+- Returns: Confirmation
+- Status: 200 OK
+
+### Punch (Time Tracking) Endpoints (`/punch`)
+
+**`POST /punch/request-token`** - Request ephemeral QR token
+- Headers: `Authorization: Bearer <token>`
+- Body: `{ "device_id": 123 }`
+- Returns: `{ "qr_token": "<JWT-string>", "expires_in": 30 }`
+- Status: 200 OK
+- Token payload: `{ "sub": user_id, "device_id": ..., "nonce": "...", "jti": "...", "exp": ..., "iat": ... }`
+
+**`POST /punch/validate`** - Validate QR token and record punch
+- Body: `{ "qr_token": "<JWT-string>", "kiosk_id": 5, "punch_type": "clock_in" }`
+- Returns: `{ "success": true, "punch_id": 123, "punched_at": "..." }`
+- Status: 200 OK
+- Validates signature, nonce, jti, device, kiosk authorization
+- Creates punch record and audit log
+
+**`GET /punch/history`** - Get punch history for authenticated user
+- Headers: `Authorization: Bearer <token>`
+- Query params: `?from=<date>&to=<date>&limit=50`
+- Returns: List of punch records
+- Status: 200 OK
+
+### Admin Endpoints (`/admin`)
+
+**`POST /admin/users`** - Create user with specific role (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Body: `{ "email": "...", "password": "...", "role": "admin" }`
+- Returns: `UserRead`
+- Status: 201 Created
+
+**`PATCH /admin/users/{user_id}/role`** - Change user role (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Body: `{ "role": "admin" }`
+- Returns: Updated `UserRead`
+- Status: 200 OK
+
+**`GET /admin/devices`** - List all devices (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Query params: `?user_id=<id>&is_revoked=<bool>`
+- Returns: List of all devices
+- Status: 200 OK
+
+**`POST /admin/devices/{device_id}/revoke`** - Revoke any device (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Returns: Confirmation
+- Status: 200 OK
+
+**`GET /admin/kiosks`** - List all kiosks (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Returns: List of kiosks
+- Status: 200 OK
+
+**`POST /admin/kiosks`** - Register new kiosk (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Body: `{ "kiosk_name": "...", "location": "...", "device_fingerprint": "..." }`
+- Returns: Kiosk details
+- Status: 201 Created
+
+**`GET /admin/audit-logs`** - Query audit logs (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Query params: `?event_type=<type>&user_id=<id>&from=<date>&to=<date>`
+- Returns: List of audit log entries
+- Status: 200 OK
+
+**`GET /admin/reports/attendance`** - Generate attendance report (admin only)
+- Headers: `Authorization: Bearer <token>` (admin role required)
+- Query params: `?from=<date>&to=<date>&user_id=<id>&format=json|csv|pdf`
+- Returns: Attendance report
+- Status: 200 OK
 
 ## Environment Configuration
 
