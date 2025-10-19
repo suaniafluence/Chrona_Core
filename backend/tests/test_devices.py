@@ -4,7 +4,6 @@ import pytest
 from fastapi import status
 from httpx import AsyncClient
 
-from src.main import app
 from src.models.device import Device
 from src.models.user import User
 

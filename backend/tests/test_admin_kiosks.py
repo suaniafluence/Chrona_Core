@@ -5,7 +5,6 @@ from fastapi import status
 from httpx import AsyncClient
 
 from src.models.kiosk import Kiosk
-from src.models.user import User
 
 
 @pytest.mark.asyncio
