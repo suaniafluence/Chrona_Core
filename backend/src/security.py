@@ -66,7 +66,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode = data.copy()
     # Use naive UTC datetimes for consistency with DB and token handling
     now = datetime.utcnow()
-    expire = now + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = now + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire, "iat": now})
     encoded_jwt = jwt.encode(
         to_encode,
