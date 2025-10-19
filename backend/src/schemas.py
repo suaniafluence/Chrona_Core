@@ -129,9 +129,7 @@ class QRTokenResponse(BaseModel):
     """Schema for ephemeral QR token response."""
 
     qr_token: str = Field(..., description="JWT token to encode in QR")
-    expires_in: int = Field(
-        ..., description="Token expiration time in seconds"
-    )
+    expires_in: int = Field(..., description="Token expiration time in seconds")
     expires_at: datetime = Field(..., description="Absolute expiration time")
 
 

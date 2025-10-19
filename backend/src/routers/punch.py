@@ -202,9 +202,7 @@ async def validate_punch(
         )
 
     # 6. Verify device exists and is not revoked
-    result = await session.execute(
-        select(Device).where(Device.id == device_id)
-    )
+    result = await session.execute(select(Device).where(Device.id == device_id))
     device = result.scalar_one_or_none()
 
     if not device:
@@ -269,8 +267,7 @@ async def validate_punch(
         device_id=device_id,
         kiosk_id=kiosk.id,
         event_data=(
-            f'{{"punch_type": "{validate_data.punch_type.value}", '
-            f'"jti": "{jti}"}}'
+            f'{{"punch_type": "{validate_data.punch_type.value}", ' f'"jti": "{jti}"}}'
         ),
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),

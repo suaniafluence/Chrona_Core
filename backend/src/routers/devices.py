@@ -17,7 +17,9 @@ from src.schemas import DeviceCreate, DeviceRead
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
 
-@router.post("/register", response_model=DeviceRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=DeviceRead, status_code=status.HTTP_201_CREATED
+)
 async def register_device(
     device_data: DeviceCreate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -142,9 +144,7 @@ async def revoke_device(
     """
     # Verify device exists and belongs to current user
     result = await session.execute(
-        select(Device).where(
-            Device.id == device_id, Device.user_id == current_user.id
-        )
+        select(Device).where(Device.id == device_id, Device.user_id == current_user.id)
     )
     device = result.scalar_one_or_none()
 
