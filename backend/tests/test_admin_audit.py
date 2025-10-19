@@ -91,9 +91,7 @@ async def test_admin_filter_audit_logs_by_user_id(
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert all(
-        log["user_id"] == test_user.id or log["user_id"] is None for log in data
-    )
+    assert all(log["user_id"] == test_user.id or log["user_id"] is None for log in data)
 
 
 @pytest.mark.asyncio
@@ -118,8 +116,7 @@ async def test_admin_filter_audit_logs_by_device_id(
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert all(
-        log["device_id"] == test_device.id or log["device_id"] is None
-        for log in data
+        log["device_id"] == test_device.id or log["device_id"] is None for log in data
     )
 
 

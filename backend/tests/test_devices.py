@@ -10,7 +10,9 @@ from src.models.user import User
 
 
 @pytest.mark.asyncio
-async def test_register_device_success(async_client: AsyncClient, test_user: User, auth_headers: dict):
+async def test_register_device_success(
+    async_client: AsyncClient, test_user: User, auth_headers: dict
+):
     """Test successful device registration."""
     device_data = {
         "device_fingerprint": "test-device-fp-12345",
@@ -75,7 +77,9 @@ async def test_register_device_unauthorized(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_devices(async_client: AsyncClient, test_user: User, auth_headers: dict):
+async def test_list_devices(
+    async_client: AsyncClient, test_user: User, auth_headers: dict
+):
     """Test listing user's devices."""
     # Register two devices
     devices_data = [
@@ -200,7 +204,9 @@ async def test_revoke_device_not_owned(
     # Create another user and their device
     from src.security import get_password_hash
 
-    other_user = User(email="other@example.com", hashed_password=get_password_hash("password"))
+    other_user = User(
+        email="other@example.com", hashed_password=get_password_hash("password")
+    )
     test_db.add(other_user)
     await test_db.commit()
     await test_db.refresh(other_user)
@@ -224,9 +230,7 @@ async def test_revoke_device_not_owned(
 
 
 @pytest.mark.asyncio
-async def test_revoke_nonexistent_device(
-    async_client: AsyncClient, auth_headers: dict
-):
+async def test_revoke_nonexistent_device(async_client: AsyncClient, auth_headers: dict):
     """Test revoking a device that doesn't exist."""
     response = await async_client.post(
         "/devices/99999/revoke",
