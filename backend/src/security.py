@@ -88,7 +88,7 @@ def create_ephemeral_qr_token(
             (default: EPHEMERAL_TOKEN_EXPIRE_SECONDS)
 
     Returns:
-        Tuple of (encoded JWT string, payload dict with nonce and jti)
+        Tuple of (encoded JWT string, payload dict with datetime objects)
     """
     nonce = str(uuid.uuid4())  # Random nonce for replay protection
     jti = str(uuid.uuid4())  # Unique token ID for single-use enforcement
@@ -97,7 +97,8 @@ def create_ephemeral_qr_token(
     now = datetime.now(timezone.utc)
     expire = now + timedelta(seconds=expires)
 
-    payload = {
+    # JWT payload with timestamps (for encoding)
+    jwt_payload = {
         "sub": str(user_id),
         "device_id": device_id,
         "nonce": nonce,
@@ -108,10 +109,21 @@ def create_ephemeral_qr_token(
     }
 
     encoded_jwt = jwt.encode(
-        payload,
+        jwt_payload,
         _get_signing_key(),
         algorithm=settings.ALGORITHM,
     )
+
+    # Return payload with datetime objects for database storage
+    payload = {
+        "sub": str(user_id),
+        "device_id": device_id,
+        "nonce": nonce,
+        "jti": jti,
+        "iat": now,  # datetime object
+        "exp": expire,  # datetime object
+        "type": "ephemeral_qr",
+    }
 
     return encoded_jwt, payload
 
