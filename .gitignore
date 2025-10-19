@@ -144,6 +144,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# JWT Keys (NEVER commit private keys!)
+jwt_private_key.pem
+**/jwt_private_key.pem
+*.pem
+
 # Spyder project settings
 .spyderproject
 .spyproject
