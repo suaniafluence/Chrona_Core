@@ -16,7 +16,10 @@ class AuditLog(SQLModel, table=True):
         index=True,
         max_length=100,
         nullable=False,
-        description="Type of event (e.g., 'punch_validated', 'device_revoked', 'login_failed')",
+        description=(
+            "Type of event (e.g., 'punch_validated', "
+            "'device_revoked', 'login_failed')"
+        ),
     )
     user_id: Optional[int] = Field(
         default=None, foreign_key="users.id", index=True, nullable=True

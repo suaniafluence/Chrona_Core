@@ -52,7 +52,8 @@ class Settings:
                 self._jwt_public_key = f.read()
         except FileNotFoundError as e:
             raise RuntimeError(
-                f"JWT keys not found: {e}. Run 'python tools/generate_keys.py' to generate them."
+                f"JWT keys not found: {e}. "
+                "Run 'python tools/generate_keys.py' to generate them."
             )
 
     @property
