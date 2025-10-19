@@ -37,7 +37,47 @@ def _get_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-app = FastAPI(title="Chrona Backend", lifespan=lifespan)
+app = FastAPI(
+    title="Chrona - Time Tracking API",
+    description="""
+## Chrona Time Tracking System
+
+Secure time tracking system with QR code-based punch validation.
+
+### Features
+
+* **Device Management**: Register and manage employee devices
+* **QR Token Generation**: Generate ephemeral JWT tokens (30s expiration)
+* **Punch Validation**: Validate QR codes with replay attack protection
+* **Admin Dashboard**: Manage devices, kiosks, and audit logs
+* **Security**: RS256 JWT, nonce/jti tracking, device attestation
+
+### Authentication
+
+Use `/auth/token` to obtain a JWT bearer token, then include it in requests:
+
+```
+Authorization: Bearer <your_token>
+```
+
+### Security Features
+
+- **RS256 JWT**: Asymmetric encryption for tokens
+- **Replay Protection**: Single-use tokens with nonce/jti tracking
+- **Device Revocation**: Instantly revoke compromised devices
+- **Audit Logging**: Comprehensive security event trail
+- **GDPR Compliant**: Data minimization and subject rights support
+    """,
+    version="1.0.0",
+    contact={
+        "name": "Chrona Support",
+        "email": "support@chrona.example.com",
+    },
+    license_info={
+        "name": "Proprietary",
+    },
+    lifespan=lifespan,
+)
 
 allowed_origins = _get_allowed_origins()
 allow_credentials = _get_bool("ALLOW_CREDENTIALS", False)
