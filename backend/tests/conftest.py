@@ -7,43 +7,36 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
 
-def pytest_configure():
-    """Set default environment variables early in the pytest session."""
-    # Use file-based SQLite by default to avoid in-memory connection pooling issues.
+def pytest_configure() -> None:
+    """Set default env vars for tests early without tripping flake8 E402."""
     os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
     os.environ.setdefault("ALLOWED_ORIGINS", "http://localhost:3000")
 
 
 @pytest_asyncio.fixture
-async def test_db():
+async def test_db() -> AsyncSession:
     """Create a test database and yield a session."""
-    # Create async engine for test database
     engine = create_async_engine(
         "sqlite+aiosqlite:///./test.db",
         echo=False,
         connect_args={"check_same_thread": False},
     )
 
-    # Create all tables
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    # Create session
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         yield session
 
-    # Drop all tables after test
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
-
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def test_user(test_db: AsyncSession):
-    """Create a test user."""
     from src.models.user import User
     from src.security import get_password_hash
 
@@ -60,7 +53,6 @@ async def test_user(test_db: AsyncSession):
 
 @pytest_asyncio.fixture
 async def test_admin(test_db: AsyncSession):
-    """Create a test admin user."""
     from src.models.user import User
     from src.security import get_password_hash
 
@@ -77,7 +69,6 @@ async def test_admin(test_db: AsyncSession):
 
 @pytest_asyncio.fixture
 async def auth_headers(test_user) -> dict:
-    """Generate authentication headers for test user."""
     from src.security import create_access_token
 
     token = create_access_token({"sub": str(test_user.id), "role": test_user.role})
@@ -86,7 +77,6 @@ async def auth_headers(test_user) -> dict:
 
 @pytest_asyncio.fixture
 async def admin_headers(test_admin) -> dict:
-    """Generate authentication headers for admin user."""
     from src.security import create_access_token
 
     token = create_access_token({"sub": str(test_admin.id), "role": test_admin.role})
@@ -95,9 +85,7 @@ async def admin_headers(test_admin) -> dict:
 
 @pytest_asyncio.fixture
 async def test_device(test_db: AsyncSession, test_user):
-    """Create a test device for the test user."""
     from datetime import datetime, timezone
-
     from src.models.device import Device
 
     device = Device(
@@ -115,9 +103,7 @@ async def test_device(test_db: AsyncSession, test_user):
 
 @pytest_asyncio.fixture
 async def test_kiosk(test_db: AsyncSession):
-    """Create a test kiosk."""
     from datetime import datetime, timezone
-
     from src.models.kiosk import Kiosk
 
     kiosk = Kiosk(
@@ -144,10 +130,8 @@ async def async_client(test_db: AsyncSession):
     from src.main import app
 
     app.dependency_overrides[get_session] = override_get_session
-
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         yield client
-
     app.dependency_overrides.clear()
