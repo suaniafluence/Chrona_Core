@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .db import db_health, lifespan
 from .routers.admin import router as admin_router
 from .routers.auth import router as auth_router
+from .routers.devices import router as devices_router
+from .routers.punch import router as punch_router
 
 load_dotenv()
 
@@ -51,6 +53,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(devices_router)
+app.include_router(punch_router)
 
 
 @app.get("/health")
