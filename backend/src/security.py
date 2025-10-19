@@ -21,6 +21,17 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
+MAX_PASSWORD_BYTES = 72
+
+
+def _truncate_password(password: str) -> str:
+    data = password.encode("utf-8")
+    if len(data) <= MAX_PASSWORD_BYTES:
+        return password
+    # Truncate to 72 bytes boundary; drop partial multibyte char tails
+    return data[:MAX_PASSWORD_BYTES].decode("utf-8", errors="ignore")
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
 
