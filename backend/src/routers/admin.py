@@ -335,9 +335,7 @@ class KioskAPIKeyResponse(BaseModel):
     message: str
 
 
-@router.post(
-    "/kiosks/{kiosk_id}/generate-api-key", response_model=KioskAPIKeyResponse
-)
+@router.post("/kiosks/{kiosk_id}/generate-api-key", response_model=KioskAPIKeyResponse)
 async def generate_kiosk_api_key_endpoint(
     kiosk_id: int,
     _current: Annotated[User, Depends(require_roles("admin"))],

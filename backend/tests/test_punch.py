@@ -290,8 +290,8 @@ async def test_get_punch_history_success(
                 "kiosk_id": test_kiosk.id,
                 "punch_type": punch_type,
             },
-        headers=kiosk_headers,
-    )
+            headers=kiosk_headers,
+        )
 
     # Get history
     response = await async_client.get(
@@ -334,8 +334,8 @@ async def test_get_punch_history_pagination(
                 "kiosk_id": test_kiosk.id,
                 "punch_type": "clock_in" if i % 2 == 0 else "clock_out",
             },
-        headers=kiosk_headers,
-    )
+            headers=kiosk_headers,
+        )
 
     # Get first 2 punches
     response1 = await async_client.get(
