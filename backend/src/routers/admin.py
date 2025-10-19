@@ -20,6 +20,7 @@ from src.schemas import (
     KioskUpdate,
     UserRead,
 )
+from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.security import get_password_hash
 from src.services import device_service
 
@@ -324,6 +325,65 @@ async def update_kiosk(
     await session.refresh(kiosk)
 
     return KioskRead.model_validate(kiosk)
+
+
+class KioskAPIKeyResponse(BaseModel):
+    """Response model for kiosk API key generation."""
+
+    kiosk_id: int
+    api_key: str
+    message: str
+
+
+@router.post(
+    "/kiosks/{kiosk_id}/generate-api-key", response_model=KioskAPIKeyResponse
+)
+async def generate_kiosk_api_key_endpoint(
+    kiosk_id: int,
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Generate a new API key for a kiosk (admin only).
+
+    This endpoint generates a secure random API key, hashes it, and stores
+    the hash in the database. The plain API key is returned ONCE and should
+    be securely stored by the kiosk.
+
+    Args:
+        kiosk_id: ID of kiosk to generate API key for
+
+    Returns:
+        KioskAPIKeyResponse with the plain API key (shown only once)
+
+    Raises:
+        HTTPException 404: Kiosk not found
+    """
+    result = await session.execute(select(Kiosk).where(Kiosk.id == kiosk_id))
+    kiosk = result.scalar_one_or_none()
+
+    if not kiosk:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kiosk not found",
+        )
+
+    # Generate new API key
+    api_key = generate_kiosk_api_key()
+    api_key_hash = hash_kiosk_api_key(api_key)
+
+    # Store hash in database
+    kiosk.api_key_hash = api_key_hash
+    session.add(kiosk)
+    await session.commit()
+
+    return KioskAPIKeyResponse(
+        kiosk_id=kiosk_id,
+        api_key=api_key,
+        message=(
+            "API key generated successfully. "
+            "Store this key securely - it will not be shown again!"
+        ),
+    )
 
 
 # ==================== Audit Logs ====================
