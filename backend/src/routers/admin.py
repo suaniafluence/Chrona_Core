@@ -15,6 +15,8 @@ from src.schemas import (
     AdminUserCreate,
     AuditLogRead,
     DeviceRead,
+    HRCodeCreate,
+    HRCodeRead,
     KioskCreate,
     KioskRead,
     KioskUpdate,
@@ -434,3 +436,99 @@ async def get_audit_logs(
     logs = result.scalars().all()
 
     return [AuditLogRead.model_validate(log) for log in logs]
+
+
+# ==================== HR Codes (Onboarding Level B) ====================
+
+
+@router.post("/hr-codes", response_model=HRCodeRead, status_code=status.HTTP_201_CREATED)
+async def create_hr_code(
+    hr_code_data: HRCodeCreate,
+    current_user: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Create a new HR code for employee onboarding (admin only).
+
+    Args:
+        hr_code_data: Employee email, name, and expiration
+        current_user: Authenticated admin user
+        session: Database session
+
+    Returns:
+        HRCodeRead with generated code
+
+    Raises:
+        HTTPException 409: HR code already exists for this email
+    """
+    from src.services.hr_code_service import HRCodeService
+
+    # Create HR code
+    hr_code = await HRCodeService.create_hr_code(
+        session=session,
+        employee_email=hr_code_data.employee_email,
+        employee_name=hr_code_data.employee_name,
+        created_by_admin_id=current_user.id,
+        expires_in_days=hr_code_data.expires_in_days,
+    )
+
+    return HRCodeRead.model_validate(hr_code)
+
+
+@router.get("/hr-codes", response_model=list[HRCodeRead])
+async def list_hr_codes(
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    include_used: bool = False,
+    include_expired: bool = False,
+):
+    """List all HR codes with optional filtering (admin only).
+
+    Args:
+        include_used: Include used codes (default: False)
+        include_expired: Include expired codes (default: False)
+        session: Database session
+
+    Returns:
+        List of HRCodeRead ordered by created_at descending
+    """
+    from src.services.hr_code_service import HRCodeService
+
+    hr_codes = await HRCodeService.list_hr_codes(
+        session=session,
+        include_used=include_used,
+        include_expired=include_expired,
+    )
+
+    return [HRCodeRead.model_validate(code) for code in hr_codes]
+
+
+@router.get("/hr-codes/{code_id}", response_model=HRCodeRead)
+async def get_hr_code(
+    code_id: int,
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Get a specific HR code by ID (admin only).
+
+    Args:
+        code_id: HR code ID
+        session: Database session
+
+    Returns:
+        HRCodeRead
+
+    Raises:
+        HTTPException 404: HR code not found
+    """
+    from src.models.hr_code import HRCode
+
+    result = await session.execute(select(HRCode).where(HRCode.id == code_id))
+    hr_code = result.scalar_one_or_none()
+
+    if not hr_code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="HR code not found",
+        )
+
+    return HRCodeRead.model_validate(hr_code)

@@ -63,6 +63,46 @@ export interface PunchHistoryItem {
   created_at: string;
 }
 
+// Onboarding Types (Level B)
+export interface OnboardingInitiateRequest {
+  hr_code: string;
+  email: string;
+}
+
+export interface OnboardingInitiateResponse {
+  success: boolean;
+  message: string;
+  session_token?: string;
+  step?: string;
+}
+
+export interface OnboardingVerifyOTPRequest {
+  session_token: string;
+  otp_code: string;
+}
+
+export interface OnboardingVerifyOTPResponse {
+  success: boolean;
+  message: string;
+  step?: string;
+}
+
+export interface OnboardingCompleteRequest {
+  session_token: string;
+  password: string;
+  device_fingerprint: string;
+  device_name: string;
+  attestation_data?: string;
+}
+
+export interface OnboardingCompleteResponse {
+  success: boolean;
+  message: string;
+  user_id?: number;
+  device_id?: number;
+  access_token?: string;
+}
+
 // API Functions
 export const authService = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
@@ -114,6 +154,46 @@ export const punchService = {
 
   getHistory: async (): Promise<PunchHistoryItem[]> => {
     const response = await api.get<PunchHistoryItem[]>('/punch/history');
+    return response.data;
+  },
+};
+
+export const onboardingService = {
+  initiateOnboarding: async (
+    hrCode: string,
+    email: string
+  ): Promise<OnboardingInitiateResponse> => {
+    const response = await api.post<OnboardingInitiateResponse>(
+      '/onboarding/initiate',
+      {
+        hr_code: hrCode,
+        email,
+      }
+    );
+    return response.data;
+  },
+
+  verifyOTP: async (
+    sessionToken: string,
+    otpCode: string
+  ): Promise<OnboardingVerifyOTPResponse> => {
+    const response = await api.post<OnboardingVerifyOTPResponse>(
+      '/onboarding/verify-otp',
+      {
+        session_token: sessionToken,
+        otp_code: otpCode,
+      }
+    );
+    return response.data;
+  },
+
+  completeOnboarding: async (
+    data: OnboardingCompleteRequest
+  ): Promise<OnboardingCompleteResponse> => {
+    const response = await api.post<OnboardingCompleteResponse>(
+      '/onboarding/complete',
+      data
+    );
     return response.data;
   },
 };

@@ -10,11 +10,19 @@ import HomeScreen from './src/screens/HomeScreen';
 import QRCodeScreen from './src/screens/QRCodeScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 
+// Onboarding Screens
+import HRCodeScreen from './src/screens/onboarding/HRCodeScreen';
+import OTPVerificationScreen from './src/screens/onboarding/OTPVerificationScreen';
+import CompleteOnboardingScreen from './src/screens/onboarding/CompleteOnboardingScreen';
+
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   QRCode: undefined;
   History: undefined;
+  HRCode: undefined;
+  OTPVerification: { sessionToken: string; email: string };
+  CompleteOnboarding: { sessionToken: string; email: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -58,11 +66,34 @@ export default function App() {
         }}
       >
         {!isAuthenticated ? (
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
+          <>
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="HRCode"
+              component={HRCodeScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="OTPVerification"
+              component={OTPVerificationScreen}
+              options={{
+                title: 'Vérification OTP',
+                headerBackTitle: 'Retour',
+              }}
+            />
+            <Stack.Screen
+              name="CompleteOnboarding"
+              component={CompleteOnboardingScreen}
+              options={{
+                title: 'Finalisation',
+                headerBackTitle: 'Retour',
+              }}
+            />
+          </>
         ) : (
           <>
             <Stack.Screen

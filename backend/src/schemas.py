@@ -194,3 +194,86 @@ class AuditLogRead(BaseModel):
     ip_address: Optional[str]
     user_agent: Optional[str]
     created_at: datetime
+
+
+# ==================== Onboarding Schemas (Level B) ====================
+
+
+class HRCodeCreate(BaseModel):
+    """Schema for creating an HR code (admin only)."""
+
+    employee_email: EmailStr = Field(..., description="Employee email address")
+    employee_name: Optional[str] = Field(None, max_length=255)
+    expires_in_days: int = Field(7, ge=1, le=30, description="Expiration in days")
+
+
+class HRCodeRead(BaseModel):
+    """Schema for reading HR code information."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str
+    employee_email: EmailStr
+    employee_name: Optional[str]
+    created_by_admin_id: Optional[int]
+    created_at: datetime
+    expires_at: Optional[datetime]
+    is_used: bool
+    used_at: Optional[datetime]
+    used_by_user_id: Optional[int]
+
+
+class OnboardingInitiateRequest(BaseModel):
+    """Schema for initiating onboarding with HR code."""
+
+    hr_code: str = Field(..., max_length=20, description="HR-provided code")
+    email: EmailStr = Field(..., description="Employee email address")
+
+
+class OnboardingInitiateResponse(BaseModel):
+    """Schema for onboarding initiation response."""
+
+    success: bool
+    message: str
+    session_token: Optional[str] = Field(
+        None, description="Session token for onboarding flow"
+    )
+    step: Optional[str] = Field(None, description="Current onboarding step")
+
+
+class OnboardingVerifyOTPRequest(BaseModel):
+    """Schema for OTP verification during onboarding."""
+
+    session_token: str = Field(..., description="Onboarding session token")
+    otp_code: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
+
+
+class OnboardingVerifyOTPResponse(BaseModel):
+    """Schema for OTP verification response."""
+
+    success: bool
+    message: str
+    step: Optional[str] = Field(None, description="Next onboarding step")
+
+
+class OnboardingCompleteRequest(BaseModel):
+    """Schema for completing onboarding with device attestation."""
+
+    session_token: str = Field(..., description="Onboarding session token")
+    password: str = Field(..., min_length=8, description="Account password")
+    device_fingerprint: str = Field(..., max_length=255)
+    device_name: str = Field(..., max_length=100)
+    attestation_data: Optional[str] = Field(
+        None, description="SafetyNet/DeviceCheck attestation"
+    )
+
+
+class OnboardingCompleteResponse(BaseModel):
+    """Schema for onboarding completion response."""
+
+    success: bool
+    message: str
+    user_id: Optional[int] = None
+    device_id: Optional[int] = None
+    access_token: Optional[str] = Field(None, description="JWT access token")

@@ -37,7 +37,9 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-asset",
+      "expo-font"
     ]
   }
 }
