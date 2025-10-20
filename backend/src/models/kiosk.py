@@ -33,6 +33,12 @@ class Kiosk(SQLModel, table=True):
         default=None,
         description="Optional RS256 public key for validation",
     )
+    api_key_hash: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        nullable=True,
+        description="Hashed API key for kiosk authentication (bcrypt)",
+    )
     is_active: bool = Field(
         default=True, index=True, nullable=False, description="Active status flag"
     )

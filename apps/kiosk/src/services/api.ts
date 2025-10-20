@@ -1,5 +1,15 @@
 import axios from 'axios'
 
+// Get API key from environment or localStorage
+const getApiKey = (): string => {
+  const apiKey = localStorage.getItem('kioskApiKey') || import.meta.env.VITE_KIOSK_API_KEY
+  if (!apiKey || apiKey === 'your-api-key-here') {
+    console.error('Kiosk API key not configured. Please set VITE_KIOSK_API_KEY or configure in localStorage.')
+    throw new Error('Kiosk API key not configured')
+  }
+  return apiKey
+}
+
 // Use the Vite proxy: /api will be rewritten to the backend URL
 const api = axios.create({
   baseURL: '/api',
@@ -7,6 +17,17 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+})
+
+// Add API key to all requests
+api.interceptors.request.use((config) => {
+  try {
+    const apiKey = getApiKey()
+    config.headers['X-Kiosk-API-Key'] = apiKey
+  } catch (error) {
+    console.error('Failed to get API key:', error)
+  }
+  return config
 })
 
 // Get kiosk ID from environment or localStorage

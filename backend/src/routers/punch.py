@@ -15,6 +15,7 @@ from src.models.kiosk import Kiosk
 from src.models.punch import Punch
 from src.models.token_tracking import TokenTracking
 from src.routers.auth import get_current_user
+from src.routers.kiosk_auth import get_current_kiosk
 from src.schemas import (
     PunchRead,
     PunchValidateRequest,
@@ -107,6 +108,7 @@ async def request_qr_token(
 @router.post("/validate", response_model=PunchValidateResponse)
 async def validate_punch(
     validate_data: PunchValidateRequest,
+    current_kiosk: Annotated[Kiosk, Depends(get_current_kiosk)],
     session: Annotated[AsyncSession, Depends(get_session)],
     request: Request,
 ) -> PunchValidateResponse:
@@ -217,23 +219,15 @@ async def validate_punch(
             detail="Device has been revoked",
         )
 
-    # 7. Verify kiosk exists and is active
-    result = await session.execute(
-        select(Kiosk).where(Kiosk.id == validate_data.kiosk_id)
-    )
-    kiosk = result.scalar_one_or_none()
-
-    if not kiosk:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Kiosk not found",
-        )
-
-    if not kiosk.is_active:
+    # 7. Verify kiosk_id matches authenticated kiosk
+    # The current_kiosk is already authenticated and verified as active
+    if validate_data.kiosk_id != current_kiosk.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Kiosk is not active",
+            detail="Kiosk ID in request does not match authenticated kiosk",
         )
+
+    kiosk = current_kiosk
 
     # 8. Verify user exists
     result = await session.execute(select(User).where(User.id == user_id))
