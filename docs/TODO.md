@@ -11,7 +11,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - ✅ **Phase 1 (Backend)** : 100% - JWT RS256, DB schema, endpoints (devices, punch, admin), 63 tests
 - ✅ **Phase 2 (Kiosk)** : 100% - React/TypeScript app, QR scanner, kiosk mode, audio feedback, connection status
 - ✅ **Phase 3 (Mobile)** : 95% - React Native Expo app with full security implementation
-- ⏳ **Phase 4 (CI/CD)** : 0% - SAST, SBOM, monitoring à venir
+- 🚧 **Phase 4 (CI/CD)** : 40% - Dependency scanning, SBOM, Docker scanning implemented
 - ⏳ **Phase 5 (Back-office)** : 0% - Dashboard RH à venir
 
 ---
@@ -269,17 +269,25 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ---
 
-## Phase 4: CI/CD Avancé (1 sprint)
+## Phase 4: CI/CD Avancé (1 sprint) - 🚧 40% COMPLETE
 
-### 4.1 Sécurité & Qualité
+### 4.1 Sécurité & Qualité ✅ COMPLETE
 
-- [ ] **SAST** : intégrer Semgrep ou SonarQube
-- [ ] **SBOM** : générer avec CycloneDX
-- [ ] **Scan dépendances** : Safety (Python), npm audit (JS)
-- [ ] **Scan images Docker** : Trivy
-- [ ] **Signature images** : Docker Content Trust ou Cosign
+- [x] **Scan dépendances** : Safety (Python) pour backend
+- [x] **NPM Audit** : Scan de vulnérabilités pour mobile, kiosk, backoffice
+- [x] **SBOM** : CycloneDX pour Python (backend) et NPM (frontend apps)
+- [x] **Scan images Docker** : Trivy avec upload SARIF vers GitHub Security
+- [x] **Rapports CI** : Artifacts uploadés pour Safety, NPM audit, Trivy, SBOM
+- [ ] **SAST** : intégrer Semgrep ou SonarQube (TODO)
+- [ ] **Signature images** : Docker Content Trust ou Cosign (TODO)
 
-### 4.2 Tests & Monitoring
+**Nouveaux jobs CI** :
+- `security-python-deps`: Safety check avec JSON report
+- `security-npm-audit`: npm audit pour toutes les apps frontend
+- `security-docker-scan`: Trivy scanner avec SARIF + JSON reports
+- `sbom-generation`: CycloneDX SBOM pour Python + Node.js apps
+
+### 4.2 Tests & Monitoring 🚧 TODO
 
 - [ ] **Tests E2E** : Playwright pour backend + kiosk
 - [ ] **Smoke tests** : scripts post-deploy
@@ -287,12 +295,14 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - [ ] **Logs** : Loki ou ELK stack
 - [ ] **Alerting** : Sentry pour erreurs
 
-### 4.3 Artefacts & Preuves
+### 4.3 Artefacts & Preuves ✅ PARTIAL
 
-- [ ] **Rapports CI** : JUnit XML, coverage XML
-- [ ] **Dashboards** : exports PDF automatiques
-- [ ] **Vidéos E2E** : enregistrement tests Playwright
-- [ ] **Logs signés** : checksums des logs CI
+- [x] **Rapports CI** : JUnit XML, coverage XML (backend)
+- [x] **Security artifacts** : Safety, NPM audit, Trivy, SBOM reports
+- [x] **SARIF upload** : GitHub Security integration for Trivy
+- [ ] **Dashboards** : exports PDF automatiques (TODO)
+- [ ] **Vidéos E2E** : enregistrement tests Playwright (TODO)
+- [ ] **Logs signés** : checksums des logs CI (TODO)
 
 ---
 
