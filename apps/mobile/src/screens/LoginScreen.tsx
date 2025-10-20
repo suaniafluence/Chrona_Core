@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorage } from '../services/secureStorage';
 import { authService } from '../services/api';
 
 export default function LoginScreen({ navigation }: any) {
@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       const response = await authService.login(email, password);
-      await AsyncStorage.setItem('@auth_token', response.access_token);
+      await authStorage.setToken(response.access_token);
 
       // Navigate will trigger re-render in App.tsx
       navigation.replace('Home');
@@ -81,6 +81,16 @@ export default function LoginScreen({ navigation }: any) {
             ) : (
               <Text style={styles.buttonText}>Se connecter</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => navigation.navigate('HRCode')}
+            disabled={isLoading}
+          >
+            <Text style={styles.linkText}>
+              Nouveau collaborateur ? S'inscrire
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -139,6 +149,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  linkButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#667eea',
+    fontSize: 14,
   },
   version: {
     position: 'absolute',

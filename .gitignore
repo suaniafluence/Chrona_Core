@@ -149,6 +149,12 @@ jwt_private_key.pem
 **/jwt_private_key.pem
 *.pem
 
+# OAuth/API tokens (NEVER commit tokens!)
+token.json
+**/token.json
+credentials.json
+**/credentials.json
+
 # Spyder project settings
 .spyderproject
 .spyproject
