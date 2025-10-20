@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import './ValidationResult.css'
+import { soundManager } from '../utils/sounds'
 
 interface ValidationResultProps {
   result: {
@@ -11,6 +13,17 @@ interface ValidationResultProps {
 }
 
 const ValidationResult = ({ result }: ValidationResultProps) => {
+  // Play sound feedback when result changes
+  useEffect(() => {
+    if (result) {
+      if (result.success) {
+        soundManager.playSuccess()
+      } else {
+        soundManager.playError()
+      }
+    }
+  }, [result])
+
   if (!result) return null
 
   const formatTime = (isoString?: string) => {

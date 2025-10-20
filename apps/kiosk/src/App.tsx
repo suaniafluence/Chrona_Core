@@ -2,8 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import QRScanner from './components/QRScanner'
 import ValidationResult from './components/ValidationResult'
-import KioskControls from './components/KioskControls'
-import { useKioskMode } from './hooks/useKioskMode'
+import KioskMode from './components/KioskMode'
 
 interface PunchResult {
   success: boolean
@@ -16,16 +15,12 @@ interface PunchResult {
 function App() {
   const [result, setResult] = useState<PunchResult | null>(null)
   const [isScanning, setIsScanning] = useState(true)
+  const [isKioskMode, setIsKioskMode] = useState(false)
 
-  // Kiosk mode management
-  const {
-    isKioskMode,
-    isFullscreen,
-    enterKioskMode,
-    exitKioskMode,
-    toggleFullscreen,
-    showExitButton,
-  } = useKioskMode()
+  // Get kiosk info from environment
+  const kioskId = import.meta.env.VITE_KIOSK_ID
+  const kioskName = `Kiosk ${kioskId}`
+  const location = 'Office Entrance'
 
   const handleScanSuccess = (validationResult: PunchResult) => {
     setResult(validationResult)
@@ -55,19 +50,19 @@ function App() {
   return (
     <div className={`app ${isKioskMode ? 'kiosk-mode-active' : ''}`}>
       {/* Kiosk mode controls */}
-      <KioskControls
-        isKioskMode={isKioskMode}
-        isFullscreen={isFullscreen}
-        showExitButton={showExitButton}
-        onEnterKioskMode={enterKioskMode}
-        onExitKioskMode={exitKioskMode}
-        onToggleFullscreen={toggleFullscreen}
+      <KioskMode
+        isActive={isKioskMode}
+        onToggle={() => setIsKioskMode(!isKioskMode)}
+        kioskName={kioskName}
+        location={location}
       />
 
-      <header className="app-header">
-        <h1>Chrona Kiosk</h1>
-        <p>Scanner le QR code pour pointer</p>
-      </header>
+      {!isKioskMode && (
+        <header className="app-header">
+          <h1>Chrona Kiosk</h1>
+          <p>Scanner le QR code pour pointer</p>
+        </header>
+      )}
 
       <main className="app-main">
         {isScanning ? (

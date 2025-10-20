@@ -67,6 +67,7 @@ async def test_e2e_qr_flow_clock_out(
     test_kiosk,
     auth_headers: dict,
     admin_headers: dict,
+    kiosk_headers: dict,
 ):
     """Validate QR flow for clock_out action."""
 
@@ -87,6 +88,7 @@ async def test_e2e_qr_flow_clock_out(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_out",
         },
+        headers=kiosk_headers,
     )
     assert r2.status_code == status.HTTP_200_OK
     data = r2.json()
@@ -100,6 +102,7 @@ async def test_e2e_qr_flow_clock_out(
             "kiosk_id": test_kiosk.id,
             "punch_type": "clock_out",
         },
+        headers=kiosk_headers,
     )
     assert r3.status_code == status.HTTP_400_BAD_REQUEST
 
