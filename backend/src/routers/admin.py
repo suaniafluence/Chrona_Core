@@ -123,6 +123,43 @@ async def create_user_with_role(
     return UserRead.model_validate(user)
 
 
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Delete a user (admin only).
+
+    Args:
+        user_id: ID of user to delete
+
+    Returns:
+        204 No Content
+
+    Raises:
+        HTTPException 404: User not found
+        HTTPException 403: Cannot delete yourself
+    """
+    # Prevent admin from deleting themselves
+    if user_id == current.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot delete your own account",
+        )
+
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found"
+        )
+
+    await session.delete(user)
+    await session.commit()
+    return None
+
+
 # ==================== Device Management ====================
 
 
@@ -384,6 +421,37 @@ async def generate_kiosk_api_key_endpoint(
     )
 
 
+@router.delete("/kiosks/{kiosk_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_kiosk(
+    kiosk_id: int,
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Delete a kiosk (admin only).
+
+    Args:
+        kiosk_id: ID of kiosk to delete
+
+    Returns:
+        204 No Content
+
+    Raises:
+        HTTPException 404: Kiosk not found
+    """
+    result = await session.execute(select(Kiosk).where(Kiosk.id == kiosk_id))
+    kiosk = result.scalar_one_or_none()
+
+    if not kiosk:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kiosk not found",
+        )
+
+    await session.delete(kiosk)
+    await session.commit()
+    return None
+
+
 # ==================== Audit Logs ====================
 
 
@@ -434,3 +502,149 @@ async def get_audit_logs(
     logs = result.scalars().all()
 
     return [AuditLogRead.model_validate(log) for log in logs]
+
+
+# ==================== Punches ====================
+
+
+@router.get("/punches")
+async def get_punches(
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    user_id: Optional[int] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 50,
+):
+    """Get punch history with optional filters (admin only).
+
+    Args:
+        user_id: Filter by user ID
+        from_date: Filter by start date (ISO format)
+        to_date: Filter by end date (ISO format)
+        offset: Pagination offset
+        limit: Maximum results (max 100)
+
+    Returns:
+        List of punch records ordered by punched_at descending
+    """
+    from src.models.punch import Punch
+    from src.schemas import PunchRead
+
+    if limit > 100:
+        limit = 100
+
+    query = select(Punch)
+
+    if user_id is not None:
+        query = query.where(Punch.user_id == user_id)
+
+    if from_date:
+        from datetime import datetime
+
+        from_dt = datetime.fromisoformat(from_date.replace("Z", "+00:00"))
+        query = query.where(Punch.punched_at >= from_dt)
+
+    if to_date:
+        from datetime import datetime
+
+        to_dt = datetime.fromisoformat(to_date.replace("Z", "+00:00"))
+        query = query.where(Punch.punched_at <= to_dt)
+
+    result = await session.execute(
+        query.order_by(Punch.punched_at.desc()).offset(offset).limit(limit)
+    )
+    punches = result.scalars().all()
+
+    return [PunchRead.model_validate(punch) for punch in punches]
+
+
+# ==================== Dashboard Stats ====================
+
+
+class DashboardStats(BaseModel):
+    """Dashboard statistics response model."""
+
+    total_users: int
+    total_devices: int
+    total_kiosks: int
+    active_kiosks: int
+    today_punches: int
+    today_users: int
+    recent_punches: list
+
+
+@router.get("/dashboard/stats", response_model=DashboardStats)
+async def get_dashboard_stats(
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Get dashboard statistics (admin only).
+
+    Returns:
+        DashboardStats with current system metrics
+    """
+    from datetime import datetime, timezone
+    from sqlalchemy import func
+    from src.models.punch import Punch
+    from src.schemas import PunchRead
+
+    # Count total users
+    result = await session.execute(select(func.count(User.id)))
+    total_users = result.scalar() or 0
+
+    # Count total devices
+    result = await session.execute(select(func.count(Device.id)))
+    total_devices = result.scalar() or 0
+
+    # Count total kiosks
+    result = await session.execute(select(func.count(Kiosk.id)))
+    total_kiosks = result.scalar() or 0
+
+    # Count active kiosks
+    result = await session.execute(
+        select(func.count(Kiosk.id)).where(Kiosk.is_active == True)
+    )
+    active_kiosks = result.scalar() or 0
+
+    # Get today's date range
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    today_end = today_start.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    # Count today's punches
+    result = await session.execute(
+        select(func.count(Punch.id)).where(
+            Punch.punched_at >= today_start, Punch.punched_at <= today_end
+        )
+    )
+    today_punches = result.scalar() or 0
+
+    # Count unique users today
+    result = await session.execute(
+        select(func.count(func.distinct(Punch.user_id))).where(
+            Punch.punched_at >= today_start, Punch.punched_at <= today_end
+        )
+    )
+    today_users = result.scalar() or 0
+
+    # Get recent punches (last 10)
+    result = await session.execute(
+        select(Punch).order_by(Punch.punched_at.desc()).limit(10)
+    )
+    recent_punches_models = result.scalars().all()
+    recent_punches = [
+        PunchRead.model_validate(p).model_dump() for p in recent_punches_models
+    ]
+
+    return DashboardStats(
+        total_users=total_users,
+        total_devices=total_devices,
+        total_kiosks=total_kiosks,
+        active_kiosks=active_kiosks,
+        today_punches=today_punches,
+        today_users=today_users,
+        recent_punches=recent_punches,
+    )
