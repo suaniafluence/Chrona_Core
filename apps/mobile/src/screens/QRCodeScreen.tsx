@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import * as ScreenCapture from 'expo-screen-capture';
 import { punchService } from '../services/api';
+import { biometricAuth } from '../services/biometricAuth';
 
 export default function QRCodeScreen({ route }: any) {
   const { deviceId } = route.params;
@@ -18,7 +20,25 @@ export default function QRCodeScreen({ route }: any) {
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
 
   useEffect(() => {
+    // Enable screenshot/screen recording protection
+    const enableProtection = async () => {
+      try {
+        await ScreenCapture.preventScreenCaptureAsync();
+        console.log('Screen capture protection enabled');
+      } catch (error) {
+        console.warn('Failed to enable screen capture protection:', error);
+      }
+    };
+
+    enableProtection();
     generateToken();
+
+    // Cleanup: disable protection when leaving screen
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync().catch((err) =>
+        console.warn('Failed to disable screen capture protection:', err)
+      );
+    };
   }, []);
 
   useEffect(() => {
@@ -42,6 +62,17 @@ export default function QRCodeScreen({ route }: any) {
   const generateToken = async () => {
     try {
       setIsLoading(true);
+
+      // Require biometric authentication before generating QR code
+      const authenticated = await biometricAuth.authenticateForQRGeneration();
+      if (!authenticated) {
+        Alert.alert(
+          'Authentification requise',
+          'Vous devez vous authentifier pour générer un QR code'
+        );
+        return;
+      }
+
       const response = await punchService.requestQRToken(deviceId);
       setQrToken(response.qr_token);
       setExpiresAt(new Date(response.expires_at));

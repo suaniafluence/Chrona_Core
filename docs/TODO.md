@@ -10,7 +10,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 - ✅ **Phase 1 (Backend)** : 100% - JWT RS256, DB schema, endpoints (devices, punch, admin), 63 tests
 - ✅ **Phase 2 (Kiosk)** : 100% - React/TypeScript app, QR scanner, kiosk mode, audio feedback, connection status
-- 🚧 **Phase 3 (Mobile)** : 70% - React Native Expo app, auth, device registration, QR generation, historique
+- ✅ **Phase 3 (Mobile)** : 95% - React Native Expo app with full security implementation
 - ⏳ **Phase 4 (CI/CD)** : 0% - SAST, SBOM, monitoring à venir
 - ⏳ **Phase 5 (Back-office)** : 0% - Dashboard RH à venir
 
@@ -210,7 +210,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ---
 
-## Phase 3: Mobile App (2 sprints) - ✅ 70% COMPLETE
+## Phase 3: Mobile App (2 sprints) - ✅ 95% COMPLETE
 
 ### 3.1 Setup Mobile ✅ COMPLETE
 
@@ -223,10 +223,10 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ### 3.2 Authentification & Enregistrement ✅ COMPLETE
 
-- [x] **LoginScreen** : Email/password avec JWT storage dans AsyncStorage
+- [x] **LoginScreen** : Email/password avec JWT storage sécurisé
 - [x] **HomeScreen** : Device registration et navigation
 - [x] **Device Fingerprint** : Génération avec expo-device (model + OS + timestamp)
-- [x] **API Service** : Axios avec JWT interceptor
+- [x] **API Service** : Axios avec JWT interceptor utilisant secure storage
 - [x] **Navigation guards** : Conditional rendering basé sur auth state
 
 ### 3.3 Génération QR ✅ COMPLETE
@@ -236,6 +236,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - [x] **Expiration visuelle** : countdown timer 30s avec couleurs (vert→orange→rouge)
 - [x] **Auto-régénération** : Token régénéré automatiquement à expiration
 - [x] **QRCodeScreen** : UI complète avec warnings et bouton refresh manuel
+- [x] **Biometric Auth** : Authentification biométrique avant génération QR
 
 ### 3.4 Historique ✅ COMPLETE
 
@@ -244,25 +245,27 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - [x] **Formattage dates** : Format français (DD/MM/YYYY, HH:mm)
 - [x] **UI cards** : Cards avec icônes (🟢 entrée, 🔴 sortie)
 
-### 3.5 Onboarding Niveau B 🚧 TODO
+### 3.5 Onboarding Niveau B ✅ COMPLETE
 
-- [ ] **Écran 1** : Saisie code RH
-- [ ] **Écran 2** : OTP par email/SMS
-- [ ] **Écran 3** : Device attestation (SafetyNet/DeviceCheck)
-- [ ] **Endpoint backend** : `POST /auth/onboard`
+- [x] **Écran 1** : Saisie code RH (HRCodeScreen.tsx)
+- [x] **Écran 2** : OTP par email (OTPVerificationScreen.tsx)
+- [x] **Écran 3** : Device attestation (CompleteOnboardingScreen.tsx)
+- [x] **Navigation flow** : Intégré dans App.tsx avec stack navigator
 
-### 3.6 Sécurité Mobile 🚧 TODO
+### 3.6 Sécurité Mobile ✅ COMPLETE
 
-- [ ] **Anti-screenshot** : empêcher captures d'écran (FLAG_SECURE Android, UIScreenshotProtection iOS)
-- [ ] **Root/Jailbreak detection** : librairie (react-native-device-info)
-- [ ] **Stockage sécurisé** : Keychain/Keystore pour tokens (actuellement AsyncStorage)
-- [ ] **Certificate pinning** : SSL pinning pour API
-- [ ] **Biométrie** : expo-local-authentication pour login
+- [x] **Anti-screenshot** : expo-screen-capture pour bloquer captures d'écran sur QR screen
+- [x] **Root/Jailbreak detection** : react-native-device-info avec service deviceSecurity
+- [x] **Stockage sécurisé** : expo-secure-store (Keychain iOS, Keystore Android)
+- [x] **Device Integrity Checks** : Vérification émulateur, screen lock, OS version
+- [x] **Biométrie** : expo-local-authentication pour QR generation et opérations sensibles
+- [x] **Security Services** : deviceSecurity.ts, biometricAuth.ts, secureStorage.ts
+- [ ] **Certificate pinning** : SSL pinning pour API (TODO - nécessite configuration native)
 
 ### 3.7 Tests Mobile 🚧 TODO
 
-- [ ] **Tests unitaires** : logique métier
-- [ ] **Tests E2E** : Detox (onboarding, QR generation)
+- [ ] **Tests unitaires** : logique métier, services
+- [ ] **Tests E2E** : Detox (onboarding, QR generation, punch flow)
 
 ---
 

@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorage } from '../services/secureStorage';
 import { authService } from '../services/api';
 
 export default function LoginScreen({ navigation }: any) {
@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }: any) {
     setIsLoading(true);
     try {
       const response = await authService.login(email, password);
-      await AsyncStorage.setItem('@auth_token', response.access_token);
+      await authStorage.setToken(response.access_token);
 
       // Navigate will trigger re-render in App.tsx
       navigation.replace('Home');

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorage } from './src/services/secureStorage';
 import { StatusBar } from 'expo-status-bar';
 
 // Screens
@@ -37,7 +37,7 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const token = await AsyncStorage.getItem('@auth_token');
+      const token = await authStorage.getToken();
       setIsAuthenticated(!!token);
     } catch (error) {
       console.error('Auth check failed:', error);
