@@ -76,8 +76,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build image
-        run: docker build -t chrona-backend:ci ./backend
+      - name: Build image (with retry)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 1 2 3; do
+            echo "Attempt $i: docker build"
+            if docker build -t chrona-backend:ci ./backend; then
+              echo "Docker build succeeded on attempt $i"; break
+            fi
+            echo "Docker build failed on attempt $i; retrying in $((5*i))s..."
+            sleep $((5*i))
+          done
 
   frontend-checks:
     name: Frontend • Build (matrix)
