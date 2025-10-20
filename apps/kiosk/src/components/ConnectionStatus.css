@@ -1,0 +1,57 @@
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.connection-status.online {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.connection-status.offline {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.connection-status.online .status-indicator {
+  background: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+}
+
+.connection-status.offline .status-indicator {
+  background: #f44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+}
+
+.status-text {
+  font-weight: 600;
+}
+
+.status-time {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
