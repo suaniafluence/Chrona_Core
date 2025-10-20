@@ -11,7 +11,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - ✅ **Phase 1 (Backend)** : 100% - JWT RS256, DB schema, endpoints (devices, punch, admin), 63 tests
 - ✅ **Phase 2 (Kiosk)** : 100% - React/TypeScript app, QR scanner, kiosk mode, audio feedback, connection status
 - ✅ **Phase 3 (Mobile)** : 95% - React Native Expo app with full security implementation + Certificate Pinning docs
-- ✅ **Phase 4 (CI/CD)** : 70% - Full security scanning + E2E tests implemented
+- ✅ **Phase 4 (CI/CD)** : 85% - Full security scanning + E2E tests + smoke tests
 - ⏳ **Phase 5 (Back-office)** : 0% - Dashboard RH à venir
 
 ---
@@ -270,7 +270,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ---
 
-## Phase 4: CI/CD Avancé (1 sprint) - ✅ 70% COMPLETE
+## Phase 4: CI/CD Avancé (1 sprint) - ✅ 85% COMPLETE
 
 ### 4.1 Sécurité & Qualité ✅ COMPLETE
 
@@ -290,22 +290,28 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - `sbom-generation`: CycloneDX SBOM pour Python + Node.js apps
 - `e2e-tests-playwright`: Tests E2E backend API + kiosk UI
 
-### 4.2 Tests & Monitoring ✅ PARTIAL
+### 4.2 Tests & Monitoring ✅ NEARLY COMPLETE
 
-- [x] **Tests E2E** : Playwright pour backend API (auth, punch flow)
+- [x] **Tests E2E API** : Playwright pour backend API (auth, punch flow)
+- [x] **Tests E2E Kiosk UI** : Playwright pour interface kiosk (15 tests UI)
 - [x] **Structure E2E** : Configuration multi-projets (API, kiosk Chrome/Firefox/tablet)
 - [x] **E2E CI integration** : Job CI avec artifacts (reports, screenshots, videos)
-- [ ] **Tests E2E Kiosk UI** : Tests Playwright pour interface kiosk (TODO)
-- [ ] **Smoke tests** : scripts post-deploy (TODO)
+- [x] **Smoke tests** : Scripts Bash + Python pour validation post-deploy
 - [ ] **Monitoring** : Prometheus + Grafana (métriques) (TODO)
 - [ ] **Logs** : Loki ou ELK stack (TODO)
 - [ ] **Alerting** : Sentry pour erreurs (TODO)
 
 **E2E Tests créés** :
-- `api.auth.e2e.ts`: Tests authentification complète
-- `api.punch-flow.e2e.ts`: Test du flux complet (register → login → device → QR → punch → history)
+- `api.auth.e2e.ts`: Tests authentification complète (7 tests)
+- `api.punch-flow.e2e.ts`: Test du flux complet (9 tests)
+- `kiosk.ui.e2e.ts`: Tests interface kiosk (15 tests UI) ⭐
 - `playwright.config.ts`: Configuration multi-projets avec CI support
 - `package.json`: Scripts et dépendances Playwright
+
+**Smoke Tests créés** :
+- `tools/smoke-tests.sh`: Script Bash pour validation déploiement ⭐
+- `tools/smoke_tests.py`: Script Python cross-platform ⭐
+- Tests: health checks, auth flow, protected endpoints, CORS
 
 ### 4.3 Artefacts & Preuves ✅ COMPLETE
 
