@@ -2,7 +2,6 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlmodel import select
 
 from src.models.kiosk import Kiosk
 from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key

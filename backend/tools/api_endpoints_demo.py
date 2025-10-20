@@ -79,7 +79,9 @@ def test_devices_list(token):
             devices = response.json()
             print_success(f"Devices list: {len(devices)} device(s) found")
             if devices:
-                print(f"    First device: {devices[0].get('device_name')} (ID: {devices[0].get('id')})")
+                print(
+                    f"    First device: {devices[0].get('device_name')} (ID: {devices[0].get('id')})"
+                )
             return devices
         else:
             print_error(f"Devices list failed: {response.status_code}")
@@ -106,7 +108,9 @@ def test_request_qr_token(token, device_id):
             print(f"    Token (first 50 chars): {qr_token[:50]}...")
             return qr_token
         else:
-            print_error(f"QR token request failed: {response.status_code} - {response.text}")
+            print_error(
+                f"QR token request failed: {response.status_code} - {response.text}"
+            )
             return None
     except Exception as e:
         print_error(f"QR token request exception: {e}")
@@ -125,14 +129,16 @@ def test_validate_punch(qr_token, kiosk_id=1):
         response = requests.post(f"{BASE_URL}/punch/validate", json=payload)
         if response.status_code == 200:
             data = response.json()
-            print_success(f"Punch validated successfully")
+            print_success("Punch validated successfully")
             print(f"    Punch ID: {data.get('punch_id')}")
             print(f"    User ID: {data.get('user_id')}")
             print(f"    Type: {data.get('punch_type')}")
             print(f"    Timestamp: {data.get('punched_at')}")
             return True
         else:
-            print_error(f"Punch validation failed: {response.status_code} - {response.text}")
+            print_error(
+                f"Punch validation failed: {response.status_code} - {response.text}"
+            )
             return False
     except Exception as e:
         print_error(f"Punch validation exception: {e}")
@@ -150,7 +156,9 @@ def test_punch_history(token):
             print_success(f"Punch history: {len(punches)} punch(es) found")
             if punches:
                 latest = punches[0]
-                print(f"    Latest: {latest.get('punch_type')} at {latest.get('punched_at')}")
+                print(
+                    f"    Latest: {latest.get('punch_type')} at {latest.get('punched_at')}"
+                )
             return punches
         else:
             print_error(f"Punch history failed: {response.status_code}")
@@ -170,10 +178,14 @@ def test_admin_kiosks(token):
             kiosks = response.json()
             print_success(f"Admin kiosks list: {len(kiosks)} kiosk(s) found")
             if kiosks:
-                print(f"    First kiosk: {kiosks[0].get('kiosk_name')} (ID: {kiosks[0].get('id')})")
+                print(
+                    f"    First kiosk: {kiosks[0].get('kiosk_name')} (ID: {kiosks[0].get('id')})"
+                )
             return kiosks
         else:
-            print_error(f"Admin kiosks failed: {response.status_code} - {response.text}")
+            print_error(
+                f"Admin kiosks failed: {response.status_code} - {response.text}"
+            )
             return None
     except Exception as e:
         print_error(f"Admin kiosks exception: {e}")
@@ -234,3 +246,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
