@@ -15,6 +15,8 @@ from src.schemas import (
     AdminUserCreate,
     AuditLogRead,
     DeviceRead,
+    HRCodeCreate,
+    HRCodeRead,
     KioskCreate,
     KioskRead,
     KioskUpdate,
