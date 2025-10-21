@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -665,7 +665,7 @@ async def get_dashboard_stats(
 async def export_attendance_report(
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
-    from_: str,  # start date/time (alias 'from' is reserved)
+    from_: Annotated[str, Query(alias="from")],  # accept ?from=...
     to: str,  # end date/time
     user_id: Optional[int] = None,
     format: Optional[str] = "json",
@@ -755,7 +755,69 @@ async def export_attendance_report(
         )
 
     if fmt == "pdf":
-        # Placeholder: explicit not implemented to avoid invalid PDFs
-        raise HTTPException(status_code=501, detail="pdf_not_implemented")
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        except Exception:
+            raise HTTPException(status_code=500, detail="reportlab_not_installed")
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, title="Attendance Report")
+        styles = getSampleStyleSheet()
+
+        elements = []
+        title = Paragraph(
+            f"Rapport de présence du {start_dt.date()} au {end_dt.date()}" + (f" — Utilisateur #{user_id}" if user_id is not None else ""),
+            styles['Title'],
+        )
+        elements.append(title)
+        elements.append(Spacer(1, 12))
+
+        data_rows = [
+            [
+                "ID",
+                "User",
+                "Device",
+                "Kiosk",
+                "Type",
+                "Punched At",
+            ]
+        ]
+        for p in punches:
+            data_rows.append([
+                str(p.id),
+                str(p.user_id),
+                str(p.device_id),
+                str(p.kiosk_id),
+                (p.punch_type.value if hasattr(p.punch_type, 'value') else str(p.punch_type)),
+                p.punched_at.isoformat(),
+            ])
+
+        table = Table(data_rows, repeatRows=1)
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ]
+            )
+        )
+        elements.append(table)
+
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        filename = f"attendance_{start_dt.date()}_{end_dt.date()}.pdf"
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
 
     raise HTTPException(status_code=400, detail="invalid_format")
