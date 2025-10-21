@@ -8,6 +8,11 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ## 📊 État Global
 
+- ✅ **Fondations** : Structure monorepo, CI/CD de base, auth basique
+- ✅ **Kiosk App** : Interface tablet avec mode plein écran et clé API (Phase 2 complète)
+- ✅ **Back-office** : Application admin RH complète (Phase 5.1 + 5.2 frontend)
+- 🚧 **En cours** : Endpoints backend admin (users, devices, kiosks, reports, audit)
+- ⏳ **À venir** : Mobile app, JWT RS256, device attestation, GDPR features
 - ✅ **Phase 1 (Backend)** : 100% - JWT RS256, DB schema, endpoints (devices, punch, admin), 63 tests
 - ✅ **Phase 2 (Kiosk)** : 100% - React/TypeScript app, QR scanner, kiosk mode, audio feedback, connection status
 - ✅ **Phase 3 (Mobile)** : 95% - React Native Expo app with full security implementation + Certificate Pinning docs
@@ -318,22 +323,65 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ---
 
-## Phase 5: Back-office RH (continu)
+## Phase 5: Back-office RH (en cours)
 
-### 5.1 Setup Back-office
+### 5.1 Setup Back-office ✅ TERMINÉ
 
-- [ ] **Initialiser app Vite/React** dans `apps/backoffice/`
-- [ ] **Auth admin** : login avec JWT
-- [ ] **Layout** : sidebar, navigation
+- [x] **Initialiser app Vite/React** dans `apps/backoffice/`
+  - React 18 + TypeScript + Tailwind CSS
+  - React Router 6 pour routing
+  - Axios pour API client
+  - 380 packages installés
+- [x] **Auth admin** : login avec JWT
+  - Contexte AuthContext
+  - Protection des routes (ProtectedRoute)
+  - Vérification rôle admin
+  - Auto-logout sur 401
+- [x] **Layout** : sidebar, navigation
+  - Sidebar responsive avec menu mobile
+  - Navigation avec 6 pages
+  - Section utilisateur avec déconnexion
 
-### 5.2 Fonctionnalités
+### 5.2 Fonctionnalités ✅ TERMINÉ (Frontend uniquement)
 
-- [ ] **Dashboard** : statistiques temps réel
-- [ ] **Gestion employés** : CRUD users
-- [ ] **Gestion devices** : liste, révocation
-- [ ] **Gestion kiosks** : CRUD kiosks
-- [ ] **Rapports** : génération CSV/PDF
-- [ ] **Audit logs** : consultation avec filtres
+- [x] **Dashboard** : statistiques temps réel
+  - 4 cartes de métriques
+  - Graphiques Recharts (barres + lignes)
+  - Liste activités récentes
+  - Auto-refresh 30s
+  - Mock data (endpoint `/admin/dashboard/stats` à créer)
+- [x] **Gestion employés** : CRUD users
+  - Table complète
+  - Création avec modal
+  - Toggle rôle admin/user
+  - Suppression avec confirmation
+- [x] **Gestion devices** : liste, révocation
+  - Table avec filtres (actifs/révoqués)
+  - Révocation d'appareils
+  - Indicateurs visuels de statut
+- [x] **Gestion kiosks** : CRUD kiosks
+  - Vue en grille (cards)
+  - Création avec génération clé API
+  - Toggle actif/inactif
+  - Alerte sécurisée pour copie clé API
+- [x] **Rapports** : génération CSV/PDF
+  - Configuration période et filtres
+  - Export JSON/CSV/PDF
+  - Download automatique
+  - Info RGPD
+- [x] **Audit logs** : consultation avec filtres
+  - Filtrage avancé (type, user, période)
+  - Codage couleur par type
+  - Détails expandables
+
+**⚠️ Note** : Frontend 100% fonctionnel, endpoints backend à implémenter :
+- `GET/POST/PATCH/DELETE /admin/users`
+- `GET /admin/devices`, `POST /admin/devices/{id}/revoke`
+- `GET/POST/PATCH/DELETE /admin/kiosks`
+- `GET /admin/punches`
+- `GET /admin/audit-logs`
+- `GET /admin/reports/attendance`
+- `GET /admin/dashboard/stats` (nouveau)
 
 ### 5.3 GDPR Features
 
@@ -392,14 +440,28 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 
 ## Notes de Sprint
 
-### Sprint actuel (Phase 1 - Backend)
-**Priorité** : JWT RS256, schéma DB complet, endpoints punch
+### Sprint actuel (Phase 5 - Back-office RH)
+**Statut** : Phase 5.1 et 5.2 TERMINÉES ✅ (20 octobre 2025)
 
-**Bloqueurs** : Aucun
+**Réalisations** :
+- Application back-office complète (React 18 + TypeScript + Tailwind)
+- 7 pages fonctionnelles : Login, Dashboard, Users, Devices, Kiosks, Reports, Audit Logs
+- Authentification JWT avec protection des routes admin
+- Design moderne et responsive (mobile/tablet/desktop)
+- Build de production fonctionnel (662kB gzipped à 191kB)
+
+**Bloqueurs** : Aucun (frontend complet)
+
+**Prochaines étapes** :
+1. Implémenter les endpoints backend manquants (voir Phase 5.2 note)
+2. Tester l'intégration frontend-backend
+3. Phase 5.3 : GDPR Features (DSR, export données, registre)
 
 **Décisions** :
-- QR code généré par mobile après request au backend (JWT fourni par backend)
-- RS256 pour signer les tokens éphémères (clé privée sur backend uniquement)
-- Redis pour cache nonce/jti (performance)
+- Vite comme bundler (rapide, moderne)
+- Tailwind CSS pour styling (utility-first)
+- Recharts pour graphiques (léger, performant)
+- Axios avec intercepteurs pour API (auto-logout 401)
+- Mock data sur dashboard (en attendant endpoint stats)
 
-**Prochaine revue** : Fin Phase 1, avant démarrage Phase 2 (Kiosk)
+**Prochaine revue** : Après implémentation endpoints backend, avant Phase 5.3
