@@ -232,7 +232,13 @@ docker compose exec backend alembic upgrade head
 
 # Créer un utilisateur admin
 docker compose exec backend python tools/create_test_user.py
+
+# Créer ou promouvoir l'administrateur (par défaut admin@example.com / adminpass123)
+docker compose exec backend python tools/create_admin_user.py
 ```
+
+> **Note :** adaptez les options `--email`, `--password` et `--reset-password` si vous souhaitez promouvoir un utilisateur existant
+> (par exemple `testuser@example.com`) ou définir d'autres identifiants.
 
 #### Étape 6: Accéder aux interfaces
 
@@ -783,7 +789,13 @@ docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
 
 # Créer l'utilisateur admin initial
 docker compose -f docker-compose.prod.yml exec backend python tools/create_test_user.py
+
+# Créer ou promouvoir l'administrateur (par défaut admin@example.com / adminpass123)
+docker compose -f docker-compose.prod.yml exec backend python tools/create_admin_user.py
 ```
+
+> **Note :** les mêmes options `--email`, `--password` et `--reset-password` sont disponibles en production pour cibler un
+> compte spécifique ou réinitialiser un mot de passe existant.
 
 ### Étape 9: Configuration de Sauvegarde Automatique
 
