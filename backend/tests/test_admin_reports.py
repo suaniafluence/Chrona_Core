@@ -1,6 +1,4 @@
 """Tests for /admin/reports/attendance export endpoint."""
-
-import io
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -59,7 +57,12 @@ async def test_reports_json(
     # Wide date range to include seeded punches
     today = datetime.now(timezone.utc).date()
     r = await async_client.get(
-        f"/admin/reports/attendance?from={today.isoformat()}&to={today.isoformat()}&format=json",
+        "/admin/reports/attendance",
+        params={
+            "from": today.isoformat(),
+            "to": today.isoformat(),
+            "format": "json",
+        },
         headers=admin_headers,
     )
     assert r.status_code == status.HTTP_200_OK, r.text
@@ -84,7 +87,12 @@ async def test_reports_csv(
     await _seed_punches(test_db, test_user, test_device, test_kiosk)
     today = datetime.now(timezone.utc).date()
     r = await async_client.get(
-        f"/admin/reports/attendance?from={today.isoformat()}&to={today.isoformat()}&format=csv",
+        "/admin/reports/attendance",
+        params={
+            "from": today.isoformat(),
+            "to": today.isoformat(),
+            "format": "csv",
+        },
         headers=admin_headers,
     )
     assert r.status_code == status.HTTP_200_OK, r.text
@@ -115,7 +123,12 @@ async def test_reports_pdf(
     await _seed_punches(test_db, test_user, test_device, test_kiosk)
     today = datetime.now(timezone.utc).date()
     r = await async_client.get(
-        f"/admin/reports/attendance?from={today.isoformat()}&to={today.isoformat()}&format=pdf",
+        "/admin/reports/attendance",
+        params={
+            "from": today.isoformat(),
+            "to": today.isoformat(),
+            "format": "pdf",
+        },
         headers=admin_headers,
     )
     assert r.status_code == status.HTTP_200_OK, r.text
