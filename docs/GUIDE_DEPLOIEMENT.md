@@ -222,6 +222,32 @@ docker compose logs -f backend
 - Back-office: http://localhost:5173
 - Kiosk: http://localhost:5174
 
+### HTTPS local (optionnel, recommandé pour tests réalistes)
+
+Traefik est fourni comme reverse proxy TLS pour exposer les services en HTTPS local via des certificats mkcert.
+
+1) Installer mkcert et initialiser l’autorité locale
+- macOS: `brew install mkcert nss` puis `mkcert -install`
+- Windows: `choco install mkcert` puis `mkcert -install`
+- Linux: voir https://github.com/FiloSottile/mkcert
+
+2) Générer les certificats (racine du repo):
+```
+mkcert -cert-file infra/traefik/certs/dev-localhost.pem \
+       -key-file infra/traefik/certs/dev-localhost-key.pem \
+       localhost 127.0.0.1 ::1 api.localhost backoffice.localhost kiosk.localhost
+```
+
+3) Démarrer en HTTPS:
+```
+DOMAIN=localhost docker compose -f docker-compose.yml -f docker-compose.https.dev.yml up -d
+```
+
+4) Accéder en HTTPS:
+- Backend: https://api.localhost
+- Backoffice: https://backoffice.localhost
+- Kiosk: https://kiosk.localhost
+
 #### Étape 5: Initialiser la base de données
 
 ```bash
@@ -1155,3 +1181,37 @@ docker compose restart nginx
 **Version du document**: 1.0
 **Dernière mise à jour**: 21 octobre 2025
 **Auteur**: Équipe Chrona
+### HTTPS en production (Traefik + Let’s Encrypt)
+
+Pré-requis DNS:
+- Créez des enregistrements A/AAAA pointant vers votre serveur pour:
+  - `api.<domaine>`, `backoffice.<domaine>`, `kiosk.<domaine>`
+
+Lancement avec l’overlay HTTPS prod:
+```
+DOMAIN=example.com TRAEFIK_ACME_EMAIL=admin@example.com \
+docker compose -f docker-compose.yml -f docker-compose.https.prod.yml up -d --build
+```
+
+Accès:
+- https://api.example.com
+- https://backoffice.example.com
+- https://kiosk.example.com
+
+Sécurité:
+- Activez `ENABLE_HSTS=true` côté backend lorsque l’HTTPS est garanti.
+- Les en-têtes de sécurité (CSP, XFO, etc.) sont injectés par le backend.
+
+### CI/CD – Déploiement via GitHub Actions
+
+Un workflow `Deploy` est prêt (`.github/workflows/deploy.yml`). Il copie un bundle sur un serveur cible via SSH et lance le stack avec HTTPS.
+
+Secrets requis (Repository → Settings → Secrets and variables → Actions):
+- `SSH_HOST`, `SSH_USER`, `SSH_KEY`, `SSH_TARGET_DIR`
+
+Déclenchement:
+- Actions → Deploy → Run workflow, fournir `environment`, `domain`, `traefik_email`.
+
+Notes:
+- Le workflow crée `.env` côté serveur avec `DOMAIN` et `TRAEFIK_ACME_EMAIL`.
+- Adaptez à votre stratégie (rolling update, healthchecks, secrets manager).
