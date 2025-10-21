@@ -1,7 +1,7 @@
 """add api_key_hash to kiosks
 
 Revision ID: 0005_add_kiosk_api_key
-Revises: 0003_add_chrona_tables
+Revises: 0004_use_punch_enum
 Create Date: 2025-10-19
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "0005_add_kiosk_api_key"
-down_revision = "0003_add_chrona_tables"
+down_revision = "0004_use_punch_enum"
 branch_labels = None
 depends_on = None
 
