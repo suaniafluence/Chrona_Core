@@ -10,10 +10,11 @@ Ce guide décrit les étapes complètes pour installer et configurer Chrona en e
 2. [Architecture Réseau](#architecture-réseau)
 3. [Installation Développement/Test](#installation-développementtest)
 4. [Installation Production](#installation-production)
-5. [Configuration Email](#configuration-email)
-6. [Sécurité et Clés](#sécurité-et-clés)
-7. [Vérifications et Tests](#vérifications-et-tests)
-8. [Dépannage](#dépannage)
+5. [Application Mobile](#application-mobile)
+6. [Configuration Email](#configuration-email)
+7. [Sécurité et Clés](#sécurité-et-clés)
+8. [Vérifications et Tests](#vérifications-et-tests)
+9. [Dépannage](#dépannage)
 
 ---
 
@@ -832,6 +833,504 @@ sudo crontab -e
 
 ---
 
+## Application Mobile
+
+L'application mobile Chrona permet aux employés de générer des QR codes éphémères pour pointer via les kiosques. Elle est développée avec **React Native** et **Expo** pour une compatibilité iOS et Android.
+
+### Architecture de l'Application Mobile
+
+```
+┌─────────────────────────────────────────────┐
+│  Application Mobile (React Native + Expo)  │
+│                                             │
+│  ┌──────────────────────────────────────┐  │
+│  │  Écrans Principaux                   │  │
+│  │  - Login (email/password)            │  │
+│  │  - Enregistrement d'appareil         │  │
+│  │  - Génération QR Code (30s)          │  │
+│  │  - Historique des pointages          │  │
+│  └──────────────┬───────────────────────┘  │
+│                 │                           │
+│  ┌──────────────▼───────────────────────┐  │
+│  │  Sécurité                            │  │
+│  │  - Device fingerprint (unique)       │  │
+│  │  - JWT tokens (AsyncStorage)         │  │
+│  │  - Anti-screenshot (expo-screen)     │  │
+│  │  - Biométrie (LocalAuth)             │  │
+│  └──────────────┬───────────────────────┘  │
+│                 │                           │
+└─────────────────┼───────────────────────────┘
+                  │ HTTPS
+                  ▼
+         ┌────────────────┐
+         │  Backend API   │
+         │  :8000 (dev)   │
+         │  :443 (prod)   │
+         └────────────────┘
+```
+
+### Prérequis Mobile
+
+| Composant | Version | Notes |
+|-----------|---------|-------|
+| **Node.js** | 20+ | Requis pour npm/Expo CLI |
+| **npm/yarn** | 9+ / 1.22+ | Gestionnaire de paquets |
+| **Expo CLI** | Latest | Installé automatiquement |
+| **Émulateur Android** | Android Studio | Pour tests Android |
+| **Simulateur iOS** | Xcode (macOS) | Pour tests iOS |
+| **Expo Go** | App mobile | Pour tests sur appareil physique |
+
+### Installation Développement/Test (Mobile)
+
+#### Étape 1: Installer les Dépendances
+
+**Windows / Linux / macOS:**
+
+```bash
+# Depuis la racine du projet
+cd apps/mobile
+
+# Installer les dépendances npm
+npm install
+
+# OU avec yarn
+yarn install
+```
+
+#### Étape 2: Configurer l'API Backend
+
+**Option A: Utiliser l'émulateur Android (Recommandé pour dev)**
+
+L'app est préconfigurée pour utiliser `http://10.0.2.2:8000` qui pointe vers `localhost:8000` de la machine hôte depuis l'émulateur Android.
+
+Aucune configuration supplémentaire n'est nécessaire si vous utilisez Docker Compose sur `localhost:8000`.
+
+**Option B: Utiliser un appareil physique (même réseau WiFi)**
+
+Créer un fichier `.env` dans `apps/mobile/`:
+
+```bash
+# apps/mobile/.env
+EXPO_PUBLIC_API_URL=http://192.168.1.100:8000
+```
+
+Remplacez `192.168.1.100` par l'adresse IP locale de votre machine:
+
+```bash
+# Windows
+ipconfig
+
+# Linux/macOS
+ifconfig
+# Chercher l'adresse IPv4 (ex: 192.168.1.100)
+```
+
+**⚠️ Important:** Assurez-vous que le firewall autorise les connexions entrantes sur le port 8000.
+
+**Option C: Utiliser ngrok pour tester sur appareil distant**
+
+```bash
+# Installer ngrok
+npm install -g ngrok
+
+# Exposer le backend local
+ngrok http 8000
+
+# Copier l'URL HTTPS fournie (ex: https://abc123.ngrok.io)
+```
+
+Puis configurer `.env`:
+
+```bash
+# apps/mobile/.env
+EXPO_PUBLIC_API_URL=https://abc123.ngrok.io
+```
+
+#### Étape 3: Lancer l'Application Mobile
+
+**Avec Expo Go (Recommandé pour démarrage rapide):**
+
+```bash
+# Démarrer le serveur de développement Expo
+npm start
+
+# OU pour Android directement
+npm run android
+
+# OU pour iOS (macOS uniquement)
+npm run ios
+```
+
+**Scannez le QR code affiché:**
+- **Android:** Ouvrir l'app "Expo Go" et scanner le QR code
+- **iOS:** Ouvrir l'app Caméra et scanner le QR code (ouvre Expo Go automatiquement)
+
+**Avec émulateur/simulateur:**
+
+```bash
+# Android (nécessite Android Studio + émulateur démarré)
+npm run android
+
+# iOS (macOS + Xcode uniquement)
+npm run ios
+```
+
+#### Étape 4: Tester le Flux Complet
+
+1. **S'assurer que le backend est démarré:**
+
+```bash
+# Depuis la racine du projet
+docker compose up -d backend db
+docker compose logs -f backend
+```
+
+2. **Créer un utilisateur test:**
+
+```bash
+docker compose exec backend python tools/create_test_user.py
+```
+
+Utiliser les identifiants:
+- Email: `test@chrona.com`
+- Password: `Test1234!`
+
+3. **Se connecter depuis l'app mobile:**
+   - Lancer l'app mobile
+   - Entrer email et mot de passe
+   - L'appareil sera automatiquement enregistré au premier login
+
+4. **Générer un QR code:**
+   - Appuyer sur "Générer QR Code"
+   - Le QR code s'affiche avec un compte à rebours (30 secondes)
+   - Scanner avec le kiosk avant expiration
+
+5. **Consulter l'historique:**
+   - Onglet "Historique"
+   - Pull-to-refresh pour actualiser
+
+### Installation Production (Mobile)
+
+#### Option 1: Publication via Expo Application Services (EAS)
+
+**EAS Build** permet de générer des binaires iOS (.ipa) et Android (.apk/.aab) sans Xcode ni Android Studio local.
+
+**Étape 1: Installer EAS CLI**
+
+```bash
+npm install -g eas-cli
+```
+
+**Étape 2: Configurer EAS (première fois)**
+
+```bash
+cd apps/mobile
+
+# Se connecter à Expo
+eas login
+
+# Configurer le projet
+eas build:configure
+```
+
+Cela génère `eas.json`:
+
+```json
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://10.0.2.2:8000"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-staging.votre-domaine.com"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.votre-domaine.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
+```
+
+**Étape 3: Configurer app.json pour Production**
+
+Éditer `apps/mobile/app.json`:
+
+```json
+{
+  "expo": {
+    "name": "Chrona",
+    "slug": "chrona-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.votre-organisation.chrona",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.votre_organisation.chrona",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "VOTRE_PROJECT_ID_EAS"
+      }
+    }
+  }
+}
+```
+
+**Étape 4: Générer les Builds de Production**
+
+```bash
+# Build Android (APK pour test interne)
+eas build --platform android --profile preview
+
+# Build Android (AAB pour Google Play Store)
+eas build --platform android --profile production
+
+# Build iOS (nécessite compte Apple Developer)
+eas build --platform ios --profile production
+```
+
+**Étape 5: Télécharger et Distribuer**
+
+Les builds seront disponibles dans votre dashboard Expo: https://expo.dev/accounts/VOTRE_COMPTE/projects/chrona-mobile/builds
+
+**Distribution interne:**
+- Android: Télécharger l'APK et partager via email/MDM
+- iOS: Utiliser TestFlight (nécessite compte Apple Developer)
+
+**Publication sur les stores:**
+
+```bash
+# Soumettre à Google Play Store
+eas submit --platform android --latest
+
+# Soumettre à Apple App Store
+eas submit --platform ios --latest
+```
+
+#### Option 2: Build Local (sans EAS)
+
+**Android:**
+
+```bash
+cd apps/mobile
+
+# Installer les dépendances
+npm install
+
+# Générer l'APK
+npx expo build:android -t apk
+
+# OU générer un AAB pour Play Store
+npx expo build:android -t app-bundle
+```
+
+**iOS (macOS + Xcode requis):**
+
+```bash
+# Générer le fichier .ipa
+npx expo build:ios -t archive
+
+# Publier sur TestFlight/App Store via Xcode
+```
+
+#### Option 3: Distribution via Mobile Device Management (MDM)
+
+Pour les entreprises avec un MDM (Intune, AirWatch, MobileIron):
+
+1. Générer l'APK/IPA en mode production
+2. Uploader sur la console MDM
+3. Déployer sur les appareils des employés
+4. Configurer les politiques de sécurité:
+   - Désactiver les screenshots (déjà implémenté dans l'app)
+   - Activer le chiffrement de l'appareil
+   - Exiger un code PIN/biométrie
+
+### Configuration Mobile Production
+
+**Variables d'environnement** (`.env` ou `eas.json`):
+
+```env
+# Backend API (PRODUCTION)
+EXPO_PUBLIC_API_URL=https://api.votre-domaine.com
+
+# Environnement
+EXPO_PUBLIC_ENV=production
+
+# Sentry (monitoring d'erreurs - optionnel)
+EXPO_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx
+
+# Analytics (optionnel)
+EXPO_PUBLIC_ANALYTICS_KEY=your-analytics-key
+```
+
+### Sécurité de l'Application Mobile
+
+L'app mobile implémente plusieurs mesures de sécurité:
+
+**1. Device Fingerprinting**
+- Génération d'un identifiant unique par appareil
+- Envoyé au backend lors de l'enregistrement
+- Validation à chaque génération de QR code
+
+**2. Prévention Anti-Capture**
+- `expo-screen-capture`: Désactive les screenshots/enregistrements d'écran
+- Protection des QR codes éphémères contre la copie
+
+**3. Stockage Sécurisé**
+- `expo-secure-store`: Stockage chiffré des tokens JWT (iOS Keychain, Android Keystore)
+- Pas de stockage de mots de passe en clair
+
+**4. Authentification Biométrique (Optionnel)**
+- `expo-local-authentication`: Face ID, Touch ID, empreinte digitale
+- Peut être activé pour ouvrir l'app
+
+**5. Certificate Pinning (Recommandé pour prod)**
+
+Ajouter dans `app.json`:
+
+```json
+{
+  "expo": {
+    "ios": {
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "api.votre-domaine.com": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionRequiresForwardSecrecy": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSPinnedDomains": ["api.votre-domaine.com"]
+            }
+          }
+        }
+      }
+    },
+    "android": {
+      "networkSecurityConfig": "./network_security_config.xml"
+    }
+  }
+}
+```
+
+Créer `apps/mobile/android/app/src/main/res/xml/network_security_config.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.votre-domaine.com</domain>
+        <pin-set expiration="2026-01-01">
+            <pin digest="SHA-256">VOTRE_CERTIFICAT_HASH_BASE64</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>
+```
+
+### Tests de l'Application Mobile
+
+**Tests unitaires (Jest):**
+
+```bash
+cd apps/mobile
+npm test
+```
+
+**Tests E2E (Detox - optionnel):**
+
+```bash
+# Installer Detox
+npm install -g detox-cli
+npm install --save-dev detox
+
+# Configurer (voir docs Detox)
+detox init
+
+# Lancer les tests
+detox test --configuration android.emu.debug
+```
+
+### Dépannage Mobile
+
+**Problème: "Network request failed"**
+
+**Solution:**
+```bash
+# Vérifier que le backend est accessible
+curl http://10.0.2.2:8000/health  # Depuis l'émulateur Android
+
+# Vérifier l'URL dans .env
+echo $EXPO_PUBLIC_API_URL
+
+# Redémarrer Expo
+npm start -- --clear
+```
+
+**Problème: "Unable to resolve module"**
+
+**Solution:**
+```bash
+# Nettoyer le cache
+npm start -- --clear
+
+# Réinstaller les dépendances
+rm -rf node_modules
+npm install
+```
+
+**Problème: QR code non scannable par le kiosk**
+
+**Vérifications:**
+- Le token est-il expiré ? (30 secondes max)
+- Le backend valide-t-il la signature RS256 ?
+- L'appareil est-il enregistré dans la base ?
+
+```bash
+# Vérifier les logs backend
+docker compose logs backend | grep -i "qr\|token"
+```
+
+**Problème: Émulateur Android lent**
+
+**Solution:**
+```bash
+# Utiliser un appareil physique avec Expo Go
+# OU augmenter la RAM de l'émulateur (Android Studio → AVD Manager)
+```
+
+---
+
 ## Configuration Email
 
 ### Option 1: Gmail (SMTP)
@@ -1149,6 +1648,7 @@ docker compose restart nginx
 
 ## Checklist de Déploiement Production
 
+### Backend & Infrastructure
 - [ ] Serveur Ubuntu/RHEL configuré avec firewall activé
 - [ ] Docker et Docker Compose installés
 - [ ] PostgreSQL 16 installé avec encryption at-rest
@@ -1162,7 +1662,35 @@ docker compose restart nginx
 - [ ] Monitoring et logs configurés (Sentry, Prometheus, etc.)
 - [ ] Tests de charge effectués (Apache Bench)
 - [ ] Utilisateur admin créé
+
+### Application Mobile
+- [ ] `app.json` configuré avec bundle identifiers production
+- [ ] `eas.json` configuré avec URL API production
+- [ ] Builds Android (APK/AAB) générés via EAS ou local
+- [ ] Builds iOS (.ipa) générés (si applicable)
+- [ ] Tests effectués sur émulateur Android
+- [ ] Tests effectués sur appareil physique Android
+- [ ] Tests effectués sur simulateur iOS (si macOS disponible)
+- [ ] Tests effectués sur appareil physique iOS (si applicable)
+- [ ] Certificate pinning configuré (production)
+- [ ] Anti-screenshot activé (expo-screen-capture)
+- [ ] Stockage sécurisé des tokens (expo-secure-store)
+- [ ] Distribution interne testée (MDM ou email APK)
+- [ ] Publication sur Google Play Store (si applicable)
+- [ ] Publication sur Apple App Store (si applicable)
+
+### Frontend Web (Back-office & Kiosk)
+- [ ] Back-office build production testé
+- [ ] Kiosk build production testé
+- [ ] Variables d'environnement production configurées
+- [ ] HTTPS forcé sur tous les domaines
+
+### Documentation & Formation
 - [ ] Documentation remise au client (credentials, accès, runbook)
+- [ ] Guide utilisateur mobile créé
+- [ ] Formation des administrateurs effectuée
+- [ ] Procédures de révocation d'appareil documentées
+- [ ] Plan de réponse aux incidents préparé
 
 ---
 
