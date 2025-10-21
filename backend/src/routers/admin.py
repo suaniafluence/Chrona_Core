@@ -125,6 +125,43 @@ async def create_user_with_role(
     return UserRead.model_validate(user)
 
 
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Delete a user (admin only).
+
+    Args:
+        user_id: ID of user to delete
+
+    Returns:
+        204 No Content
+
+    Raises:
+        HTTPException 404: User not found
+        HTTPException 403: Cannot delete yourself
+    """
+    # Prevent admin from deleting themselves
+    if user_id == current.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot delete your own account",
+        )
+
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="user_not_found"
+        )
+
+    await session.delete(user)
+    await session.commit()
+    return None
+
+
 # ==================== Device Management ====================
 
 
@@ -386,6 +423,37 @@ async def generate_kiosk_api_key_endpoint(
     )
 
 
+@router.delete("/kiosks/{kiosk_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_kiosk(
+    kiosk_id: int,
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Delete a kiosk (admin only).
+
+    Args:
+        kiosk_id: ID of kiosk to delete
+
+    Returns:
+        204 No Content
+
+    Raises:
+        HTTPException 404: Kiosk not found
+    """
+    result = await session.execute(select(Kiosk).where(Kiosk.id == kiosk_id))
+    kiosk = result.scalar_one_or_none()
+
+    if not kiosk:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Kiosk not found",
+        )
+
+    await session.delete(kiosk)
+    await session.commit()
+    return None
+
+
 # ==================== Audit Logs ====================
 
 
@@ -438,7 +506,7 @@ async def get_audit_logs(
     return [AuditLogRead.model_validate(log) for log in logs]
 
 
-# ==================== HR Codes (Onboarding Level B) ====================
+# ==================== Punches ====================
 
 
 @router.post(
@@ -448,89 +516,140 @@ async def create_hr_code(
     hr_code_data: HRCodeCreate,
     current_user: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
+    user_id: Optional[int] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    offset: int = 0,
+    limit: int = 50,
 ):
-    """Create a new HR code for employee onboarding (admin only).
+    """Get punch history with optional filters (admin only).
 
     Args:
-        hr_code_data: Employee email, name, and expiration
-        current_user: Authenticated admin user
-        session: Database session
+        user_id: Filter by user ID
+        from_date: Filter by start date (ISO format)
+        to_date: Filter by end date (ISO format)
+        offset: Pagination offset
+        limit: Maximum results (max 100)
 
     Returns:
-        HRCodeRead with generated code
-
-    Raises:
-        HTTPException 409: HR code already exists for this email
+        List of punch records ordered by punched_at descending
     """
-    from src.services.hr_code_service import HRCodeService
+    from src.models.punch import Punch
+    from src.schemas import PunchRead
 
-    # Create HR code
-    hr_code = await HRCodeService.create_hr_code(
-        session=session,
-        employee_email=hr_code_data.employee_email,
-        employee_name=hr_code_data.employee_name,
-        created_by_admin_id=current_user.id,
-        expires_in_days=hr_code_data.expires_in_days,
+    if limit > 100:
+        limit = 100
+
+    query = select(Punch)
+
+    if user_id is not None:
+        query = query.where(Punch.user_id == user_id)
+
+    if from_date:
+        from datetime import datetime
+
+        from_dt = datetime.fromisoformat(from_date.replace("Z", "+00:00"))
+        query = query.where(Punch.punched_at >= from_dt)
+
+    if to_date:
+        from datetime import datetime
+
+        to_dt = datetime.fromisoformat(to_date.replace("Z", "+00:00"))
+        query = query.where(Punch.punched_at <= to_dt)
+
+    result = await session.execute(
+        query.order_by(Punch.punched_at.desc()).offset(offset).limit(limit)
     )
+    punches = result.scalars().all()
 
-    return HRCodeRead.model_validate(hr_code)
+    return [PunchRead.model_validate(punch) for punch in punches]
 
 
-@router.get("/hr-codes", response_model=list[HRCodeRead])
-async def list_hr_codes(
+# ==================== Dashboard Stats ====================
+
+
+class DashboardStats(BaseModel):
+    """Dashboard statistics response model."""
+
+    total_users: int
+    total_devices: int
+    total_kiosks: int
+    active_kiosks: int
+    today_punches: int
+    today_users: int
+    recent_punches: list
+
+
+@router.get("/dashboard/stats", response_model=DashboardStats)
+async def get_dashboard_stats(
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
-    include_used: bool = False,
-    include_expired: bool = False,
 ):
-    """List all HR codes with optional filtering (admin only).
-
-    Args:
-        include_used: Include used codes (default: False)
-        include_expired: Include expired codes (default: False)
-        session: Database session
+    """Get dashboard statistics (admin only).
 
     Returns:
-        List of HRCodeRead ordered by created_at descending
+        DashboardStats with current system metrics
     """
-    from src.services.hr_code_service import HRCodeService
+    from datetime import datetime, timezone
+    from sqlalchemy import func
+    from src.models.punch import Punch
+    from src.schemas import PunchRead
 
-    hr_codes = await HRCodeService.list_hr_codes(
-        session=session,
-        include_used=include_used,
-        include_expired=include_expired,
+    # Count total users
+    result = await session.execute(select(func.count(User.id)))
+    total_users = result.scalar() or 0
+
+    # Count total devices
+    result = await session.execute(select(func.count(Device.id)))
+    total_devices = result.scalar() or 0
+
+    # Count total kiosks
+    result = await session.execute(select(func.count(Kiosk.id)))
+    total_kiosks = result.scalar() or 0
+
+    # Count active kiosks
+    result = await session.execute(
+        select(func.count(Kiosk.id)).where(Kiosk.is_active == True)
     )
+    active_kiosks = result.scalar() or 0
 
-    return [HRCodeRead.model_validate(code) for code in hr_codes]
+    # Get today's date range
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    today_end = today_start.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-
-@router.get("/hr-codes/{code_id}", response_model=HRCodeRead)
-async def get_hr_code(
-    code_id: int,
-    _current: Annotated[User, Depends(require_roles("admin"))],
-    session: Annotated[AsyncSession, Depends(get_session)],
-):
-    """Get a specific HR code by ID (admin only).
-
-    Args:
-        code_id: HR code ID
-        session: Database session
-
-    Returns:
-        HRCodeRead
-
-    Raises:
-        HTTPException 404: HR code not found
-    """
-    from src.models.hr_code import HRCode
-
-    result = await session.execute(select(HRCode).where(HRCode.id == code_id))
-    hr_code = result.scalar_one_or_none()
-
-    if not hr_code:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="HR code not found",
+    # Count today's punches
+    result = await session.execute(
+        select(func.count(Punch.id)).where(
+            Punch.punched_at >= today_start, Punch.punched_at <= today_end
         )
+    )
+    today_punches = result.scalar() or 0
 
-    return HRCodeRead.model_validate(hr_code)
+    # Count unique users today
+    result = await session.execute(
+        select(func.count(func.distinct(Punch.user_id))).where(
+            Punch.punched_at >= today_start, Punch.punched_at <= today_end
+        )
+    )
+    today_users = result.scalar() or 0
+
+    # Get recent punches (last 10)
+    result = await session.execute(
+        select(Punch).order_by(Punch.punched_at.desc()).limit(10)
+    )
+    recent_punches_models = result.scalars().all()
+    recent_punches = [
+        PunchRead.model_validate(p).model_dump() for p in recent_punches_models
+    ]
+
+    return DashboardStats(
+        total_users=total_users,
+        total_devices=total_devices,
+        total_kiosks=total_kiosks,
+        active_kiosks=active_kiosks,
+        today_punches=today_punches,
+        today_users=today_users,
+        recent_punches=recent_punches,
+    )

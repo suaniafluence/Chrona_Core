@@ -1,6 +1,6 @@
 """Punch endpoints for time tracking (QR token generation and validation)."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -92,7 +92,8 @@ async def request_qr_token(
     session.add(token_tracking)
 
     # Update device last_seen_at
-    device.last_seen_at = datetime.now(timezone.utc)
+    # Use naive UTC for DB TIMESTAMP WITHOUT TIME ZONE
+    device.last_seen_at = datetime.utcnow()
     session.add(device)
 
     await session.commit()
@@ -149,9 +150,8 @@ async def validate_punch(
     # 3. Verify expiration (decode_token already checks this via jose)
     # Additional explicit check for clarity
     exp = payload.get("exp")
-    if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(
-        timezone.utc
-    ):
+    # Compare using naive UTC datetimes
+    if not exp or datetime.utcfromtimestamp(exp) < datetime.utcnow():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token has expired",
@@ -239,7 +239,8 @@ async def validate_punch(
         )
 
     # 9. Atomically mark token as consumed and create punch record
-    now = datetime.now(timezone.utc)
+    # Use naive UTC to match DB types
+    now = datetime.utcnow()
     token_record.consumed_at = now
     token_record.consumed_by_kiosk_id = kiosk.id
     session.add(token_record)

@@ -1,0 +1,85 @@
+export interface User {
+  id: number;
+  email: string;
+  role: 'user' | 'admin';
+  created_at: string;
+}
+
+export interface Device {
+  id: number;
+  user_id: number;
+  device_fingerprint: string;
+  device_name: string;
+  registered_at: string;
+  last_seen_at: string;
+  is_revoked: boolean;
+}
+
+export interface Kiosk {
+  id: number;
+  kiosk_name: string;
+  location: string;
+  device_fingerprint: string;
+  is_active: boolean;
+  created_at: string;
+  api_key?: string;
+}
+
+export interface Punch {
+  id: number;
+  user_id: number;
+  device_id: number;
+  kiosk_id: number;
+  punch_type: 'clock_in' | 'clock_out';
+  punched_at: string;
+  jwt_jti: string;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: number;
+  event_type: string;
+  user_id: number | null;
+  device_id: number | null;
+  kiosk_id: number | null;
+  event_data: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface DashboardStats {
+  total_users: number;
+  total_devices: number;
+  total_kiosks: number;
+  active_kiosks: number;
+  today_punches: number;
+  today_users: number;
+  recent_punches: Punch[];
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  role: 'user' | 'admin';
+}
+
+export interface CreateKioskRequest {
+  kiosk_name: string;
+  location: string;
+  device_fingerprint: string;
+}
+
+export interface CreateKioskResponse extends Kiosk {
+  api_key: string;
+}
