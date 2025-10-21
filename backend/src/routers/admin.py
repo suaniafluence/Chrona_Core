@@ -11,6 +11,7 @@ from src.models.device import Device
 from src.models.kiosk import Kiosk
 from src.models.user import User
 from src.routers.auth import require_roles
+from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.schemas import (
     AdminUserCreate,
     AuditLogRead,
@@ -22,7 +23,6 @@ from src.schemas import (
     KioskUpdate,
     UserRead,
 )
-from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.security import get_password_hash
 from src.services import device_service
 
@@ -441,7 +441,9 @@ async def get_audit_logs(
 # ==================== HR Codes (Onboarding Level B) ====================
 
 
-@router.post("/hr-codes", response_model=HRCodeRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/hr-codes", response_model=HRCodeRead, status_code=status.HTTP_201_CREATED
+)
 async def create_hr_code(
     hr_code_data: HRCodeCreate,
     current_user: Annotated[User, Depends(require_roles("admin"))],

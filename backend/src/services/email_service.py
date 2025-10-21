@@ -58,7 +58,9 @@ class EmailService:
 
         try:
             if self.settings.EMAIL_PROVIDER == EmailProvider.SMTP:
-                return await self._send_via_smtp(recipient, subject, html_body, text_body)
+                return await self._send_via_smtp(
+                    recipient, subject, html_body, text_body
+                )
             elif self.settings.EMAIL_PROVIDER == EmailProvider.SENDGRID:
                 return await self._send_via_sendgrid(
                     recipient, subject, html_body, text_body

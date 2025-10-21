@@ -3,8 +3,9 @@ Test script to verify all main API endpoints are working.
 Requires backend server to be running on http://localhost:8000
 """
 
-import requests
 from datetime import datetime
+
+import requests
 
 BASE_URL = "http://localhost:8000"
 

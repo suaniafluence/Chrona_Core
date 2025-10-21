@@ -77,9 +77,7 @@ async def initiate_onboarding(
     await OTPService.send_otp_email(request_data.email, otp_code)
 
     # Update session step
-    await OnboardingService.update_session_step(
-        session, onboarding_session, "otp_sent"
-    )
+    await OnboardingService.update_session_step(session, onboarding_session, "otp_sent")
 
     # Create audit log
     audit_log = AuditLog(
@@ -122,10 +120,8 @@ async def verify_otp(
         OnboardingVerifyOTPResponse with next step
     """
     # Validate onboarding session
-    is_valid, onboarding_session, error_msg = (
-        await OnboardingService.validate_session(
-            session, request_data.session_token
-        )
+    is_valid, onboarding_session, error_msg = await OnboardingService.validate_session(
+        session, request_data.session_token
     )
 
     if not is_valid:
@@ -198,10 +194,8 @@ async def complete_onboarding(
         OnboardingCompleteResponse with user/device IDs and access token
     """
     # Validate onboarding session
-    is_valid, onboarding_session, error_msg = (
-        await OnboardingService.validate_session(
-            session, request_data.session_token
-        )
+    is_valid, onboarding_session, error_msg = await OnboardingService.validate_session(
+        session, request_data.session_token
     )
 
     if not is_valid:
@@ -254,8 +248,9 @@ async def complete_onboarding(
 
     # Mark HR code as used
     if onboarding_session.hr_code_id:
-        from src.models.hr_code import HRCode
         from sqlmodel import select
+
+        from src.models.hr_code import HRCode
 
         result = await session.execute(
             select(HRCode).where(HRCode.id == onboarding_session.hr_code_id)
@@ -273,8 +268,7 @@ async def complete_onboarding(
         user_id=user.id,
         device_id=device.id,
         event_data=(
-            f'{{"email": "{user.email}", '
-            f'"device_name": "{device.device_name}"}}'
+            f'{{"email": "{user.email}", ' f'"device_name": "{device.device_name}"}}'
         ),
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
@@ -283,9 +277,7 @@ async def complete_onboarding(
     await session.commit()
 
     # Generate access token
-    access_token = create_access_token(
-        data={"sub": str(user.id), "role": user.role}
-    )
+    access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
 
     return OnboardingCompleteResponse(
         success=True,
