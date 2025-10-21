@@ -211,7 +211,8 @@ async def complete_onboarding(
             detail="Veuillez d'abord vérifier le code OTP",
         )
 
-    # Validate device attestation (placeholder - implement SafetyNet/DeviceCheck validation)
+    # Validate device attestation (placeholder - implement
+    # SafetyNet/DeviceCheck validation)
     # TODO: Implement actual attestation validation
     if request_data.attestation_data:
         # Validate SafetyNet (Android) or DeviceCheck (iOS) attestation

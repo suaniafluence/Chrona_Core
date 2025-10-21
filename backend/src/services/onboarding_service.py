@@ -128,7 +128,8 @@ class OnboardingService:
         Args:
             session: Database session
             onboarding_session: OnboardingSession instance
-            step: New step value (hr_code, otp_sent, otp_verified, device_attestation, completed)
+            step: New step value (hr_code, otp_sent, otp_verified,
+                  device_attestation, completed)
             device_fingerprint_candidate: Device fingerprint (optional)
         """
         onboarding_session.step = step

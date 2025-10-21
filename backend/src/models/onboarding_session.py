@@ -34,7 +34,10 @@ class OnboardingSession(SQLModel, table=True):
         default="hr_code",
         max_length=50,
         nullable=False,
-        description="Current step: hr_code, otp_sent, otp_verified, device_attestation, completed",
+        description=(
+            "Current step: hr_code, otp_sent, otp_verified, "
+            "device_attestation, completed"
+        ),
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

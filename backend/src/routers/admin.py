@@ -591,7 +591,9 @@ async def get_dashboard_stats(
         DashboardStats with current system metrics
     """
     from datetime import datetime, timezone
+
     from sqlalchemy import func
+
     from src.models.punch import Punch
     from src.schemas import PunchRead
 
@@ -609,7 +611,7 @@ async def get_dashboard_stats(
 
     # Count active kiosks
     result = await session.execute(
-        select(func.count(Kiosk.id)).where(Kiosk.is_active == True)
+        select(func.count(Kiosk.id)).where(Kiosk.is_active.is_(True))
     )
     active_kiosks = result.scalar() or 0
 
