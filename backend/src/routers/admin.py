@@ -2,6 +2,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -714,7 +715,7 @@ async def export_attendance_report(
     fmt = (format or "json").lower()
     if fmt == "json":
         data = [PunchRead.model_validate(p).model_dump() for p in punches]
-        return JSONResponse(content=data)
+        return JSONResponse(content=jsonable_encoder(data))
 
     if fmt == "csv":
         output = io.StringIO()
