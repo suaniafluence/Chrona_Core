@@ -1,0 +1,5 @@
+tls:
+  certificates:
+    - certFile: /certs/dev-localhost.pem
+      keyFile: /certs/dev-localhost-key.pem
+

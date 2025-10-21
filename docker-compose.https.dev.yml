@@ -1,0 +1,39 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --configFile=/traefik.yml
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./infra/traefik/traefik.dev.yml:/traefik.yml:ro
+      - ./infra/traefik/dynamic/certs.yml:/dynamic/certs.yml:ro
+      - ./infra/traefik/certs:/certs:ro
+    restart: unless-stopped
+
+  backend:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`api.${DOMAIN:-localhost}`)
+      - traefik.http.routers.backend.entrypoints=websecure
+      - traefik.http.routers.backend.tls=true
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+
+  backoffice:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backoffice.rule=Host(`backoffice.${DOMAIN:-localhost}`)
+      - traefik.http.routers.backoffice.entrypoints=websecure
+      - traefik.http.routers.backoffice.tls=true
+      - traefik.http.services.backoffice.loadbalancer.server.port=5173
+
+  kiosk:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.kiosk.rule=Host(`kiosk.${DOMAIN:-localhost}`)
+      - traefik.http.routers.kiosk.entrypoints=websecure
+      - traefik.http.routers.kiosk.tls=true
+      - traefik.http.services.kiosk.loadbalancer.server.port=5174
+
