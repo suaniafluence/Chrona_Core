@@ -232,7 +232,9 @@ docker compose logs -f backend
 docker compose exec backend alembic upgrade head
 
 # Créer un utilisateur admin
-docker compose exec backend python tools/create_test_user.py
+docker compose exec backend python tools/create_admin_user.py --email "admin@example.com" --password "Passw0rd!"
+      - Le paramètre --role est optionnel (défaut: admin). Pour le préciser:
+          - ... --role admin
 
 # Créer ou promouvoir l'administrateur (par défaut admin@example.com / adminpass123)
 docker compose exec backend python tools/create_admin_user.py
