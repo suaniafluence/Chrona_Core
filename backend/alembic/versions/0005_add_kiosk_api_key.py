@@ -5,9 +5,9 @@ Revises: 0003_add_chrona_tables
 Create Date: 2025-10-19
 """
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision = "0005_add_kiosk_api_key"
 down_revision = "0003_add_chrona_tables"

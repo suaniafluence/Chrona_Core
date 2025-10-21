@@ -58,7 +58,9 @@ class EmailService:
 
         try:
             if self.settings.EMAIL_PROVIDER == EmailProvider.SMTP:
-                return await self._send_via_smtp(recipient, subject, html_body, text_body)
+                return await self._send_via_smtp(
+                    recipient, subject, html_body, text_body
+                )
             elif self.settings.EMAIL_PROVIDER == EmailProvider.SENDGRID:
                 return await self._send_via_sendgrid(
                     recipient, subject, html_body, text_body
@@ -262,8 +264,8 @@ class EmailService:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code de vérification Chrona</title>
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">  # noqa: E501
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">  # noqa: E501
         <h1 style="color: white; margin: 0; font-size: 28px;">Chrona</h1>
         <p style="color: #f0f0f0; margin: 10px 0 0 0;">Système de pointage sécurisé</p>
     </div>
@@ -273,21 +275,21 @@ class EmailService:
 
         <p>Bonjour,</p>
 
-        <p>Vous avez demandé un code de vérification pour finaliser votre inscription sur Chrona.</p>
+        <p>Vous avez demandé un code de vérification pour finaliser votre inscription sur Chrona.</p>  # noqa: E501
 
-        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Votre code de vérification :</p>
-            <p style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">
+        <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">  # noqa: E501
+            <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Votre code de vérification :</p>  # noqa: E501
+            <p style="font-size: 36px; font-weight: bold; color: #667eea; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">  # noqa: E501
                 {otp_code}
             </p>
         </div>
 
         <p style="color: #666; font-size: 14px;">
-            <strong>⏱️ Ce code expire dans {self.settings.OTP_EXPIRY_MINUTES} minutes.</strong>
+            <strong>⏱️ Ce code expire dans {self.settings.OTP_EXPIRY_MINUTES} minutes.</strong>  # noqa: E501
         </p>
 
         <p style="color: #666; font-size: 14px;">
-            Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email en toute sécurité.
+            Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email en toute sécurité.  # noqa: E501
         </p>
 
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">

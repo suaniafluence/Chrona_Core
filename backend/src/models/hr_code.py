@@ -51,9 +51,7 @@ class HRCode(SQLModel, table=True):
         nullable=False,
         description="Whether code has been redeemed",
     )
-    used_at: Optional[datetime] = Field(
-        default=None, description="When code was used"
-    )
+    used_at: Optional[datetime] = Field(default=None, description="When code was used")
     used_by_user_id: Optional[int] = Field(
         default=None,
         foreign_key="users.id",

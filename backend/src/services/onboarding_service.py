@@ -102,9 +102,7 @@ class OnboardingService:
         Returns:
             Tuple of (is_valid, session_obj, error_message)
         """
-        onboarding_session = await OnboardingService.get_session(
-            session, session_token
-        )
+        onboarding_session = await OnboardingService.get_session(session, session_token)
 
         if not onboarding_session:
             return False, None, "Session invalide"
@@ -130,7 +128,8 @@ class OnboardingService:
         Args:
             session: Database session
             onboarding_session: OnboardingSession instance
-            step: New step value (hr_code, otp_sent, otp_verified, device_attestation, completed)
+            step: New step value (hr_code, otp_sent, otp_verified,
+                  device_attestation, completed)
             device_fingerprint_candidate: Device fingerprint (optional)
         """
         onboarding_session.step = step
@@ -157,9 +156,7 @@ class OnboardingService:
         await session.commit()
 
     @staticmethod
-    async def invalidate_previous_sessions(
-        session: AsyncSession, email: str
-    ) -> None:
+    async def invalidate_previous_sessions(session: AsyncSession, email: str) -> None:
         """Invalidate all previous incomplete sessions for an email.
 
         Args:

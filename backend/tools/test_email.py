@@ -1,4 +1,9 @@
-"""Test script for email sending functionality."""
+"""Test script for email sending functionality.
+
+IMPORTANT: This is an INTERACTIVE test tool for manual testing only.
+It is NOT intended to be run by pytest. Run it directly with:
+    python backend/tools/test_email.py
+"""
 
 import asyncio
 import sys

@@ -11,6 +11,7 @@ from src.models.device import Device
 from src.models.kiosk import Kiosk
 from src.models.user import User
 from src.routers.auth import require_roles
+from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.schemas import (
     AdminUserCreate,
     AuditLogRead,
@@ -22,7 +23,6 @@ from src.schemas import (
     KioskUpdate,
     UserRead,
 )
-from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.security import get_password_hash
 from src.services import device_service
 
@@ -509,9 +509,12 @@ async def get_audit_logs(
 # ==================== Punches ====================
 
 
-@router.get("/punches")
-async def get_punches(
-    _current: Annotated[User, Depends(require_roles("admin"))],
+@router.post(
+    "/hr-codes", response_model=HRCodeRead, status_code=status.HTTP_201_CREATED
+)
+async def create_hr_code(
+    hr_code_data: HRCodeCreate,
+    current_user: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
     user_id: Optional[int] = None,
     from_date: Optional[str] = None,
@@ -588,7 +591,9 @@ async def get_dashboard_stats(
         DashboardStats with current system metrics
     """
     from datetime import datetime, timezone
+
     from sqlalchemy import func
+
     from src.models.punch import Punch
     from src.schemas import PunchRead
 
@@ -606,7 +611,7 @@ async def get_dashboard_stats(
 
     # Count active kiosks
     result = await session.execute(
-        select(func.count(Kiosk.id)).where(Kiosk.is_active == True)
+        select(func.count(Kiosk.id)).where(Kiosk.is_active.is_(True))
     )
     active_kiosks = result.scalar() or 0
 

@@ -5,9 +5,9 @@ Revises: 0003_add_chrona_tables
 Create Date: 2025-10-19
 """
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision = "0004_use_punch_enum"
 down_revision = "0003_add_chrona_tables"

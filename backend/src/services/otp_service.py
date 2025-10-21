@@ -147,9 +147,7 @@ class OTPService:
         return True, otp_record, None
 
     @staticmethod
-    async def invalidate_previous_otps(
-        session: AsyncSession, email: str
-    ) -> None:
+    async def invalidate_previous_otps(session: AsyncSession, email: str) -> None:
         """Invalidate all previous unverified OTPs for an email.
 
         This prevents OTP reuse and ensures only the latest OTP is valid.

@@ -1,3 +1,10 @@
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
+# Exclude interactive tools from test discovery
+norecursedirs = ["tools", ".venv", "venv", "*.egg", "dist", "build"]
+addopts = "--strict-markers"
+
 [tool.isort]
 profile = "black"
 known_first_party = ["src"]

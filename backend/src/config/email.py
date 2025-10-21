@@ -1,6 +1,5 @@
 """Email configuration for OTP and notifications."""
 
-import os
 from enum import Enum
 from typing import Optional
 

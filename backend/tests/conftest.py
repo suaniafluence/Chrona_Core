@@ -95,6 +95,7 @@ async def kiosk_headers(test_kiosk) -> dict:
 @pytest_asyncio.fixture
 async def test_device(test_db: AsyncSession, test_user):
     from datetime import datetime, timezone
+
     from src.models.device import Device
 
     device = Device(
@@ -113,6 +114,7 @@ async def test_device(test_db: AsyncSession, test_user):
 @pytest_asyncio.fixture
 async def test_kiosk(test_db: AsyncSession):
     from datetime import datetime, timezone
+
     from src.models.kiosk import Kiosk
     from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 
