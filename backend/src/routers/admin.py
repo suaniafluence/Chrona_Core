@@ -1,6 +1,7 @@
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -655,3 +656,106 @@ async def get_dashboard_stats(
         today_users=today_users,
         recent_punches=recent_punches,
     )
+
+
+# ==================== Reports (Attendance) ====================
+
+
+@router.get("/reports/attendance")
+async def export_attendance_report(
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    from_: str,  # start date/time (alias 'from' is reserved)
+    to: str,  # end date/time
+    user_id: Optional[int] = None,
+    format: Optional[str] = "json",
+):
+    """Export attendance records between two dates.
+
+    Query params:
+    - from_: ISO date/time or YYYY-MM-DD (inclusive, 00:00)
+    - to: ISO date/time or YYYY-MM-DD (inclusive, 23:59:59.999999)
+    - user_id: optional filter
+    - format: 'json' | 'csv' | 'pdf' (pdf not implemented)
+    """
+    from datetime import datetime, timezone
+    import io
+    import csv
+
+    from src.models.punch import Punch
+    from src.schemas import PunchRead
+
+    def parse_boundary(value: str, is_start: bool) -> datetime:
+        v = value.strip()
+        try:
+            if len(v) == 10 and v[4] == "-" and v[7] == "-":
+                # YYYY-MM-DD
+                dt = datetime.fromisoformat(v).replace(tzinfo=timezone.utc)
+                if is_start:
+                    return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+            # Replace trailing Z with +00:00 for fromisoformat
+            return datetime.fromisoformat(v.replace("Z", "+00:00"))
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid_datetime")
+
+    start_dt = parse_boundary(from_, True)
+    end_dt = parse_boundary(to, False)
+    if end_dt < start_dt:
+        raise HTTPException(status_code=400, detail="invalid_range")
+
+    query = select(Punch).where(Punch.punched_at >= start_dt, Punch.punched_at <= end_dt)
+    if user_id is not None:
+        query = query.where(Punch.user_id == user_id)
+
+    result = await session.execute(query.order_by(Punch.punched_at.asc()))
+    punches = result.scalars().all()
+
+    fmt = (format or "json").lower()
+    if fmt == "json":
+        data = [PunchRead.model_validate(p).model_dump() for p in punches]
+        return JSONResponse(content=data)
+
+    if fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "id",
+                "user_id",
+                "device_id",
+                "kiosk_id",
+                "punch_type",
+                "punched_at",
+                "jwt_jti",
+                "created_at",
+            ]
+        )
+        for p in punches:
+            writer.writerow(
+                [
+                    p.id,
+                    p.user_id,
+                    p.device_id,
+                    p.kiosk_id,
+                    p.punch_type.value if hasattr(p.punch_type, "value") else str(p.punch_type),
+                    p.punched_at.isoformat(),
+                    p.jwt_jti,
+                    p.created_at.isoformat(),
+                ]
+            )
+        csv_bytes = output.getvalue().encode("utf-8")
+        filename = f"attendance_{start_dt.date()}_{end_dt.date()}.csv"
+        return StreamingResponse(
+            io.BytesIO(csv_bytes),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+
+    if fmt == "pdf":
+        # Placeholder: explicit not implemented to avoid invalid PDFs
+        raise HTTPException(status_code=501, detail="pdf_not_implemented")
+
+    raise HTTPException(status_code=400, detail="invalid_format")
