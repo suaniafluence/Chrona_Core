@@ -15,36 +15,46 @@ from src.models.kiosk import Kiosk
 from src.models.user import User
 
 
-async def _seed_punches(db: AsyncSession, user: User, device: Device, kiosk: Kiosk) -> list[Punch]:
-  now = datetime.now(timezone.utc)
-  punches = [
-      Punch(
-          user_id=user.id,
-          device_id=device.id,
-          kiosk_id=kiosk.id,
-          punch_type=PunchType.CLOCK_IN,
-          punched_at=now - timedelta(minutes=60),
-          jwt_jti=f"test-jti-{uuid4()}",
-      ),
-      Punch(
-          user_id=user.id,
-          device_id=device.id,
-          kiosk_id=kiosk.id,
-          punch_type=PunchType.CLOCK_OUT,
-          punched_at=now - timedelta(minutes=30),
-          jwt_jti=f"test-jti-{uuid4()}",
-      ),
-  ]
-  for p in punches:
-      db.add(p)
-  await db.commit()
-  for p in punches:
-      await db.refresh(p)
-  return punches
+async def _seed_punches(
+    db: AsyncSession, user: User, device: Device, kiosk: Kiosk
+) -> list[Punch]:
+    now = datetime.now(timezone.utc)
+    punches = [
+        Punch(
+            user_id=user.id,
+            device_id=device.id,
+            kiosk_id=kiosk.id,
+            punch_type=PunchType.CLOCK_IN,
+            punched_at=now - timedelta(minutes=60),
+            jwt_jti=f"test-jti-{uuid4()}",
+        ),
+        Punch(
+            user_id=user.id,
+            device_id=device.id,
+            kiosk_id=kiosk.id,
+            punch_type=PunchType.CLOCK_OUT,
+            punched_at=now - timedelta(minutes=30),
+            jwt_jti=f"test-jti-{uuid4()}",
+        ),
+    ]
+    for p in punches:
+        db.add(p)
+    await db.commit()
+    for p in punches:
+        await db.refresh(p)
+    return punches
 
 
 @pytest.mark.asyncio
-async def test_reports_json(async_client: AsyncClient, test_db: AsyncSession, test_admin: User, test_user: User, test_device: Device, test_kiosk: Kiosk, admin_headers: dict):
+async def test_reports_json(
+    async_client: AsyncClient,
+    test_db: AsyncSession,
+    test_admin: User,
+    test_user: User,
+    test_device: Device,
+    test_kiosk: Kiosk,
+    admin_headers: dict,
+):
     await _seed_punches(test_db, test_user, test_device, test_kiosk)
     # Wide date range to include seeded punches
     today = datetime.now(timezone.utc).date()
@@ -62,7 +72,15 @@ async def test_reports_json(async_client: AsyncClient, test_db: AsyncSession, te
 
 
 @pytest.mark.asyncio
-async def test_reports_csv(async_client: AsyncClient, test_db: AsyncSession, test_admin: User, test_user: User, test_device: Device, test_kiosk: Kiosk, admin_headers: dict):
+async def test_reports_csv(
+    async_client: AsyncClient,
+    test_db: AsyncSession,
+    test_admin: User,
+    test_user: User,
+    test_device: Device,
+    test_kiosk: Kiosk,
+    admin_headers: dict,
+):
     await _seed_punches(test_db, test_user, test_device, test_kiosk)
     today = datetime.now(timezone.utc).date()
     r = await async_client.get(
@@ -81,7 +99,19 @@ async def test_reports_csv(async_client: AsyncClient, test_db: AsyncSession, tes
 
 
 @pytest.mark.asyncio
-async def test_reports_pdf(async_client: AsyncClient, test_db: AsyncSession, test_admin: User, test_user: User, test_device: Device, test_kiosk: Kiosk, admin_headers: dict):
+async def test_reports_pdf(
+    async_client: AsyncClient,
+    test_db: AsyncSession,
+    test_admin: User,
+    test_user: User,
+    test_device: Device,
+    test_kiosk: Kiosk,
+    admin_headers: dict,
+):
+    try:
+        import reportlab  # noqa: F401
+    except Exception:
+        pytest.skip("reportlab not installed in test environment")
     await _seed_punches(test_db, test_user, test_device, test_kiosk)
     today = datetime.now(timezone.utc).date()
     r = await async_client.get(
@@ -95,7 +125,9 @@ async def test_reports_pdf(async_client: AsyncClient, test_db: AsyncSession, tes
 
 
 @pytest.mark.asyncio
-async def test_reports_validation_and_auth(async_client: AsyncClient, admin_headers: dict, auth_headers: dict):
+async def test_reports_validation_and_auth(
+    async_client: AsyncClient, admin_headers: dict, auth_headers: dict
+):
     # invalid range (from > to)
     r_bad = await async_client.get(
         "/admin/reports/attendance?from=2030-01-02&to=2030-01-01&format=json",
@@ -110,4 +142,3 @@ async def test_reports_validation_and_auth(async_client: AsyncClient, admin_head
         headers=auth_headers,
     )
     assert r_forbidden.status_code == status.HTTP_403_FORBIDDEN
-

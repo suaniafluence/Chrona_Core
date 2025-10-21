@@ -705,7 +705,9 @@ async def export_attendance_report(
     if end_dt < start_dt:
         raise HTTPException(status_code=400, detail="invalid_range")
 
-    query = select(Punch).where(Punch.punched_at >= start_dt, Punch.punched_at <= end_dt)
+    query = select(Punch).where(
+        Punch.punched_at >= start_dt, Punch.punched_at <= end_dt
+    )
     if user_id is not None:
         query = query.where(Punch.user_id == user_id)
 
@@ -739,7 +741,11 @@ async def export_attendance_report(
                     p.user_id,
                     p.device_id,
                     p.kiosk_id,
-                    p.punch_type.value if hasattr(p.punch_type, "value") else str(p.punch_type),
+                    (
+                        p.punch_type.value
+                        if hasattr(p.punch_type, "value")
+                        else str(p.punch_type)
+                    ),
                     p.punched_at.isoformat(),
                     p.jwt_jti,
                     p.created_at.isoformat(),
@@ -760,7 +766,13 @@ async def export_attendance_report(
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4
             from reportlab.lib.styles import getSampleStyleSheet
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.platypus import (
+                SimpleDocTemplate,
+                Table,
+                TableStyle,
+                Paragraph,
+                Spacer,
+            )
         except Exception:
             raise HTTPException(status_code=500, detail="reportlab_not_installed")
 
@@ -770,8 +782,9 @@ async def export_attendance_report(
 
         elements = []
         title = Paragraph(
-            f"Rapport de présence du {start_dt.date()} au {end_dt.date()}" + (f" — Utilisateur #{user_id}" if user_id is not None else ""),
-            styles['Title'],
+            f"Rapport de présence du {start_dt.date()} au {end_dt.date()}"
+            + (f" — Utilisateur #{user_id}" if user_id is not None else ""),
+            styles["Title"],
         )
         elements.append(title)
         elements.append(Spacer(1, 12))
@@ -787,14 +800,20 @@ async def export_attendance_report(
             ]
         ]
         for p in punches:
-            data_rows.append([
-                str(p.id),
-                str(p.user_id),
-                str(p.device_id),
-                str(p.kiosk_id),
-                (p.punch_type.value if hasattr(p.punch_type, 'value') else str(p.punch_type)),
-                p.punched_at.isoformat(),
-            ])
+            data_rows.append(
+                [
+                    str(p.id),
+                    str(p.user_id),
+                    str(p.device_id),
+                    str(p.kiosk_id),
+                    (
+                        p.punch_type.value
+                        if hasattr(p.punch_type, "value")
+                        else str(p.punch_type)
+                    ),
+                    p.punched_at.isoformat(),
+                ]
+            )
 
         table = Table(data_rows, repeatRows=1)
         table.setStyle(
