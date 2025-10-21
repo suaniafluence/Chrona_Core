@@ -297,6 +297,7 @@ Ce fichier est la **source de vérité** du projet (priorités, décisions, éta
 - [x] **Structure E2E** : Configuration multi-projets (API, kiosk Chrome/Firefox/tablet)
 - [x] **E2E CI integration** : Job CI avec artifacts (reports, screenshots, videos)
 - [x] **Smoke tests** : Scripts Bash + Python pour validation post-deploy
+- [x] **Pytest configuration** : Configured to exclude interactive tools, 72 tests passing
 - [ ] **Monitoring** : Prometheus + Grafana (métriques) (TODO)
 - [ ] **Logs** : Loki ou ELK stack (TODO)
 - [ ] **Alerting** : Sentry pour erreurs (TODO)
