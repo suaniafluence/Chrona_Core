@@ -5,10 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Install dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application source
 COPY src ./src
+COPY alembic ./alembic
+COPY alembic.ini ./
 
 EXPOSE 8000
 
