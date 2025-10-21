@@ -162,6 +162,8 @@ Cela génère:
 ```bash
 # Windows
 copy backend\.env.example backend\.env
+copy apps\backoffice\.env.example apps\backoffice\.env
+copy apps\kiosk\.env.example apps\kiosk\.env
 
 # Linux
 cp backend/.env.example backend/.env
