@@ -4,6 +4,7 @@ import QRScanner from './components/QRScanner'
 import CameraTest from './components/CameraTest'
 import ValidationResult from './components/ValidationResult'
 import KioskMode from './components/KioskMode'
+import ConnectionStatus from './components/ConnectionStatus'
 
 interface PunchResult {
   success: boolean
@@ -63,6 +64,9 @@ function App() {
         <header className="app-header">
           <h1>Chrona Kiosk</h1>
           <p>Scanner le QR code pour pointer</p>
+          <div style={{ marginTop: 8 }}>
+            <ConnectionStatus />
+          </div>
         </header>
       )}
 
