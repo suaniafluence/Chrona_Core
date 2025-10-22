@@ -66,6 +66,8 @@ async def test_admin_create_kiosk_success(
     assert data["is_active"] is True
     assert "id" in data
     assert "created_at" in data
+    # Contract: creation does NOT return api_key
+    assert "api_key" not in data
 
 
 @pytest.mark.asyncio
