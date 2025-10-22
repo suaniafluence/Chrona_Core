@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import QRScanner from './components/QRScanner'
+import CameraTest from './components/CameraTest'
 import ValidationResult from './components/ValidationResult'
 import KioskMode from './components/KioskMode'
 
@@ -16,6 +17,7 @@ function App() {
   const [result, setResult] = useState<PunchResult | null>(null)
   const [isScanning, setIsScanning] = useState(true)
   const [isKioskMode, setIsKioskMode] = useState(false)
+  const [showCameraTest, setShowCameraTest] = useState(false)
 
   // Get kiosk info from environment
   const kioskId = import.meta.env.VITE_KIOSK_ID
@@ -65,11 +67,18 @@ function App() {
       )}
 
       <main className="app-main">
-        {isScanning ? (
-          <QRScanner
-            onScanSuccess={handleScanSuccess}
-            onScanError={handleScanError}
-          />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <button onClick={() => setShowCameraTest(false)} disabled={!showCameraTest}>
+            Mode scan QR
+          </button>
+          <button onClick={() => setShowCameraTest(true)} disabled={showCameraTest}>
+            Mode test caméra
+          </button>
+        </div>
+        {showCameraTest ? (
+          <CameraTest />
+        ) : isScanning ? (
+          <QRScanner onScanSuccess={handleScanSuccess} onScanError={handleScanError} />
         ) : (
           <ValidationResult result={result} />
         )}
