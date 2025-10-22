@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, ci/** ]
+    branches: [ main, ci/**, E2E, fix/** ]
   pull_request:
     branches: [ main ]
 
@@ -342,10 +342,12 @@ jobs:
           python -m tools.seed_kiosk || true
           # Generate API key and capture it
           python -m tools.generate_kiosk_api_key 1 | tee kiosk_key.out || true
-          KEY=$(grep -E "^API KEY:\s+" kiosk_key.out | sed -E 's/^API KEY:\s+//')
+          # Normalize CRLF and extract after 'API KEY: '
+          KEY=$(tr -d '\r' < kiosk_key.out | awk -F'API KEY: ' '/API KEY:/{print $2; exit}')
           if [ -n "$KEY" ]; then
             echo "TEST_KIOSK_API_KEY=$KEY" >> $GITHUB_ENV
             echo "KIOSK_ID=1" >> $GITHUB_ENV
+            echo "Exported TEST_KIOSK_API_KEY (length): ${#KEY}"
           else
             echo "WARNING: Could not extract API key; E2E API punch tests may fail"
           fi
@@ -422,3 +424,5 @@ jobs:
           path: |
             backend/tests/e2e/test-results/
           if-no-files-found: warn
+      - name: Show auth e2e snippet (debug)
+        run: sed -n '36,60p' backend/tests/e2e/api.auth.e2e.ts
