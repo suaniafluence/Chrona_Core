@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, ci/** ]
+    branches: [ main, ci/**, E2E, fix/** ]
   pull_request:
     branches: [ main ]
 
@@ -332,13 +332,84 @@ jobs:
         working-directory: backend
         run: python tools/generate_keys.py
 
+      - name: Seed kiosk and generate API key
+        working-directory: backend
+        shell: bash
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:///./app.db
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y && sudo apt-get install -y jq curl >/dev/null 2>&1 || true
+          # Create kiosk with ID 1 if missing
+          python -m tools.seed_kiosk || true
+          # Ensure kiosk 1 is active (if it already existed)
+          python - <<'PY'
+import os, asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from src.models.kiosk import Kiosk
+async def main():
+    engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with async_session() as s:
+        k = await s.get(Kiosk, 1)
+        if k and not k.is_active:
+            k.is_active = True
+            s.add(k)
+            await s.commit()
+asyncio.run(main())
+PY
+          # Create admin or ensure exists
+          ADMIN_EMAIL="admin-e2e@local"
+          ADMIN_PASS="Passw0rd!"
+          python -m tools.create_admin_user --email "$ADMIN_EMAIL" --password "$ADMIN_PASS" --role admin
+          # Obtain admin token via HTTP
+          TOKEN=$(curl -fsS -X POST http://localhost:8000/auth/token \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode "username=$ADMIN_EMAIL" \
+            --data-urlencode "password=$ADMIN_PASS" | jq -r .access_token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then echo "Failed to get admin token"; exit 1; fi
+          # Generate kiosk API key via HTTP (authoritative)
+          API_KEY=$(curl -fsS -X POST http://localhost:8000/admin/kiosks/1/generate-api-key \
+            -H "Authorization: Bearer $TOKEN" | jq -r .api_key)
+          if [ -z "$API_KEY" ] || [ "$API_KEY" = "null" ]; then echo "Failed to generate kiosk API key"; exit 1; fi
+          echo "TEST_KIOSK_API_KEY=$API_KEY" >> $GITHUB_ENV
+          echo "KIOSK_ID=1" >> $GITHUB_ENV
+          echo "Exported TEST_KIOSK_API_KEY (length): ${#API_KEY}"
+
       - name: Start backend server
         working-directory: backend
         run: |
           uvicorn src.main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
+          # Wait for /health to be ready (max ~20s)
+          for i in {1..20}; do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
         env:
           PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:///./app.db
+
+      - name: Setup Node for Kiosk UI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and start Kiosk UI
+        shell: bash
+        run: |
+          if [ -f "apps/kiosk/package.json" ]; then
+            cd apps/kiosk
+            npm ci
+            # Start Vite dev server in background on 0.0.0.0:5174
+            npm run dev -- --host 0.0.0.0 --port 5174 &
+            # Wait for kiosk to respond (max ~20s)
+            for i in {1..20}; do
+              if curl -fsS http://localhost:5174 >/dev/null; then
+                echo "Kiosk UI is up"; break; fi; echo "Waiting kiosk..."; sleep 1; done
+          else
+            echo "No Kiosk app found; skipping UI startup"
+          fi
 
       - name: Setup Node for Playwright
         uses: actions/setup-node@v4
@@ -347,15 +418,25 @@ jobs:
 
       - name: Install Playwright dependencies
         working-directory: backend/tests/e2e
+        shell: bash
         run: |
-          npm ci
+          echo "Node:" $(node -v)
+          echo "NPM:" $(npm -v)
+          ls -la
+          # Use npm install for broader compatibility (no lockfile required)
+          npm install --no-audit --no-fund
           npx playwright install --with-deps
 
       - name: Run E2E tests
         working-directory: backend/tests/e2e
         env:
           API_URL: http://localhost:8000
-        run: npm test
+          KIOSK_URL: http://localhost:5174
+          TEST_KIOSK_API_KEY: ${{ env.TEST_KIOSK_API_KEY }}
+          KIOSK_ID: ${{ env.KIOSK_ID }}
+        run: |
+          echo "E2E env → API_URL=$API_URL KIOSK_URL=$KIOSK_URL KIOSK_ID=$KIOSK_ID KEY_LEN=${#TEST_KIOSK_API_KEY}"
+          npm test
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -373,3 +454,5 @@ jobs:
           path: |
             backend/tests/e2e/test-results/
           if-no-files-found: warn
+      - name: Show auth e2e snippet (debug)
+        run: sed -n '36,60p' backend/tests/e2e/api.auth.e2e.ts

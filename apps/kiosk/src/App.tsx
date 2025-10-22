@@ -4,6 +4,7 @@ import QRScanner from './components/QRScanner'
 import CameraTest from './components/CameraTest'
 import ValidationResult from './components/ValidationResult'
 import KioskMode from './components/KioskMode'
+import ConnectionStatus from './components/ConnectionStatus'
 
 interface PunchResult {
   success: boolean
@@ -51,6 +52,10 @@ function App() {
 
   return (
     <div className={`app ${isKioskMode ? 'kiosk-mode-active' : ''}`}>
+      {/* Always show connection status for visibility in E2E */}
+      <div style={{ position: 'fixed', top: 8, right: 8, zIndex: 1000 }}>
+        <ConnectionStatus />
+      </div>
       {/* Kiosk mode controls */}
       <KioskMode
         isActive={isKioskMode}
@@ -63,6 +68,9 @@ function App() {
         <header className="app-header">
           <h1>Chrona Kiosk</h1>
           <p>Scanner le QR code pour pointer</p>
+          <div style={{ marginTop: 8 }}>
+            <ConnectionStatus />
+          </div>
         </header>
       )}
 

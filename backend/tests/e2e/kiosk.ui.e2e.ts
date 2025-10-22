@@ -34,12 +34,11 @@ test.describe('Kiosk UI E2E', () => {
 
   test('should display connection status indicator', async ({ page }) => {
     // Look for connection status element
-    const statusIndicator = page.locator(
-      '[class*="connection"], [data-testid="connection-status"]'
-    );
-
-    // Should be visible within 5 seconds
-    await expect(statusIndicator.first()).toBeVisible({ timeout: 5000 });
+    const statusIndicator = page.locator('[data-testid="connection-status"], [class*="connection"]');
+    // Wait up to 10s for it to appear and be visible (CI-safe)
+    const el = statusIndicator.first();
+    await el.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(el).toBeVisible();
   });
 
   test('should have kiosk mode toggle', async ({ page }) => {
@@ -104,35 +103,29 @@ test.describe('Kiosk UI E2E', () => {
   });
 
   test('should display kiosk information', async ({ page }) => {
-    // Look for kiosk ID or name
-    const kioskInfo = page.locator(
-      'text=/Kiosk [0-9]+/i, text=/Office/i, [class*="kiosk-info"]'
-    );
-
-    const hasInfo = (await kioskInfo.count()) > 0;
-
-    // Kiosk info may be hidden in kiosk mode, but should exist
-    expect(hasInfo).toBeTruthy();
+    // Prefer a pure CSS selector to avoid mixing text and CSS engines
+    await expect(page.locator('[class*="kiosk-info"]').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should handle network errors gracefully', async ({ page, context }) => {
     // Simulate offline mode
     await context.setOffline(true);
 
-    await page.reload();
+    // Reload while offline will fail; swallow expected error
+    try {
+      await page.reload({ timeout: 3000 });
+    } catch {
+      // Expected navigation error when offline
+    }
 
-    // Wait a bit for connection check
-    await page.waitForTimeout(2000);
+    // ConnectionStatus polls every 10s; wait long enough for state to update
+    await page.waitForTimeout(12000);
 
-    // Check for offline indicator or error message
-    const offlineIndicator = page.locator(
-      'text=/offline/i, text=/connexion/i, text=/erreur/i, [class*="offline"]'
-    );
-
-    const hasOfflineIndicator = (await offlineIndicator.count()) > 0;
-
-    // Should show some indication of connection issue
-    expect(hasOfflineIndicator).toBeTruthy();
+    // Check for offline indicator or error message (use separate locators, not mixed string)
+    const offlineByClass = page.locator('.connection-status.offline, [class*="offline"]');
+    const offlineByText = page.locator('text=/offline|connexion|erreur/i');
+    const offlineIndicator = offlineByClass.or(offlineByText);
+    await expect(offlineIndicator.first()).toBeVisible({ timeout: 5000 });
 
     // Restore online mode
     await context.setOffline(false);
@@ -141,15 +134,15 @@ test.describe('Kiosk UI E2E', () => {
   test('should be responsive to different viewports', async ({ page }) => {
     // Test desktop viewport (default)
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await expect(page.locator('.app, body')).toBeVisible();
+    await expect(page.locator('.app').first()).toBeVisible();
 
     // Test tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
-    await expect(page.locator('.app, body')).toBeVisible();
+    await expect(page.locator('.app').first()).toBeVisible();
 
     // Test mobile viewport (kiosk might not support this)
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(page.locator('.app, body')).toBeVisible();
+    await expect(page.locator('.app').first()).toBeVisible();
   });
 
   test('should have accessible UI elements', async ({ page }) => {

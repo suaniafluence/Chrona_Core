@@ -44,7 +44,8 @@ test.describe('Authentication API E2E', () => {
     expect(response.status()).toBe(400);
 
     const body = await response.json();
-    expect(body.detail).toContain('already registered');
+    // Backend returns machine code 'email_already_registered'; accept both human/machine variants
+    expect(String(body.detail)).toMatch(/already(?: |_)?registered/i);
   });
 
   test('should login with valid credentials', async ({ request }) => {

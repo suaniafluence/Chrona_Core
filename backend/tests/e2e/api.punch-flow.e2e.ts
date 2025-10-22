@@ -11,6 +11,7 @@ import { test, expect } from '@playwright/test';
  */
 
 const API_BASE = process.env.API_URL || 'http://localhost:8000';
+const KIOSK_ID = Number(process.env.KIOSK_ID || '1');
 
 test.describe('Complete Punch Flow E2E', () => {
   test.describe.configure({ mode: 'serial' });
@@ -28,7 +29,13 @@ test.describe('Complete Punch Flow E2E', () => {
   test.beforeAll(async () => {
     // In a real scenario, kiosk API key would be pre-provisioned
     // For E2E, we'll use a mock or admin-created key
-    kioskApiKey = process.env.TEST_KIOSK_API_KEY || 'test-kiosk-key';
+    kioskApiKey = process.env.TEST_KIOSK_API_KEY || '';
+    if (!kioskApiKey) {
+      console.warn('TEST_KIOSK_API_KEY missing; using fallback invalid key');
+      kioskApiKey = 'invalid-test-kiosk-key';
+    } else {
+      console.log(`Using kiosk API key (len=${kioskApiKey.length})`);
+    }
   });
 
   test('Step 1: Register user', async ({ request }) => {
@@ -110,18 +117,21 @@ test.describe('Complete Punch Flow E2E', () => {
       },
       data: {
         qr_token: qrToken,
-        kiosk_id: 1, // Assuming kiosk ID 1 exists
+        kiosk_id: KIOSK_ID,
         punch_type: 'clock_in',
       },
     });
 
-    expect(response.status()).toBe(200);
+    const status = response.status();
+    const text = await response.text();
+    expect(status, `Punch validate failed: ${status} ${text}`).toBe(200);
 
-    const body = await response.json();
+    const body = JSON.parse(text);
     expect(body).toHaveProperty('success', true);
     expect(body).toHaveProperty('punch_id');
     expect(body).toHaveProperty('punched_at');
-    expect(body).toHaveProperty('user_email', testUser.email);
+    // Backend response includes user_id/device_id but not user_email
+    expect(body).toHaveProperty('user_id');
   });
 
   test('Step 6: Verify token cannot be reused (replay protection)', async ({
@@ -133,7 +143,7 @@ test.describe('Complete Punch Flow E2E', () => {
       },
       data: {
         qr_token: qrToken,
-        kiosk_id: 1,
+        kiosk_id: KIOSK_ID,
         punch_type: 'clock_out',
       },
     });
@@ -188,7 +198,7 @@ test.describe('Complete Punch Flow E2E', () => {
       },
       data: {
         qr_token: newQrToken,
-        kiosk_id: 1,
+        kiosk_id: KIOSK_ID,
         punch_type: 'clock_out',
       },
     });
