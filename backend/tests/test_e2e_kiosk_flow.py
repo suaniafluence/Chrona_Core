@@ -6,6 +6,7 @@ Covers the backoffice UX contract:
 3) Listing kiosks never includes the plain api_key
 """
 
+
 import pytest
 from fastapi import status
 from httpx import AsyncClient
@@ -36,7 +37,8 @@ async def test_kiosk_create_then_generate_key(
     assert resp_key.status_code == status.HTTP_200_OK
     key_data = resp_key.json()
     assert key_data.get("kiosk_id") == kiosk_id
-    assert isinstance(key_data.get("api_key"), str) and len(key_data["api_key"]) > 16
+    assert isinstance(key_data.get("api_key"), str)
+    assert len(key_data["api_key"]) > 16
 
     # 3) List kiosks - ensure no api_key is leaked
     resp_list = await async_client.get("/admin/kiosks", headers=admin_headers)
