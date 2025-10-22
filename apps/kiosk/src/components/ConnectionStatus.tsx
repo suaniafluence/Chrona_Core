@@ -29,7 +29,10 @@ export default function ConnectionStatus() {
   }, [])
 
   return (
-    <div className={`connection-status ${isOnline ? 'online' : 'offline'}`}>
+    <div
+      data-testid="connection-status"
+      className={`connection-status ${isOnline ? 'online' : 'offline'}`}
+    >
       <div className="status-indicator" />
       <span className="status-text">
         {isOnline ? 'En ligne' : 'Hors ligne'}
