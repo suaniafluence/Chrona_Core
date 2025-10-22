@@ -47,15 +47,11 @@ async def test_kiosk_create_then_generate_key(
 
 
 @pytest.mark.asyncio
-async def test_generate_key_requires_admin(async_client: AsyncClient, auth_headers: dict):
+async def test_generate_key_requires_admin(
+    async_client: AsyncClient, admin_headers: dict, auth_headers: dict
+):
     # Create a kiosk as setup: must be created by admin; emulate by creating then calling without admin
     # We rely on the first step using admin; then we attempt the generate-key with non-admin.
-    from src.security import create_access_token
-
-    # Create admin token dynamically for setup
-    admin_token = create_access_token({"sub": "1", "role": "admin"})
-    admin_headers = {"Authorization": f"Bearer {admin_token}"}
-
     create_resp = await async_client.post(
         "/admin/kiosks",
         json={
@@ -84,4 +80,3 @@ async def test_generate_key_requires_admin(async_client: AsyncClient, auth_heade
         f"/admin/kiosks/{kiosk_id}/generate-api-key", headers=auth_headers
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
-
