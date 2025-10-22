@@ -94,11 +94,11 @@ const CameraTest = () => {
 
       <div style={{ margin: '12px 0' }}>
         {!active ? (
-          <button onClick={() => startStream(selectedId)} style={{ padding: '10px 16px' }}>
+          <button className="btn" onClick={() => startStream(selectedId)}>
             Démarrer
           </button>
         ) : (
-          <button onClick={stopStream} style={{ padding: '10px 16px' }}>
+          <button className="btn" onClick={stopStream}>
             Arrêter
           </button>
         )}

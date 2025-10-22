@@ -49,6 +49,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  flex-direction: column;
 }
 
 .app-footer {
@@ -94,4 +95,27 @@
   pointer-events: none;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+/* Buttons */
+.btn {
+  border: 1px solid #000;
+  background: #fff;
+  color: #111;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.btn:hover {
+  background: #f5f5f5;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn--active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-color: #667eea;
 }
