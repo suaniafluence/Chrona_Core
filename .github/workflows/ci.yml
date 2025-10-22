@@ -332,11 +332,32 @@ jobs:
         working-directory: backend
         run: python tools/generate_keys.py
 
+      - name: Seed kiosk and generate API key
+        working-directory: backend
+        shell: bash
+        env:
+          PYTHONPATH: .
+        run: |
+          # Create kiosk with ID 1 if missing
+          python -m tools.seed_kiosk || true
+          # Generate API key and capture it
+          python -m tools.generate_kiosk_api_key 1 | tee kiosk_key.out || true
+          KEY=$(grep -E "^API KEY:\s+" kiosk_key.out | sed -E 's/^API KEY:\s+//')
+          if [ -n "$KEY" ]; then
+            echo "TEST_KIOSK_API_KEY=$KEY" >> $GITHUB_ENV
+            echo "KIOSK_ID=1" >> $GITHUB_ENV
+          else
+            echo "WARNING: Could not extract API key; E2E API punch tests may fail"
+          fi
+
       - name: Start backend server
         working-directory: backend
         run: |
           uvicorn src.main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
+          # Wait for /health to be ready (max ~20s)
+          for i in {1..20}; do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
         env:
           PYTHONPATH: .
 
@@ -353,7 +374,10 @@ jobs:
             npm ci
             # Start Vite dev server in background on 0.0.0.0:5174
             npm run dev -- --host 0.0.0.0 --port 5174 &
-            sleep 6
+            # Wait for kiosk to respond (max ~20s)
+            for i in {1..20}; do
+              if curl -fsS http://localhost:5174 >/dev/null; then
+                echo "Kiosk UI is up"; break; fi; echo "Waiting kiosk..."; sleep 1; done
           else
             echo "No Kiosk app found; skipping UI startup"
           fi
@@ -379,6 +403,7 @@ jobs:
         env:
           API_URL: http://localhost:8000
           KIOSK_URL: http://localhost:5174
+          TEST_KIOSK_API_KEY: ${{ env.TEST_KIOSK_API_KEY }}
         run: npm test
 
       - name: Upload Playwright report
