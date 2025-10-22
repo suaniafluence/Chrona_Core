@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { kiosksAPI } from '@/lib/api';
-import type { Kiosk, CreateKioskRequest, CreateKioskResponse } from '@/types';
+import type { Kiosk, CreateKioskRequest } from '@/types';
 import { Monitor, Plus, Power, MapPin, Key } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -10,7 +10,10 @@ export default function KiosksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createdKiosk, setCreatedKiosk] = useState<CreateKioskResponse | null>(null);
+  const [createdKiosk, setCreatedKiosk] = useState<{
+    kiosk_name: string;
+    api_key: string;
+  } | null>(null);
 
   useEffect(() => {
     loadKiosks();
@@ -21,9 +24,16 @@ export default function KiosksPage() {
       const data = await kiosksAPI.getAll();
       setKiosks(data);
       setError('');
-    } catch (err) {
-      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else {\n        setError(detail || 'Erreur lors du chargement des kiosques');\n      }\n      console.error('Load kiosks error:', anyErr);
-      console.error(err);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail || err?.message;
+      if (status === 401 || status === 403) {
+        setError('Session expirée. Veuillez vous reconnecter.');
+        window.location.href = '/login';
+      } else {
+        setError(detail || 'Erreur lors du chargement des kiosques');
+      }
+      console.error('Load kiosks error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -31,14 +41,25 @@ export default function KiosksPage() {
 
   const handleCreateKiosk = async (data: CreateKioskRequest) => {
     try {
-      const result = await kiosksAPI.create(data);
-      setCreatedKiosk(result);
+      const kiosk = await kiosksAPI.create(data);
+      // Generate API key immediately after creation to show once to the admin
+      const keyResp = await kiosksAPI.generateApiKey(kiosk.id);
+      setCreatedKiosk({ kiosk_name: kiosk.kiosk_name, api_key: keyResp.api_key });
       await loadKiosks();
       setShowCreateModal(false);
       setError('');
-    } catch (err) {
-      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else if (status === 409) {\n        setError(detail || 'Conflit: nom ou empreinte déjà utilisés');\n      } else {\n        setError(detail || 'Erreur lors de la création du kiosque');\n      }\n      console.error('Create kiosk error:', anyErr);
-      console.error(err);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail || err?.message;
+      if (status === 401 || status === 403) {
+        setError('Session expirée. Veuillez vous reconnecter.');
+        window.location.href = '/login';
+      } else if (status === 409) {
+        setError(detail || 'Conflit: nom ou empreinte déjà utilisés');
+      } else {
+        setError(detail || 'Erreur lors de la création du kiosque');
+      }
+      console.error('Create kiosk error:', err);
     }
   };
 
@@ -46,9 +67,16 @@ export default function KiosksPage() {
     try {
       await kiosksAPI.update(kioskId, { is_active: !currentStatus });
       await loadKiosks();
-    } catch (err) {
-      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else {\n        setError(detail || 'Erreur lors de la modification du statut');\n      }\n      console.error('Toggle kiosk status error:', anyErr);
-      console.error(err);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail || err?.message;
+      if (status === 401 || status === 403) {
+        setError('Session expirée. Veuillez vous reconnecter.');
+        window.location.href = '/login';
+      } else {
+        setError(detail || 'Erreur lors de la modification du statut');
+      }
+      console.error('Toggle kiosk status error:', err);
     }
   };
 
