@@ -340,6 +340,24 @@ jobs:
         env:
           PYTHONPATH: .
 
+      - name: Setup Node for Kiosk UI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and start Kiosk UI
+        shell: bash
+        run: |
+          if [ -f "apps/kiosk/package.json" ]; then
+            cd apps/kiosk
+            npm ci
+            # Start Vite dev server in background on 0.0.0.0:5174
+            npm run dev -- --host 0.0.0.0 --port 5174 &
+            sleep 6
+          else
+            echo "No Kiosk app found; skipping UI startup"
+          fi
+
       - name: Setup Node for Playwright
         uses: actions/setup-node@v4
         with:
@@ -355,6 +373,7 @@ jobs:
         working-directory: backend/tests/e2e
         env:
           API_URL: http://localhost:8000
+          KIOSK_URL: http://localhost:5174
         run: npm test
 
       - name: Upload Playwright report
