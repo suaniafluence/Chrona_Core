@@ -365,8 +365,13 @@ jobs:
 
       - name: Install Playwright dependencies
         working-directory: backend/tests/e2e
+        shell: bash
         run: |
-          npm ci
+          echo "Node:" $(node -v)
+          echo "NPM:" $(npm -v)
+          ls -la
+          # Use npm install for broader compatibility (no lockfile required)
+          npm install --no-audit --no-fund
           npx playwright install --with-deps
 
       - name: Run E2E tests
