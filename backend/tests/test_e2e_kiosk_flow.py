@@ -6,7 +6,6 @@ Covers the backoffice UX contract:
 3) Listing kiosks never includes the plain api_key
 """
 
-
 import pytest
 from fastapi import status
 from httpx import AsyncClient
@@ -52,9 +51,9 @@ async def test_kiosk_create_then_generate_key(
 async def test_generate_key_requires_admin(
     async_client: AsyncClient, admin_headers: dict, auth_headers: dict
 ):
-    # Create a kiosk as setup: must be created by admin; emulate by creating then calling without admin
-    # We rely on the first step using admin; then we attempt the generate-key with non-admin.
+    # Create kiosk as ADMIN (unique fingerprint to ensure 201)
     from uuid import uuid4
+
     fp = f"forbidden-flow-fp-{uuid4()}"
     create_resp = await async_client.post(
         "/admin/kiosks",
@@ -73,3 +72,4 @@ async def test_generate_key_requires_admin(
         f"/admin/kiosks/{kiosk_id}/generate-api-key", headers=auth_headers
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
+
