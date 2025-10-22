@@ -72,4 +72,3 @@ async def test_generate_key_requires_admin(
         f"/admin/kiosks/{kiosk_id}/generate-api-key", headers=auth_headers
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
-
