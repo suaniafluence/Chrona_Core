@@ -244,6 +244,8 @@ mkcert -cert-file infra/traefik/certs/dev-localhost.pem \
 3) Démarrer en HTTPS:
 ```
 DOMAIN=localhost docker compose -f docker-compose.yml -f docker-compose.https.dev.yml up -d
+ou  
+ $env:DOMAIN='localhost'; docker compose -f docker-compose.yml -f docker-compose.https.dev.yml up -d
 ```
 
 4) Accéder en HTTPS:
