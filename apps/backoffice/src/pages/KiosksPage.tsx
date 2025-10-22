@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { kiosksAPI } from '@/lib/api';
 import type { Kiosk, CreateKioskRequest, CreateKioskResponse } from '@/types';
 import { Monitor, Plus, Power, MapPin, Key } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function KiosksPage() {
       setKiosks(data);
       setError('');
     } catch (err) {
-      setError('Erreur lors du chargement des kiosques');
+      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else {\n        setError(detail || 'Erreur lors du chargement des kiosques');\n      }\n      console.error('Load kiosks error:', anyErr);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -37,7 +37,7 @@ export default function KiosksPage() {
       setShowCreateModal(false);
       setError('');
     } catch (err) {
-      setError('Erreur lors de la création du kiosque');
+      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else if (status === 409) {\n        setError(detail || 'Conflit: nom ou empreinte déjà utilisés');\n      } else {\n        setError(detail || 'Erreur lors de la création du kiosque');\n      }\n      console.error('Create kiosk error:', anyErr);
       console.error(err);
     }
   };
@@ -47,7 +47,7 @@ export default function KiosksPage() {
       await kiosksAPI.update(kioskId, { is_active: !currentStatus });
       await loadKiosks();
     } catch (err) {
-      setError('Erreur lors de la modification du statut');
+      const anyErr = err as any;\n      const status = anyErr?.response?.status;\n      const detail = anyErr?.response?.data?.detail || anyErr?.message;\n      if (status === 401 || status === 403) {\n        setError('Session expirée. Veuillez vous reconnecter.');\n        window.location.href = '/login';\n      } else {\n        setError(detail || 'Erreur lors de la modification du statut');\n      }\n      console.error('Toggle kiosk status error:', anyErr);
       console.error(err);
     }
   };
@@ -97,10 +97,10 @@ export default function KiosksPage() {
             <Key className="w-5 h-5 text-yellow-600 mr-3 mt-0.5" />
             <div className="flex-1">
               <h3 className="text-sm font-medium text-yellow-900 mb-2">
-                Clé API générée - Copiez-la maintenant !
+                ClÃ© API gÃ©nÃ©rÃ©e - Copiez-la maintenant !
               </h3>
               <p className="text-sm text-yellow-700 mb-3">
-                Cette clé ne sera plus affichée. Configurez-la sur le kiosque :{' '}
+                Cette clÃ© ne sera plus affichÃ©e. Configurez-la sur le kiosque :{' '}
                 <strong>{createdKiosk.kiosk_name}</strong>
               </p>
               <div className="bg-white border border-yellow-300 rounded p-3 font-mono text-sm break-all">
@@ -109,17 +109,17 @@ export default function KiosksPage() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(createdKiosk.api_key);
-                  alert('Clé API copiée !');
+                  alert('ClÃ© API copiÃ©e !');
                 }}
                 className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm"
               >
-                Copier la clé
+                Copier la clÃ©
               </button>
               <button
                 onClick={() => setCreatedKiosk(null)}
                 className="mt-3 ml-2 px-4 py-2 bg-white border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 text-sm"
               >
-                J'ai sauvegardé la clé
+                J'ai sauvegardÃ© la clÃ©
               </button>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function KiosksPage() {
                 {kiosk.location}
               </div>
               <div className="text-xs text-gray-500">
-                Créé le {format(new Date(kiosk.created_at), 'dd MMM yyyy', { locale: fr })}
+                CrÃ©Ã© le {format(new Date(kiosk.created_at), 'dd MMM yyyy', { locale: fr })}
               </div>
             </div>
 
@@ -178,7 +178,7 @@ export default function KiosksPage() {
 
       {kiosks.length === 0 && (
         <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
-          Aucun kiosque configuré. Créez-en un pour commencer.
+          Aucun kiosque configurÃ©. CrÃ©ez-en un pour commencer.
         </div>
       )}
 
@@ -212,7 +212,7 @@ function CreateKioskModal({
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Créer un kiosque</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">CrÃ©er un kiosque</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -223,7 +223,7 @@ function CreateKioskModal({
               value={kioskName}
               onChange={(e) => setKioskName(e.target.value)}
               required
-              placeholder="Entrée-Étage1"
+              placeholder="EntrÃ©e-Ã‰tage1"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -236,7 +236,7 @@ function CreateKioskModal({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               required
-              placeholder="Hall d'entrée, 1er étage"
+              placeholder="Hall d'entrÃ©e, 1er Ã©tage"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -249,7 +249,7 @@ function CreateKioskModal({
               value={deviceFingerprint}
               onChange={(e) => setDeviceFingerprint(e.target.value)}
               required
-              placeholder="UUID ou identifiant matériel"
+              placeholder="UUID ou identifiant matÃ©riel"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
             />
           </div>
@@ -265,7 +265,7 @@ function CreateKioskModal({
               type="submit"
               className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              Créer
+              CrÃ©er
             </button>
           </div>
         </form>
@@ -273,3 +273,4 @@ function CreateKioskModal({
     </div>
   );
 }
+
