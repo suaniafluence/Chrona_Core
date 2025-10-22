@@ -52,6 +52,10 @@ function App() {
 
   return (
     <div className={`app ${isKioskMode ? 'kiosk-mode-active' : ''}`}>
+      {/* Always show connection status for visibility in E2E */}
+      <div style={{ position: 'fixed', top: 8, right: 8, zIndex: 1000 }}>
+        <ConnectionStatus />
+      </div>
       {/* Kiosk mode controls */}
       <KioskMode
         isActive={isKioskMode}
