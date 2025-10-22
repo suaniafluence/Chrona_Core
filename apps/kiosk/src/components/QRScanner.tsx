@@ -185,7 +185,7 @@ const QRScanner = ({ onScanSuccess, onScanError }: QRScannerProps) => {
     return (
       <div className="scanner-error">
         <h2>Erreur</h2>
-        <p>{error}</p>
+        <p className="error-message">{error}</p>
         <p className="scanner-help">
           Assurez-vous que la caméra est autorisée et fonctionnelle.
         </p>

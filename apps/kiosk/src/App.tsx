@@ -68,10 +68,18 @@ function App() {
 
       <main className="app-main">
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          <button onClick={() => setShowCameraTest(false)} disabled={!showCameraTest}>
+          <button
+            className={`btn ${!showCameraTest ? 'btn--active' : ''}`}
+            onClick={() => setShowCameraTest(false)}
+            disabled={!showCameraTest}
+          >
             Mode scan QR
           </button>
-          <button onClick={() => setShowCameraTest(true)} disabled={showCameraTest}>
+          <button
+            className={`btn ${showCameraTest ? 'btn--active' : ''}`}
+            onClick={() => setShowCameraTest(true)}
+            disabled={showCameraTest}
+          >
             Mode test caméra
           </button>
         </div>
