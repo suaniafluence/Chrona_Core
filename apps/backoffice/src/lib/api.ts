@@ -88,8 +88,8 @@ export const kiosksAPI = {
     const res = await api.get<Kiosk[]>('/admin/kiosks', { params });
     return res.data;
   },
-  create: async (data: CreateKioskRequest): Promise<CreateKioskResponse> => {
-    const res = await api.post<CreateKioskResponse>('/admin/kiosks', data);
+  create: async (data: CreateKioskRequest): Promise<Kiosk> => {
+    const res = await api.post<Kiosk>('/admin/kiosks', data);
     return res.data;
   },
   update: async (

@@ -127,40 +127,13 @@ const QRScanner = ({ onScanSuccess, onScanError }: QRScannerProps) => {
         })
 
         await Promise.race([tryStart(), timeout])
-          async (decodedText) => {
-            // Stop scanner temporarily during validation
-            await scanner.pause(true)
-
-            try {
-              // The QR code contains the JWT token
-              const result = await validatePunch(decodedText)
-              onScanSuccess(result)
-            } catch (err: any) {
-              const errorMsg = err.response?.data?.detail || err.message || 'Erreur de validation'
-              onScanError(errorMsg)
-            }
-
-            // Resume scanner after a delay
-            setTimeout(async () => {
-              try {
-                await scanner.resume()
-              } catch (resumeErr) {
-                console.error('Error resuming scanner:', resumeErr)
-              }
-            }, 3000)
-          },
-          (errorMessage) => {
-            // Ignore scanning errors (camera still searching for QR)
-            console.debug('Scan error:', errorMessage)
-          }
-        )
 
         console.log('QR > Camera started successfully!')
         setIsLoading(false)
         setInitDone(true) // Mark initialization as complete
       } catch (err: any) {
         console.error('QR > Error initializing scanner:', err)
-        const errorMsg = err.message || err.toString() || 'Impossible d\'initialiser la caméra'
+        const errorMsg = err.message || err.toString() || "Impossible d'initialiser la caméra"
         console.error('QR > Full error details:', err)
         setError(errorMsg)
         setIsLoading(false)
