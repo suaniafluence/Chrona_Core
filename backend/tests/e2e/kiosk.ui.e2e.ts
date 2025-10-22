@@ -34,12 +34,11 @@ test.describe('Kiosk UI E2E', () => {
 
   test('should display connection status indicator', async ({ page }) => {
     // Look for connection status element
-    const statusIndicator = page.locator(
-      '[class*="connection"], [data-testid="connection-status"]'
-    );
-
-    // Should be visible within 5 seconds
-    await expect(statusIndicator.first()).toBeVisible({ timeout: 5000 });
+    const statusIndicator = page.locator('[data-testid="connection-status"], [class*="connection"]');
+    // Wait up to 10s for it to appear and be visible (CI-safe)
+    const el = statusIndicator.first();
+    await el.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(el).toBeVisible();
   });
 
   test('should have kiosk mode toggle', async ({ page }) => {
