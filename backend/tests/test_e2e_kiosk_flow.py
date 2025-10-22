@@ -52,28 +52,19 @@ async def test_generate_key_requires_admin(
 ):
     # Create a kiosk as setup: must be created by admin; emulate by creating then calling without admin
     # We rely on the first step using admin; then we attempt the generate-key with non-admin.
+    from uuid import uuid4
+    fp = f"forbidden-flow-fp-{uuid4()}"
     create_resp = await async_client.post(
         "/admin/kiosks",
         json={
             "kiosk_name": "NonAdmin-Forbidden-Flow",
             "location": "Floor 2",
-            "device_fingerprint": "forbidden-flow-fp",
+            "device_fingerprint": fp,
         },
         headers=admin_headers,
     )
-    assert create_resp.status_code in (status.HTTP_201_CREATED, status.HTTP_409_CONFLICT)
-    kiosk_id = None
-    if create_resp.status_code == status.HTTP_201_CREATED:
-        kiosk_id = create_resp.json()["id"]
-    else:
-        # If already exists from a flaky previous run, list and pick it
-        list_resp = await async_client.get("/admin/kiosks", headers=admin_headers)
-        assert list_resp.status_code == status.HTTP_200_OK
-        for k in list_resp.json():
-            if k["device_fingerprint"] == "forbidden-flow-fp":
-                kiosk_id = k["id"]
-                break
-        assert kiosk_id is not None
+    assert create_resp.status_code == status.HTTP_201_CREATED, create_resp.text
+    kiosk_id = create_resp.json()["id"]
 
     # Attempt generate-key without admin role
     resp = await async_client.post(
