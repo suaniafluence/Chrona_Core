@@ -113,7 +113,12 @@ const CameraTest = () => {
         playsInline
         autoPlay
         muted
-        style={{ width: '100%', borderRadius: 12, border: '3px solid #667eea' }}
+        style={{
+          width: '100%',
+          maxWidth: 640,
+          maxHeight: 480,
+          border: '1px solid black',
+        }}
       />
       <p style={{ color: '#667eea' }}>Autorisez la caméra si demandé par le navigateur.</p>
     </div>
@@ -121,4 +126,3 @@ const CameraTest = () => {
 }
 
 export default CameraTest
-
