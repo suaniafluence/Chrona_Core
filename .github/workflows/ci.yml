@@ -340,17 +340,23 @@ jobs:
         run: |
           # Create kiosk with ID 1 if missing
           python -m tools.seed_kiosk || true
-          # Generate API key and capture it
-          python -m tools.generate_kiosk_api_key 1 | tee kiosk_key.out || true
-          # Normalize CRLF and extract after 'API KEY: '
-          KEY=$(tr -d '\r' < kiosk_key.out | awk -F'API KEY: ' '/API KEY:/{print $2; exit}')
-          if [ -n "$KEY" ]; then
-            echo "TEST_KIOSK_API_KEY=$KEY" >> $GITHUB_ENV
-            echo "KIOSK_ID=1" >> $GITHUB_ENV
-            echo "Exported TEST_KIOSK_API_KEY (length): ${#KEY}"
-          else
-            echo "WARNING: Could not extract API key; E2E API punch tests may fail"
-          fi
+          # Create admin or ensure exists
+          ADMIN_EMAIL="admin-e2e@local"
+          ADMIN_PASS="Passw0rd!"
+          python -m tools.create_admin_user --email "$ADMIN_EMAIL" --password "$ADMIN_PASS" --role admin
+          # Obtain admin token via HTTP
+          TOKEN=$(curl -fsS -X POST http://localhost:8000/auth/token \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode "username=$ADMIN_EMAIL" \
+            --data-urlencode "password=$ADMIN_PASS" | jq -r .access_token)
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then echo "Failed to get admin token"; exit 1; fi
+          # Generate kiosk API key via HTTP (authoritative)
+          API_KEY=$(curl -fsS -X POST http://localhost:8000/admin/kiosks/1/generate-api-key \
+            -H "Authorization: Bearer $TOKEN" | jq -r .api_key)
+          if [ -z "$API_KEY" ] || [ "$API_KEY" = "null" ]; then echo "Failed to generate kiosk API key"; exit 1; fi
+          echo "TEST_KIOSK_API_KEY=$API_KEY" >> $GITHUB_ENV
+          echo "KIOSK_ID=1" >> $GITHUB_ENV
+          echo "Exported TEST_KIOSK_API_KEY (length): ${#API_KEY}"
 
       - name: Start backend server
         working-directory: backend
@@ -406,6 +412,7 @@ jobs:
           API_URL: http://localhost:8000
           KIOSK_URL: http://localhost:5174
           TEST_KIOSK_API_KEY: ${{ env.TEST_KIOSK_API_KEY }}
+          KIOSK_ID: ${{ env.KIOSK_ID }}
         run: npm test
 
       - name: Upload Playwright report
