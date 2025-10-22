@@ -47,7 +47,6 @@ async def test_kiosk_create_then_generate_key(
     assert all("api_key" not in k for k in items)
 
 
-
 @pytest.mark.asyncio
 async def test_generate_key_requires_admin(
     async_client: AsyncClient, admin_headers: dict, auth_headers: dict
