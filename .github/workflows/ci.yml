@@ -413,7 +413,9 @@ jobs:
           KIOSK_URL: http://localhost:5174
           TEST_KIOSK_API_KEY: ${{ env.TEST_KIOSK_API_KEY }}
           KIOSK_ID: ${{ env.KIOSK_ID }}
-        run: npm test
+        run: |
+          echo "E2E env → API_URL=$API_URL KIOSK_URL=$KIOSK_URL KIOSK_ID=$KIOSK_ID KEY_LEN=${#TEST_KIOSK_API_KEY}"
+          npm test
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

@@ -29,7 +29,13 @@ test.describe('Complete Punch Flow E2E', () => {
   test.beforeAll(async () => {
     // In a real scenario, kiosk API key would be pre-provisioned
     // For E2E, we'll use a mock or admin-created key
-    kioskApiKey = process.env.TEST_KIOSK_API_KEY || 'test-kiosk-key';
+    kioskApiKey = process.env.TEST_KIOSK_API_KEY || '';
+    if (!kioskApiKey) {
+      console.warn('TEST_KIOSK_API_KEY missing; using fallback invalid key');
+      kioskApiKey = 'invalid-test-kiosk-key';
+    } else {
+      console.log(`Using kiosk API key (len=${kioskApiKey.length})`);
+    }
   });
 
   test('Step 1: Register user', async ({ request }) => {
