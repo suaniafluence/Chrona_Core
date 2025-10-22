@@ -278,7 +278,9 @@ jobs:
         working-directory: backend
         run: |
           pip install -r requirements.txt
-          cyclonedx-py requirements -r requirements.txt -o sbom-python.json --format json
+          # cyclonedx-py v4+ n'accepte plus --format/json ni -r
+          # Utiliser l'interface moderne: -i <input> -o <output> -j (JSON)
+          cyclonedx-py -i requirements.txt -o sbom-python.json -j
 
       - name: Setup Node for JS SBOM
         uses: actions/setup-node@v4
