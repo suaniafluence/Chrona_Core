@@ -338,6 +338,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
+          set -euo pipefail
+          sudo apt-get update -y && sudo apt-get install -y jq curl >/dev/null 2>&1 || true
           # Create kiosk with ID 1 if missing
           python -m tools.seed_kiosk || true
           # Create admin or ensure exists

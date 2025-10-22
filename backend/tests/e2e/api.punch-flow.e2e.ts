@@ -122,9 +122,11 @@ test.describe('Complete Punch Flow E2E', () => {
       },
     });
 
-    expect(response.status()).toBe(200);
+    const status = response.status();
+    const text = await response.text();
+    expect(status, `Punch validate failed: ${status} ${text}`).toBe(200);
 
-    const body = await response.json();
+    const body = JSON.parse(text);
     expect(body).toHaveProperty('success', true);
     expect(body).toHaveProperty('punch_id');
     expect(body).toHaveProperty('punched_at');
