@@ -236,9 +236,7 @@ Traefik est fourni comme reverse proxy TLS pour exposer les services en HTTPS lo
 
 2) Générer les certificats (racine du repo):
 ```
-mkcert -cert-file infra/traefik/certs/dev-localhost.pem \
-       -key-file infra/traefik/certs/dev-localhost-key.pem \
-       localhost 127.0.0.1 ::1 api.localhost backoffice.localhost kiosk.localhost
+mkcert -cert-file infra/traefik/certs/dev-localhost.pem  -key-file infra/traefik/certs/dev-localhost-key.pem  localhost 127.0.0.1 ::1 api.localhost backoffice.localhost kiosk.localhost
 ```
 
 3) Démarrer en HTTPS:
