@@ -1,0 +1,57 @@
+**PR Summary**
+
+- Adds admin attendance reports endpoint with JSON/CSV/PDF export.
+- Fixes backoffice by adding the missing API client resolving `@/lib/api`.
+- Ensures backend Docker image includes `tools/` directory.
+- Adds integration tests for reports.
+
+**Changes**
+
+- Backend
+  - `GET /admin/reports/attendance` with `format=json|csv|pdf`, admin-only.
+  - Query param alias `from_` accepts `?from=...`.
+  - CSV response streamed with `Content-Disposition`.
+  - PDF via ReportLab with a simple table.
+  - File: backend/src/routers/admin.py:664
+  - Dependency: `reportlab>=4.0.0` added (backend/requirements.txt:21)
+  - Dockerfile now copies `tools/` (backend/Dockerfile:17)
+
+- Frontend (Backoffice)
+  - New axios client exporting `authAPI`, `usersAPI`, `devicesAPI`, `kiosksAPI`, `auditLogsAPI`, `dashboardAPI`, `reportsAPI`.
+  - Base URL `/api` to use Vite proxy; auto `Authorization: Bearer` header.
+  - File: apps/backoffice/src/lib/api.ts:1
+  - .gitignore updated to track `apps/backoffice/src/lib/**` (.gitignore:2)
+
+- Tests
+  - New tests for reports endpoint (JSON/CSV/PDF, validation, auth).
+  - File: backend/tests/test_admin_reports.py:1
+  - All tests: 75 passed, 1 skipped.
+
+**How To Verify**
+
+- Docker
+  - `docker compose up -d --build`
+  - Backend: http://localhost:8000/docs (login as admin; exercise `/admin/reports/attendance`)
+  - Backoffice: http://localhost:5173 (page “Rapports”, test JSON/CSV/PDF)
+
+- Local (optional)
+  - Backend: `cd Chrona_Core/backend && pip install -r requirements.txt && uvicorn src.main:app --reload`
+  - Tests: `cd Chrona_Core/backend && pytest -q`
+
+- Curl examples
+  - JSON: `curl "http://localhost:8000/admin/reports/attendance?from=2025-01-01&to=2025-12-31&format=json" -H "Authorization: Bearer <token>"`
+  - CSV: `curl -OJ "http://localhost:8000/admin/reports/attendance?from=2025-01-01&to=2025-12-31&format=csv" -H "Authorization: Bearer <token>"`
+  - PDF: `curl -OJ "http://localhost:8000/admin/reports/attendance?from=2025-01-01&to=2025-12-31&format=pdf" -H "Authorization: Bearer <token>"`
+
+**Notes**
+
+- PDF export is intentionally simple; we can style/brand it later (logo, footers, pagination).
+- Large exports may benefit from pagination/streaming or background jobs.
+
+**Commits**
+
+- fix(backend): copy tools directory in Dockerfile
+- fix(backoffice): add API client in src/lib and unignore it in .gitignore
+- feat(backend): add GET /admin/reports/attendance supporting JSON and CSV export (admin-only); PDF returns 501 for now
+- feat(backend): implement PDF export for /admin/reports/attendance using ReportLab; add query alias for ?from=; add reportlab dependency
+- test(backend): add tests for /admin/reports/attendance (JSON/CSV/PDF, validation, auth)
