@@ -7,7 +7,7 @@ export default function ConnectionStatus() {
   const [lastCheck, setLastCheck] = useState<Date>(new Date())
 
   useEffect(() => {
-    // Check connection every 10 seconds
+    // Check connection every 10 seconds (or faster if offline)
     const checkConnection = async () => {
       try {
         await healthCheck()
@@ -15,6 +15,7 @@ export default function ConnectionStatus() {
         setLastCheck(new Date())
       } catch (error) {
         setIsOnline(false)
+        setLastCheck(new Date())
         console.error('Backend connection failed:', error)
       }
     }
@@ -22,10 +23,27 @@ export default function ConnectionStatus() {
     // Initial check
     checkConnection()
 
-    // Regular checks
+    // Listen to browser online/offline events (faster than health check)
+    const handleOnline = () => {
+      setIsOnline(true)
+      setLastCheck(new Date())
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+      setLastCheck(new Date())
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Regular health checks every 10 seconds
     const interval = setInterval(checkConnection, 10000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
   }, [])
 
   return (
