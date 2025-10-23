@@ -334,6 +334,30 @@ jobs:
         working-directory: backend
         run: python tools/generate_keys.py
 
+      - name: Initialize database schema
+        working-directory: backend
+        shell: bash
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:///./app.db
+        run: |
+          cat > /tmp/init_db.py << 'EOF'
+          import os, asyncio
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from sqlmodel import SQLModel
+          async def init_db():
+              engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
+              try:
+                  import src.models
+                  async with engine.begin() as conn:
+                      await conn.run_sync(SQLModel.metadata.create_all)
+                  print("Database schema initialized")
+              finally:
+                  await engine.dispose()
+          asyncio.run(init_db())
+          EOF
+          python /tmp/init_db.py
+
       - name: Seed kiosk and generate API key
         working-directory: backend
         shell: bash

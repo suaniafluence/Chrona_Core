@@ -72,7 +72,7 @@ async def lifespan(app):  # type: ignore[no-untyped-def]
         try:
             import importlib
 
-            importlib.import_module("src.models.user")
+            importlib.import_module("src.models")
         except Exception:
             pass
         async with current_engine.begin() as conn:
