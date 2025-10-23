@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 from typing import List
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from .db import db_health, lifespan
 from .routers.admin import router as admin_router
@@ -129,6 +131,53 @@ app.include_router(admin_router)
 app.include_router(devices_router)
 app.include_router(onboarding_router)
 app.include_router(punch_router)
+
+# Mount static files for Swagger UI (downloaded in Dockerfile)
+static_path = Path("/app/static/swagger-ui")
+if static_path.exists():
+    app.mount("/static/swagger-ui", StaticFiles(directory=str(static_path)), name="swagger_ui_static")
+
+
+@app.get("/docs-offline", response_class=HTMLResponse)
+async def swagger_ui_offline() -> str:
+    """Swagger UI with locally served files (fully offline)."""
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Chrona API Documentation</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/static/swagger-ui/swagger-ui.css">
+        <style>
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            *, *:before, *:after { box-sizing: inherit; }
+            body { margin:0; background: #fafafa; }
+        </style>
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script src="/static/swagger-ui/swagger-ui-bundle.js" charset="UTF-8"></script>
+        <script src="/static/swagger-ui/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+        <script>
+            const ui = SwaggerUIBundle({
+                url: "/openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "BaseLayout"
+            })
+        </script>
+    </body>
+    </html>
+    """
+
 
 @app.get("/health")
 async def health() -> dict:
