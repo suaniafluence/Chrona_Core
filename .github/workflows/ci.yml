@@ -248,6 +248,7 @@ jobs:
         if: always()
         with:
           sarif_file: semgrep.sarif
+        continue-on-error: true
 
       - name: Upload Semgrep results
         uses: actions/upload-artifact@v4
@@ -270,15 +271,15 @@ jobs:
           python-version: '3.11'
 
       - name: Install CycloneDX
-        run: pip install cyclonedx-bom
+        run: pip install cyclonedx-py
 
       - name: Generate Python SBOM
         working-directory: backend
         run: |
           pip install -r requirements.txt
-          # cyclonedx-py v4+ n'accepte plus --format/json ni -r
-          # Utiliser l'interface moderne: -i <input> -o <output> -j (JSON)
-          cyclonedx-py -i requirements.txt -o sbom-python.json -j
+          # cyclonedx-py v4+ requires 'requirements' subcommand
+          # Syntax: cyclonedx-py <subcommand> -i <input> -o <output> -j (JSON)
+          cyclonedx-py requirements -i requirements.txt -o sbom-python.json -j
 
       - name: Setup Node for JS SBOM
         uses: actions/setup-node@v4
