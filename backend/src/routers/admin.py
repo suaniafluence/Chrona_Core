@@ -285,7 +285,7 @@ async def create_kiosk(
     Raises:
         HTTPException 409: Kiosk name or fingerprint already exists
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     # Check for duplicate kiosk_name
     result = await session.execute(
@@ -314,7 +314,7 @@ async def create_kiosk(
         device_fingerprint=kiosk_data.device_fingerprint,
         public_key=kiosk_data.public_key,
         is_active=True,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.utcnow(),
     )
     session.add(kiosk)
     await session.commit()
