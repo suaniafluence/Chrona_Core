@@ -58,28 +58,40 @@ Le kiosk est déjà configuré avec sa clé API !
 
 ---
 
-## 📱 Configuration de l'App Mobile (1 commande)
+## 📱 Configuration de l'App Mobile
 
+### Sur votre PC (Windows)
+
+**1. Configurer automatiquement:**
 ```powershell
 .\setup-mobile.ps1
 ```
 
-**Ce script:**
-- ✅ Détecte automatiquement votre IP WiFi
-- ✅ Crée le fichier `.env` pour React Native
-- ✅ Installe les dépendances npm
-- ✅ Affiche les instructions pour le pare-feu
+**2. Configurer le pare-feu (PowerShell en Administrateur):**
+```powershell
+netsh advfirewall firewall add rule name="Chrona Backend API" dir=in action=allow protocol=TCP localport=8000
+```
 
-**Puis démarrez l'app:**
-
+**3. Démarrer l'app:**
 ```bash
 cd apps/mobile
+npm install    # Première fois seulement
 npm start
 ```
 
-**Options:**
-- **Émulateur Android:** `npm run android`
-- **Appareil physique:** Scannez le QR code avec Expo Go
+Un **QR code** s'affichera dans le terminal.
+
+### Sur votre Téléphone (Android/iOS)
+
+**1. Installer Expo Go:**
+- Android: [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+- iOS: [App Store](https://apps.apple.com/app/expo-go/id982107779)
+
+**2. Scanner le QR code:**
+- Android: Ouvrir Expo Go → "Scan QR Code"
+- iOS: Ouvrir l'app Caméra → Scanner le QR code
+
+**📖 [Guide complet d'installation mobile](apps/mobile/INSTALLATION.md)**
 
 ---
 

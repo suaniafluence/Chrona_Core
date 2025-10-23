@@ -41,11 +41,19 @@ Accès: http://localhost:5174
 Accès: http://localhost:5173
 
 ### Application Mobile (Employés)
+
+**Sur PC:**
 ```powershell
 .\setup-mobile.ps1    # Configuration auto
 cd apps/mobile
-npm start             # Démarrage
+npm start             # Affiche un QR code
 ```
+
+**Sur téléphone:**
+1. Installer [Expo Go](https://expo.dev/client)
+2. Scanner le QR code avec Expo Go
+
+**📱 [Guide d'installation mobile détaillé](apps/mobile/INSTALLATION.md)**
 
 **[📖 Guide complet de déploiement](docs/GUIDE_DEPLOIEMENT.md)**
 
