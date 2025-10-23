@@ -4,6 +4,7 @@ from typing import List
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from .db import db_health, lifespan
 from .routers.admin import router as admin_router
@@ -129,10 +130,50 @@ app.include_router(devices_router)
 app.include_router(onboarding_router)
 app.include_router(punch_router)
 
-
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "db": "ok" if await db_health() else "down"}
+
+
+@app.get("/docs-custom", response_class=HTMLResponse)
+async def custom_swagger_ui() -> str:
+    """Swagger UI with alternative CDN for offline environments."""
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Chrona API Documentation</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+        <style>
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            *, *:before, *:after { box-sizing: inherit; }
+            body { margin:0; background: #fafafa; }
+        </style>
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js" charset="UTF-8"></script>
+        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+        <script>
+            const ui = SwaggerUIBundle({
+                url: "/openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "BaseLayout"
+            })
+        </script>
+    </body>
+    </html>
+    """
 
 
 @app.get("/")
