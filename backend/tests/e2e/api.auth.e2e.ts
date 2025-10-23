@@ -93,7 +93,8 @@ test.describe('Authentication API E2E', () => {
   test('should reject /auth/me without token', async ({ request }) => {
     const response = await request.get(`${API_BASE}/auth/me`);
 
-    expect(response.status()).toBe(403);
+    // OAuth2 standard: missing credentials returns 401 (Unauthorized), not 403 (Forbidden)
+    expect(response.status()).toBe(401);
   });
 
   test('should reject /auth/me with invalid token', async ({ request }) => {

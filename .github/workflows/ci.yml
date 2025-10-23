@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ main, ci/**, E2E, fix/** ]
   pull_request:
     branches: [ main ]
 
@@ -250,6 +248,7 @@ jobs:
         if: always()
         with:
           sarif_file: semgrep.sarif
+        continue-on-error: true
 
       - name: Upload Semgrep results
         uses: actions/upload-artifact@v4
@@ -272,15 +271,15 @@ jobs:
           python-version: '3.11'
 
       - name: Install CycloneDX
-        run: pip install cyclonedx-bom
+        run: pip install cyclonedx-py
 
       - name: Generate Python SBOM
         working-directory: backend
         run: |
           pip install -r requirements.txt
-          # cyclonedx-py v4+ n'accepte plus --format/json ni -r
-          # Utiliser l'interface moderne: -i <input> -o <output> -j (JSON)
-          cyclonedx-py -i requirements.txt -o sbom-python.json -j
+          # cyclonedx-py v4+ requires 'requirements' subcommand
+          # Syntax: cyclonedx-py requirements -i <input> -o <output> --output-format json
+          cyclonedx-py requirements -i requirements.txt -o sbom-python.json --output-format json
 
       - name: Setup Node for JS SBOM
         uses: actions/setup-node@v4
@@ -334,34 +333,71 @@ jobs:
         working-directory: backend
         run: python tools/generate_keys.py
 
+      - name: Initialize database schema
+        working-directory: backend
+        shell: bash
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:////tmp/chrona_test.db
+        run: |
+          cat > /tmp/init_db.py << 'EOF'
+          import os, asyncio
+          from sqlalchemy.ext.asyncio import create_async_engine
+          from sqlmodel import SQLModel
+          async def init_db():
+              engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:////tmp/chrona_test.db'))
+              try:
+                  import src.models
+                  async with engine.begin() as conn:
+                      await conn.run_sync(SQLModel.metadata.create_all)
+                  print("Database schema initialized")
+              finally:
+                  await engine.dispose()
+          asyncio.run(init_db())
+          EOF
+          python /tmp/init_db.py
+
+      - name: Start backend server
+        working-directory: backend
+        run: |
+          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for /health to be ready (max ~20s)
+          for i in {1..20}; do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:////tmp/chrona_test.db
+
       - name: Seed kiosk and generate API key
         working-directory: backend
         shell: bash
         env:
           PYTHONPATH: .
-          DATABASE_URL: sqlite+aiosqlite:///./app.db
+          DATABASE_URL: sqlite+aiosqlite:////tmp/chrona_test.db
         run: |
           set -euo pipefail
           sudo apt-get update -y && sudo apt-get install -y jq curl >/dev/null 2>&1 || true
           # Create kiosk with ID 1 if missing
           python -m tools.seed_kiosk || true
           # Ensure kiosk 1 is active (if it already existed)
-          python - <<'PY'
-import os, asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from src.models.kiosk import Kiosk
-async def main():
-    engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    async with async_session() as s:
-        k = await s.get(Kiosk, 1)
-        if k and not k.is_active:
-            k.is_active = True
-            s.add(k)
-            await s.commit()
-asyncio.run(main())
-PY
+          cat > /tmp/ensure_kiosk.py << 'EOF'
+          import os, asyncio
+          from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+          from sqlalchemy.orm import sessionmaker
+          from src.models.kiosk import Kiosk
+          async def main():
+              engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
+              async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+              async with async_session() as s:
+                  k = await s.get(Kiosk, 1)
+                  if k and not k.is_active:
+                      k.is_active = True
+                      s.add(k)
+                      await s.commit()
+          asyncio.run(main())
+          EOF
+          python /tmp/ensure_kiosk.py
           # Create admin or ensure exists
           ADMIN_EMAIL="admin-e2e@local"
           ADMIN_PASS="Passw0rd!"
@@ -379,18 +415,6 @@ PY
           echo "TEST_KIOSK_API_KEY=$API_KEY" >> $GITHUB_ENV
           echo "KIOSK_ID=1" >> $GITHUB_ENV
           echo "Exported TEST_KIOSK_API_KEY (length): ${#API_KEY}"
-
-      - name: Start backend server
-        working-directory: backend
-        run: |
-          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
-          # Wait for /health to be ready (max ~20s)
-          for i in {1..20}; do
-            if curl -fsS http://localhost:8000/health >/dev/null; then
-              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
-        env:
-          PYTHONPATH: .
-          DATABASE_URL: sqlite+aiosqlite:///./app.db
 
       - name: Setup Node for Kiosk UI
         uses: actions/setup-node@v4

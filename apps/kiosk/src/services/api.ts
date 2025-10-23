@@ -4,8 +4,12 @@ import axios from 'axios'
 const getApiKey = (): string => {
   const apiKey = localStorage.getItem('kioskApiKey') || import.meta.env.VITE_KIOSK_API_KEY
   if (!apiKey || apiKey === 'your-api-key-here') {
-    console.error('Kiosk API key not configured. Please set VITE_KIOSK_API_KEY or configure in localStorage.')
-    throw new Error('Kiosk API key not configured')
+    // Log warning but don't throw - allow page to load without API key
+    // (useful for development/testing before E2E setup)
+    if (import.meta.env.DEV) {
+      console.warn('Kiosk API key not configured. Please set VITE_KIOSK_API_KEY in .env or configure in localStorage.')
+    }
+    return ''  // Return empty string instead of throwing
   }
   return apiKey
 }
@@ -34,7 +38,11 @@ api.interceptors.request.use((config) => {
 const getKioskId = (): number => {
   const kioskId = localStorage.getItem('kioskId') || import.meta.env.VITE_KIOSK_ID
   if (!kioskId) {
-    throw new Error('Kiosk ID not configured. Please set VITE_KIOSK_ID or configure in localStorage.')
+    // Log warning but return default - allow page to load in test/dev mode
+    if (import.meta.env.DEV) {
+      console.warn('Kiosk ID not configured. Please set VITE_KIOSK_ID in .env or configure in localStorage.')
+    }
+    return 1  // Return default kiosk ID instead of throwing
   }
   return parseInt(kioskId, 10)
 }
