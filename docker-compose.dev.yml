@@ -1,4 +1,18 @@
 services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
   db:
     image: postgres:16
     environment:
@@ -20,7 +34,7 @@ services:
       context: ./backend
     environment:
       DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://api.localhost,https://api.localhost
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://api.localhost,http://backoffice.localhost,http://kiosk.localhost
       ALLOW_CREDENTIALS: "false"
       ALLOWED_METHODS: "*"
       ALLOWED_HEADERS: "*"
