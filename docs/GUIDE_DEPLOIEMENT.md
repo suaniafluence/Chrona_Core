@@ -241,11 +241,20 @@ echo "$SECRET_KEY" | wc -c
 ```
 
 **Utilisation dans `.env`:**
+
+**Option 1: Script Python (recommandé)**
+```bash
+# Depuis la racine du projet ou backend/
+python backend/tools/generate_secret_key.py              # Affiche la clé
+python backend/tools/generate_secret_key.py --env dev   # Ajoute à .env.dev
+```
+
+**Option 2: Copier-coller manuel**
 ```bash
 # Copier-coller directement le résultat:
 SECRET_KEY=T3F9kL2mN8X5jQ1pR4vY9wZ6aB7cD0eF1gH2iJ3kL4mN5oP6qR7sT8uV9wX0yZ1aB2cD3eF4
 
-# OU copier-coller sans le retour à la ligne final:
+# OU générer avec OpenSSL et ajouter au fichier:
 SECRET_KEY=$(openssl rand -base64 64 | tr -d '\n')
 echo "SECRET_KEY=$SECRET_KEY" >> backend/.env
 ```
