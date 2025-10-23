@@ -182,10 +182,11 @@ ALLOW_CREDENTIALS=false
 ALLOWED_METHODS=*
 ALLOWED_HEADERS=*
 
-# Sécurité (générer une clé aléatoire sécurisée)
-SECRET_KEY=dev-secret-CHANGE-ME-IN-PRODUCTION
+# Sécurité - SECRET_KEY pour JWT et sessions
+# ⚠️ IMPORTANT: Générer une clé aléatoire forte (voir ci-dessous)
+SECRET_KEY=votre-cle-secrete-aleatoire-de-64-caracteres-minimum
 
-# JWT RS256
+# JWT RS256 (pour les QR codes éphémères)
 ALGORITHM=RS256
 JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
 JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
@@ -198,6 +199,65 @@ EMAIL_FROM_NAME=Chrona Dev
 # Logs
 LOG_LEVEL=debug
 ```
+
+#### Générer une SECRET_KEY Sécurisée
+
+La `SECRET_KEY` est utilisée pour:
+- Signer les JWT tokens (HS256 - legacy, si utilisé)
+- Chiffrer les sessions
+- Protéger les données sensibles
+
+**Génération recommandée (64 caractères, base64):**
+
+**Windows PowerShell:**
+```powershell
+# Méthode 1: Utiliser l'API .NET
+$bytes = New-Object byte[] 64
+(New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+**Linux / macOS:**
+```bash
+# Méthode 1: OpenSSL (recommandé)
+openssl rand -base64 64
+
+# Méthode 2: Python
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+
+# Méthode 3: Head de /dev/urandom
+head -c 64 /dev/urandom | base64
+```
+
+**Résultat attendu** (exemple - NE PAS utiliser ceci en production!):
+```
+T3F9kL2mN8X5jQ1pR4vY9wZ6aB7cD0eF1gH2iJ3kL4mN5oP6qR7sT8uV9wX0yZ1aB2cD3eF4
+```
+
+**Validation:**
+```bash
+# Vérifier la longueur (au moins 32 caractères, 64+ recommandé)
+echo "$SECRET_KEY" | wc -c
+```
+
+**Utilisation dans `.env`:**
+```bash
+# Copier-coller directement le résultat:
+SECRET_KEY=T3F9kL2mN8X5jQ1pR4vY9wZ6aB7cD0eF1gH2iJ3kL4mN5oP6qR7sT8uV9wX0yZ1aB2cD3eF4
+
+# OU copier-coller sans le retour à la ligne final:
+SECRET_KEY=$(openssl rand -base64 64 | tr -d '\n')
+echo "SECRET_KEY=$SECRET_KEY" >> backend/.env
+```
+
+**⚠️ Règles de Sécurité:**
+- ✅ Générer une clé DIFFÉRENTE pour chaque environnement (dev, staging, prod)
+- ✅ Ne JAMAIS réutiliser la même clé
+- ✅ Ne JAMAIS mettre en dur dans le code
+- ✅ Ne JAMAIS commiter dans Git (utiliser `.env` qui est dans `.gitignore`)
+- ✅ En production, utiliser un gestionnaire de secrets (AWS Secrets Manager, Azure Key Vault, Vault, etc.)
+- ❌ Ne pas utiliser des clés simples ou prédictibles
+- ❌ Ne pas utiliser le même SECRET_KEY entre environments
 
 **Frontend** - Configurer `apps/backoffice/.env` et `apps/kiosk/.env`:
 
@@ -586,9 +646,9 @@ Créer `/opt/chrona/.env.production`:
 # Base de données PostgreSQL (PRODUCTION)
 DATABASE_URL=postgresql+asyncpg://chrona:STRONG-DB-PASSWORD@db:5432/chrona
 
-# Sécurité - GÉNÉRER UNE CLÉ ALÉATOIRE FORTE
-# Commande: openssl rand -base64 64
-SECRET_KEY=VOTRE-CLE-SECRETE-ALEATOIRE-TRES-LONGUE-64-CARACTERES-MINIMUM
+# Sécurité - SECRET_KEY (voir ci-dessous pour génération)
+# ⚠️ CRITICAL: Générer avec openssl rand -base64 64 ou secrets manager
+SECRET_KEY=VOTRE-CLE-SECRETE-ALEATOIRE-GENEREE-DE-64-CARACTERES-MINIMUM
 
 # JWT RS256 (Production)
 ALGORITHM=RS256
@@ -603,13 +663,9 @@ ALLOW_CREDENTIALS=true
 ALLOWED_METHODS=GET,POST,PUT,PATCH,DELETE,OPTIONS
 ALLOWED_HEADERS=Content-Type,Authorization
 
-# Email - Configuration SMTP Production
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=noreply@votre-domaine.com
-SMTP_PASSWORD=APP-SPECIFIC-PASSWORD
-SMTP_USE_TLS=true
+# Email - Configuration SMTP Production (SendGrid recommandé)
+EMAIL_PROVIDER=sendgrid
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 EMAIL_FROM_ADDRESS=noreply@votre-domaine.com
 EMAIL_FROM_NAME=Chrona - Pointage
 
@@ -620,11 +676,66 @@ LOG_LEVEL=warning
 # SENTRY_DSN=https://xxx@sentry.io/xxx
 ```
 
-**⚠️ IMPORTANT:** Protéger ce fichier:
+#### Générer SECRET_KEY pour Production
+
+⚠️ **CRITIQUE EN PRODUCTION** - Utiliser un générateur cryptographiquement sécurisé:
+
+**Sur le serveur de déploiement (Linux):**
+```bash
+# Générer une clé avec OpenSSL
+SECRET_KEY=$(openssl rand -base64 64 | tr -d '\n')
+
+# Afficher la clé générée
+echo "SECRET_KEY=$SECRET_KEY"
+
+# Ajouter au fichier .env.production
+echo "SECRET_KEY=$SECRET_KEY" >> /opt/chrona/.env.production
+```
+
+**Alternative: Générer localement, puis transférer sécurisé**
+```bash
+# Localement (sur votre machine)
+openssl rand -base64 64 > /tmp/secret_key.txt
+
+# Copier vers le serveur avec SCP chiffré
+scp /tmp/secret_key.txt admin@votre-serveur:/tmp/
+ssh admin@votre-serveur
+cat /tmp/secret_key.txt >> /opt/chrona/.env.production
+rm /tmp/secret_key.txt
+```
+
+**Avec un Secrets Manager (recommandé):**
+```bash
+# AWS Secrets Manager
+aws secretsmanager create-secret --name chrona/secret-key \
+  --secret-string "$(openssl rand -base64 64)"
+
+# Azure Key Vault
+az keyvault secret set --vault-name chrona-vault \
+  --name secret-key \
+  --value "$(openssl rand -base64 64)"
+
+# HashiCorp Vault
+vault kv put secret/chrona/backend \
+  secret_key="$(openssl rand -base64 64)"
+```
+
+**⚠️ IMPORTANT:** Protéger le fichier:
 ```bash
 sudo chmod 600 /opt/chrona/.env.production
 sudo chown root:root /opt/chrona/.env.production
+
+# Vérifier les permissions
+ls -la /opt/chrona/.env.production
+# Résultat attendu: -rw------- 1 root root ...
 ```
+
+**⚠️ Ne JAMAIS:**
+- Mettre en dur dans le code source
+- Commiter dans Git
+- Envoyer par email
+- Logguer ou afficher dans les logs
+- Copier-coller dans des fichiers non-chiffrés
 
 ### Étape 5: Configurer Docker Compose (Production)
 
