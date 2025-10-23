@@ -1,10 +1,63 @@
-# Chrona
+# Chrona - Système de Pointage Sécurisé
 
 [![CI](https://github.com/suaniafluence/Chrona_Core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/suaniafluence/Chrona_Core/actions/workflows/ci.yml)
 [![Docker Publish](https://github.com/suaniafluence/Chrona_Core/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/suaniafluence/Chrona_Core/actions/workflows/docker-publish.yml)
 
+Système de pointage employés avec QR codes éphémères signés (JWT RS256), attestation d'appareil et conformité RGPD.
 
-Voir `AGENTS.md` pour le guide local et `docs/TODO.md` pour la feuille de route.
+---
+
+## 🚀 Démarrage Rapide (Installation en 1 Commande)
+
+**Windows (PowerShell):**
+```powershell
+.\setup-dev.ps1
+```
+
+**Ce script fait tout automatiquement:**
+- ✅ Génère les clés JWT RS256 et SECRET_KEY
+- ✅ Configure les fichiers .env
+- ✅ Démarre Backend API + PostgreSQL
+- ✅ Applique les migrations
+- ✅ Crée un admin (admin@example.com / Passw0rd!)
+- ✅ Configure le kiosk avec sa clé API
+
+**Durée:** ~2-3 minutes | **[Voir le guide détaillé](QUICK_START.md)**
+
+---
+
+## 📱 Déploiement des Applications
+
+### Kiosk (Tablette de pointage)
+```powershell
+.\start-kiosk.ps1
+```
+Accès: http://localhost:5174
+
+### Back-office (Administration RH)
+```powershell
+.\start-backoffice.ps1
+```
+Accès: http://localhost:5173
+
+### Application Mobile (Employés)
+```powershell
+.\setup-mobile.ps1    # Configuration auto
+cd apps/mobile
+npm start             # Démarrage
+```
+
+**[📖 Guide complet de déploiement](docs/GUIDE_DEPLOIEMENT.md)**
+
+---
+
+## 📚 Documentation
+
+- **[QUICK_START.md](QUICK_START.md)** - Guide de démarrage rapide (recommandé)
+- **[docs/GUIDE_DEPLOIEMENT.md](docs/GUIDE_DEPLOIEMENT.md)** - Guide complet d'installation
+- **[CLAUDE.md](CLAUDE.md)** - Configuration pour développeurs
+- **[docs/TODO.md](docs/TODO.md)** - Roadmap et tâches
+- **[AGENTS.md](AGENTS.md)** - Guide local détaillé
 
 Image GHCR
 - Nom d’image: `ghcr.io/suaniafluence/chrona-core-backend`

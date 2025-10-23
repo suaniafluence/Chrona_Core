@@ -4,6 +4,36 @@ Ce guide décrit les étapes complètes pour installer et configurer Chrona en e
 
 ---
 
+## ⚡ Installation Rapide (Recommandé)
+
+**Pour un démarrage rapide en 1 commande, utilisez les scripts automatisés:**
+
+### Windows (PowerShell)
+```powershell
+# Installation complète
+.\setup-dev.ps1
+
+# Démarrage des applications
+.\start-kiosk.ps1
+.\start-backoffice.ps1
+.\setup-mobile.ps1
+```
+
+**➡️ [Voir le guide de démarrage rapide (QUICK_START.md)](../QUICK_START.md)**
+
+**Les scripts automatisés gèrent:**
+- ✅ Génération des clés JWT RS256 et SECRET_KEY
+- ✅ Configuration des fichiers .env
+- ✅ Démarrage automatique des services (Backend, DB, Kiosk, Backoffice)
+- ✅ Migrations de base de données
+- ✅ Création de l'utilisateur admin
+- ✅ Configuration de la clé API du kiosk
+- ✅ Détection automatique de l'IP WiFi pour mobile
+
+**Si vous préférez une installation manuelle détaillée, continuez ci-dessous.**
+
+---
+
 ## Table des Matières
 
 1. [Prérequis Système](#prérequis-système)
