@@ -278,8 +278,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           # cyclonedx-py v4+ requires 'requirements' subcommand
-          # Syntax: cyclonedx-py <subcommand> -i <input> -o <output> -j (JSON)
-          cyclonedx-py requirements -i requirements.txt -o sbom-python.json -j
+          # Syntax: cyclonedx-py requirements -i <input> -o <output> --output-format json
+          cyclonedx-py requirements -i requirements.txt -o sbom-python.json --output-format json
 
       - name: Setup Node for JS SBOM
         uses: actions/setup-node@v4
