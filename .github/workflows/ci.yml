@@ -346,22 +346,23 @@ jobs:
           # Create kiosk with ID 1 if missing
           python -m tools.seed_kiosk || true
           # Ensure kiosk 1 is active (if it already existed)
-          python - <<'PY'
-import os, asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from src.models.kiosk import Kiosk
-async def main():
-    engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    async with async_session() as s:
-        k = await s.get(Kiosk, 1)
-        if k and not k.is_active:
-            k.is_active = True
-            s.add(k)
-            await s.commit()
-asyncio.run(main())
-PY
+          cat > /tmp/ensure_kiosk.py << 'EOF'
+          import os, asyncio
+          from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+          from sqlalchemy.orm import sessionmaker
+          from src.models.kiosk import Kiosk
+          async def main():
+              engine = create_async_engine(os.getenv('DATABASE_URL','sqlite+aiosqlite:///./app.db'))
+              async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+              async with async_session() as s:
+                  k = await s.get(Kiosk, 1)
+                  if k and not k.is_active:
+                      k.is_active = True
+                      s.add(k)
+                      await s.commit()
+          asyncio.run(main())
+          EOF
+          python /tmp/ensure_kiosk.py
           # Create admin or ensure exists
           ADMIN_EMAIL="admin-e2e@local"
           ADMIN_PASS="Passw0rd!"
