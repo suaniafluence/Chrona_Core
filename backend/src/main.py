@@ -135,7 +135,11 @@ app.include_router(punch_router)
 # Mount static files for Swagger UI (downloaded in Dockerfile)
 static_path = Path("/app/static/swagger-ui")
 if static_path.exists():
-    app.mount("/static/swagger-ui", StaticFiles(directory=str(static_path)), name="swagger_ui_static")
+    app.mount(
+        "/static/swagger-ui",
+        StaticFiles(directory=str(static_path)),
+        name="swagger_ui_static",
+    )
 
 
 @app.get("/docs-offline", response_class=HTMLResponse)
@@ -150,15 +154,15 @@ async def swagger_ui_offline() -> str:
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/static/swagger-ui/swagger-ui.css">
         <style>
-            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }  # noqa: E501
             *, *:before, *:after { box-sizing: inherit; }
             body { margin:0; background: #fafafa; }
         </style>
     </head>
     <body>
         <div id="swagger-ui"></div>
-        <script src="/static/swagger-ui/swagger-ui-bundle.js" charset="UTF-8"></script>
-        <script src="/static/swagger-ui/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+        <script src="/static/swagger-ui/swagger-ui-bundle.js" charset="UTF-8"></script>  # noqa: E501
+        <script src="/static/swagger-ui/swagger-ui-standalone-preset.js" charset="UTF-8"></script>  # noqa: E501
         <script>
             const ui = SwaggerUIBundle({
                 url: "/openapi.json",
@@ -189,7 +193,7 @@ async def redoc_offline() -> str:
         <title>Chrona API - ReDoc</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">  # noqa: E501
         <style>
             body {
                 margin: 0;
@@ -199,7 +203,7 @@ async def redoc_offline() -> str:
     </head>
     <body>
         <redoc spec-url='/openapi.json'></redoc>
-        <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"> </script>
+        <script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"> </script>  # noqa: E501
     </body>
     </html>
     """
@@ -220,17 +224,17 @@ async def custom_swagger_ui() -> str:
         <title>Chrona API Documentation</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">  # noqa: E501
         <style>
-            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }  # noqa: E501
             *, *:before, *:after { box-sizing: inherit; }
             body { margin:0; background: #fafafa; }
         </style>
     </head>
     <body>
         <div id="swagger-ui"></div>
-        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js" charset="UTF-8"></script>
-        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js" charset="UTF-8"></script>  # noqa: E501
+        <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js" charset="UTF-8"></script>  # noqa: E501
         <script>
             const ui = SwaggerUIBundle({
                 url: "/openapi.json",
