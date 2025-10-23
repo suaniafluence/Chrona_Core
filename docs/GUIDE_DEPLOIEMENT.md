@@ -156,7 +156,22 @@ Cela génère:
 - `backend/jwt_private_key.pem` (clé privée, **NE JAMAIS COMMITER**)
 - `backend/jwt_public_key.pem` (clé publique)
 
-#### Étape 3: Configurer les variables d'environnement
+#### Étape 3: Générer les clés de sécurité
+
+Avant de configurer `.env`, générer une **SECRET_KEY** sécurisée:
+
+```bash
+# Depuis la racine du projet
+python backend/tools/generate_secret_key.py
+
+# Résultat (exemple):
+# Generated SECRET_KEY (86 chars):
+#   RxJaCXMAm2cR58vJL-VmBy39alcXFSDlbCSKkLCJmflhH8mSQwQVVyCBxRtVoDEgP-3Uzg2zwDue9Vw3pcqZwQ
+```
+
+Copier cette clé pour l'étape suivante (elle sera utilisée dans `.env`).
+
+#### Étape 4: Configurer les variables d'environnement
 
 **Backend** - Copier `backend/.env.example` → `backend/.env`:
 
