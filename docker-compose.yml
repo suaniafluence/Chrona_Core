@@ -1,4 +1,26 @@
 services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=admin@chrona.local
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/acme:rw
+    restart: unless-stopped
+
   db:
     image: postgres:16
     environment:
@@ -20,7 +42,7 @@ services:
       context: ./backend
     environment:
       DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://api.localhost,https://api.localhost
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://api.localhost,https://api.localhost,https://backoffice.localhost,https://kiosk.localhost,http://backoffice.localhost,http://kiosk.localhost
       ALLOW_CREDENTIALS: "false"
       ALLOWED_METHODS: "*"
       ALLOWED_HEADERS: "*"
@@ -33,8 +55,17 @@ services:
       - ./backend/jwt_public_key.pem:/app/jwt_public_key.pem:ro
     labels:
       - traefik.enable=true
+      # HTTP → HTTPS redirect
       - traefik.http.routers.backend.rule=Host(`api.localhost`)
       - traefik.http.routers.backend.entrypoints=web
+      - traefik.http.routers.backend.middlewares=backend-redirect
+      - traefik.http.middlewares.backend-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.backend-redirect.redirectscheme.permanent=true
+      # HTTPS
+      - traefik.http.routers.backend-secure.rule=Host(`api.localhost`)
+      - traefik.http.routers.backend-secure.entrypoints=websecure
+      - traefik.http.routers.backend-secure.tls=true
+      - traefik.http.routers.backend-secure.service=backend
       - traefik.http.services.backend.loadbalancer.server.port=8000
     depends_on:
       db:
@@ -47,13 +78,22 @@ services:
       - ./apps/backoffice:/app
     command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in backoffice; skipping' && sleep 3600; fi"
     environment:
-      VITE_API_URL: http://backend:8000
+      VITE_API_URL: https://api.localhost
     ports:
       - "5173:5173"
     labels:
       - traefik.enable=true
+      # HTTP → HTTPS redirect
       - traefik.http.routers.backoffice.rule=Host(`backoffice.localhost`)
       - traefik.http.routers.backoffice.entrypoints=web
+      - traefik.http.routers.backoffice.middlewares=backoffice-redirect
+      - traefik.http.middlewares.backoffice-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.backoffice-redirect.redirectscheme.permanent=true
+      # HTTPS
+      - traefik.http.routers.backoffice-secure.rule=Host(`backoffice.localhost`)
+      - traefik.http.routers.backoffice-secure.entrypoints=websecure
+      - traefik.http.routers.backoffice-secure.tls=true
+      - traefik.http.routers.backoffice-secure.service=backoffice
       - traefik.http.services.backoffice.loadbalancer.server.port=5173
     depends_on:
       - backend
@@ -65,16 +105,26 @@ services:
       - ./apps/kiosk:/app
     command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in kiosk; skipping' && sleep 3600; fi"
     environment:
-      VITE_API_URL: http://backend:8000
+      VITE_API_URL: https://api.localhost
     ports:
       - "5174:5174"
     labels:
       - traefik.enable=true
+      # HTTP → HTTPS redirect
       - traefik.http.routers.kiosk.rule=Host(`kiosk.localhost`)
       - traefik.http.routers.kiosk.entrypoints=web
+      - traefik.http.routers.kiosk.middlewares=kiosk-redirect
+      - traefik.http.middlewares.kiosk-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.kiosk-redirect.redirectscheme.permanent=true
+      # HTTPS
+      - traefik.http.routers.kiosk-secure.rule=Host(`kiosk.localhost`)
+      - traefik.http.routers.kiosk-secure.entrypoints=websecure
+      - traefik.http.routers.kiosk-secure.tls=true
+      - traefik.http.routers.kiosk-secure.service=kiosk
       - traefik.http.services.kiosk.loadbalancer.server.port=5174
     depends_on:
       - backend
 
 volumes:
   chrona_pg:
+  traefik_certs:
