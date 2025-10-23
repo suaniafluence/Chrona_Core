@@ -358,6 +358,18 @@ jobs:
           EOF
           python /tmp/init_db.py
 
+      - name: Start backend server
+        working-directory: backend
+        run: |
+          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for /health to be ready (max ~20s)
+          for i in {1..20}; do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: sqlite+aiosqlite:///./app.db
+
       - name: Seed kiosk and generate API key
         working-directory: backend
         shell: bash
@@ -404,18 +416,6 @@ jobs:
           echo "TEST_KIOSK_API_KEY=$API_KEY" >> $GITHUB_ENV
           echo "KIOSK_ID=1" >> $GITHUB_ENV
           echo "Exported TEST_KIOSK_API_KEY (length): ${#API_KEY}"
-
-      - name: Start backend server
-        working-directory: backend
-        run: |
-          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
-          # Wait for /health to be ready (max ~20s)
-          for i in {1..20}; do
-            if curl -fsS http://localhost:8000/health >/dev/null; then
-              echo "Backend is up"; break; fi; echo "Waiting backend..."; sleep 1; done
-        env:
-          PYTHONPATH: .
-          DATABASE_URL: sqlite+aiosqlite:///./app.db
 
       - name: Setup Node for Kiosk UI
         uses: actions/setup-node@v4
