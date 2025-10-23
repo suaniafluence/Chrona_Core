@@ -5,15 +5,40 @@
   gap: 2rem;
   max-width: 600px;
   width: 100%;
+  height: 100%;
+  justify-content: center;
 }
 
 .qr-reader {
   width: 100%;
   max-width: 500px;
+  height: 500px;
+  aspect-ratio: 1;
   border: 3px solid #667eea;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Ensure video element inside qr-reader displays properly */
+.qr-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block;
+  pointer-events: auto;
+}
+
+/* Canvas elements from html5-qrcode */
+.qr-reader canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .scanner-instruction {

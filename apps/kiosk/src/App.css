@@ -90,11 +90,18 @@
 }
 
 /* Prevent text selection and dragging in kiosk mode */
-.app.kiosk-mode-active img,
-.app.kiosk-mode-active video {
+/* NOTE: Only apply pointer-events: none to images, not videos (cameras need input) */
+.app.kiosk-mode-active img {
   pointer-events: none;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+.app.kiosk-mode-active video {
+  -webkit-user-drag: none;
+  user-select: none;
+  /* Allow pointer events on video for camera interaction */
+  pointer-events: auto;
 }
 
 /* Buttons */

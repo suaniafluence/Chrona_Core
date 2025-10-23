@@ -177,7 +177,16 @@ const QRScanner = ({ onScanSuccess, onScanError }: QRScannerProps) => {
 
   return (
     <div className="scanner-container">
-      <div id="qr-reader" ref={qrReaderRef} className="qr-reader"></div>
+      <div
+        id="qr-reader"
+        ref={qrReaderRef}
+        className="qr-reader"
+        style={{
+          minHeight: '500px',
+          background: '#000',
+          position: 'relative'
+        }}
+      ></div>
       <p className="scanner-instruction">
         Positionnez le QR code dans le cadre
       </p>
