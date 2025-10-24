@@ -1,0 +1,84 @@
+# Docker Compose VPN Extension for Chrona
+#
+# Ce fichier ajoute un serveur VPN Wireguard OPTIONNEL au déploiement Chrona
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.vpn.yml up -d
+#
+# À utiliser SEULEMENT si:
+# 1. VPN testé et fonctionnel
+# 2. Accès direct (port 5174/8000) bloqué par le réseau
+# 3. Vous avez besoin d'un tunnel sécurisé pour les accès distants
+
+services:
+  # Wireguard VPN Server for remote access to Chrona
+  # Permet aux employés en 4G ou hors réseau d'accéder au kiosk
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: chrona-vpn-wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      # Configuration de base
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+
+      # IP/Port d'écoute (à adapter)
+      # IMPORTANT: Remplacer par votre IP réelle!
+      - SERVERURL=192.168.211.14
+      - SERVERPORT=51820
+
+      # Créer 2 clients peers (Android devices)
+      - PEERS=android-pixel7,android-backup
+
+      # Réseau VPN interne
+      - PEERDNS=auto
+      - INTERNAL_SUBNET=10.6.0.0
+      - ALLOWEDIPS=10.6.0.1/32,192.168.211.0/24,192.168.212.0/24
+
+      # Performance
+      - PERSISTKEEPALIVE=25
+
+    ports:
+      - "51820:51820/udp"
+
+    volumes:
+      # Persister la config + clés
+      - ./wireguard:/config
+      - /lib/modules:/lib/modules:ro
+
+    networks:
+      - default
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "wg", "show"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optionnel: OpenVPN Server Alternative
+  # Décommenter pour utiliser OpenVPN au lieu de Wireguard
+  # openvpn:
+  #   image: kylemanna/openvpn:latest
+  #   container_name: chrona-vpn-openvpn
+  #   cap_add:
+  #     - NET_ADMIN
+  #   ports:
+  #     - "1194:1194/udp"
+  #   volumes:
+  #     - ./openvpn:/etc/openvpn
+  #   restart: unless-stopped
+  #   environment:
+  #     - OVPN_SERVER=192.168.211.14
+  #     - OVPN_SERVER_PORT=1194
+  #   command: ovpn_run
+
+# Note: VPN clients (Android) pourront accéder à:
+# - http://192.168.211.14:5174 (Kiosk)
+# - http://192.168.211.14:8000 (Backend API)
+# - http://192.168.212.100:8000 (Backend alternatif si déployé sur VLAN 212)
