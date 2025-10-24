@@ -103,9 +103,10 @@ services:
     working_dir: /app
     volumes:
       - ./apps/kiosk:/app
+      - ./apps/kiosk/.env:/app/.env:ro
     command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in kiosk; skipping' && sleep 3600; fi"
-    environment:
-      VITE_API_URL: https://api.localhost
+    env_file:
+      - ./apps/kiosk/.env
     ports:
       - "5174:5174"
     labels:
