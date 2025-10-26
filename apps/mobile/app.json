@@ -3,6 +3,11 @@
     "name": "Chrona",
     "slug": "chrona-mobile",
     "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "7b49a4aa-ee61-4bf8-bd3d-1e7d7eef8bd8"
+      }
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
