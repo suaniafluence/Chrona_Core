@@ -47,3 +47,26 @@ class Kiosk(SQLModel, table=True):
         nullable=False,
         description="Registration timestamp",
     )
+    last_heartbeat_at: Optional[datetime] = Field(
+        default=None,
+        nullable=True,
+        description="Last heartbeat/ping timestamp",
+    )
+    app_version: Optional[str] = Field(
+        default=None,
+        max_length=50,
+        nullable=True,
+        description="Mobile app version",
+    )
+    device_info: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        nullable=True,
+        description="Device model and OS info",
+    )
+    access_mode: str = Field(
+        default="public",
+        max_length=20,
+        nullable=False,
+        description="Access control mode: public, whitelist, or blacklist",
+    )

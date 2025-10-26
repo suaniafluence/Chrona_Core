@@ -1,0 +1,10 @@
+# Documentation
+*.md
+!README.md
+
+# Tools
+tools/
+
+# Dev files
+.env.example
+tsconfig.json

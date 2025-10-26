@@ -24,6 +24,7 @@ from src.schemas import (
     QRTokenResponse,
 )
 from src.security import create_ephemeral_qr_token, decode_token
+from src.services.access_control import check_kiosk_access
 
 router = APIRouter(prefix="/punch", tags=["Punch"])
 
@@ -236,6 +237,27 @@ async def validate_punch(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
+        )
+
+    # 8.5 CHECK KIOSK ACCESS CONTROL
+    access_ok, access_reason = check_kiosk_access(user_id, kiosk.id, session)
+    if not access_ok:
+        # Log access denied event
+        audit_log = AuditLog(
+            event_type="punch_access_denied",
+            user_id=user_id,
+            device_id=device_id,
+            kiosk_id=kiosk.id,
+            event_data=f'{{"reason": "{access_reason}", "jti": "{jti}"}}',
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        session.add(audit_log)
+        await session.commit()
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Accès refusé: {access_reason}",
         )
 
     # 9. Atomically mark token as consumed and create punch record
