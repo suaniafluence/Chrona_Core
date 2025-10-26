@@ -3,6 +3,11 @@
     "name": "Chrona",
     "slug": "chrona-mobile",
     "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "7b49a4aa-ee61-4bf8-bd3d-1e7d7eef8bd8"
+      }
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -28,9 +33,17 @@
         "backgroundColor": "#667eea"
       },
       "package": "com.chrona.mobile",
+      "versionCode": 1,
       "permissions": [
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "blockedPermissions": [
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
