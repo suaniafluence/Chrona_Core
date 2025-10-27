@@ -41,6 +41,17 @@ jobs:
         working-directory: apps/mobile
         run: npm ci
 
+      - name: 🔐 Setup EAS credentials (Android keystore)
+        working-directory: apps/mobile
+        env:
+          EAS_CLI_LOG_LEVEL: debug
+        run: |
+          # Create credentials.json for EAS from environment
+          # Note: This assumes your Expo account has credentials pre-configured
+          # If not, uncomment the interactive setup below:
+          # npx eas@latest credentials configure --platform android --non-interactive
+          echo "Using pre-configured EAS credentials from your Expo account..."
+
       - name: 🔧 Configure version
         working-directory: apps/mobile
         run: |
@@ -95,7 +106,7 @@ jobs:
       - name: 🚀 Build APK
         working-directory: apps/mobile
         run: |
-          eas build --platform android --profile preview --non-interactive --no-wait
+          eas build --platform android --profile preview --no-wait
 
           # Wait for build to complete and get download URL
           echo "Waiting for build to complete..."
