@@ -1,36 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add CLAUDE.md)",
-      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: add CLAUDE.md for Claude Code guidance\n\nAdd comprehensive guidance document for Claude Code instances working in this repository. Includes architecture overview, essential commands for backend/frontend development, authentication flow, environment configuration, and code style conventions.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push)",
-      "Bash(git branch:*)",
-      "Bash(python tools/generate_keys.py:*)",
-      "Bash(python -m venv:*)",
-      "Bash(.venv/Scripts/pip:*)",
-      "Bash(.venv/Scripts/python:*)",
-      "Bash(docker compose:*)",
-      "Bash(podman --version:*)",
-      "Bash(podman-compose:*)",
-      "Bash(podman compose:*)",
-      "Bash(podman machine:*)",
-      "Bash(podman ps:*)",
-      "Bash(podman exec:*)",
-      "Bash(curl:*)",
-      "Bash(npm ci:*)",
-      "Bash(npm run dev:*)",
-      "Bash(findstr:*)",
-      "Bash(netsh advfirewall firewall:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(git checkout:*)",
-      "Bash(gh pr create:*)",
-      "Bash(gh release create v1.0.0-automated-deployment --title \"🚀 Automated Deployment Scripts\" --notes \"$(cat <<''EOF''\n# 🚀 Automated Deployment Scripts - v1.0.0\n\n## ✨ What''s New\n\nThis release introduces **one-command automated deployment** for the Chrona time tracking system, reducing installation time from **30-45 minutes to 2-3 minutes**.\n\n## 🎯 New Features\n\n### PowerShell Automation Scripts\n\n- **`setup-dev.ps1`** - Complete automated installation (all services)\n  - ✅ Checks prerequisites (Podman, Python, Node.js)\n  - ✅ Generates JWT RS256 keys\n  - ✅ Generates SECRET_KEY\n  - ✅ Creates all `.env` files\n  - ✅ Starts backend + PostgreSQL\n  - ✅ Applies migrations\n  - ✅ Creates admin user\n  - ✅ Configures kiosk with API key\n\n- **`start-kiosk.ps1`** - One-command kiosk deployment\n- **`start-backoffice.ps1`** - One-command backoffice deployment\n- **`setup-mobile.ps1`** - Automated mobile configuration with WiFi IP detection\n\n### Documentation Improvements\n\n- **`QUICK_START.md`** - New quick start guide (3 commands to full deployment)\n- **`apps/mobile/INSTALLATION.md`** - Comprehensive mobile installation guide (282 lines)\n  - Clear separation of PC vs Phone steps\n  - QR code scanning workflow\n  - Network connectivity testing\n  - Troubleshooting guide\n- Updated `README.md` with quick start section\n- Updated `docs/GUIDE_DEPLOIEMENT.md` with automation references\n\n## 📊 Impact\n\n### Before\n- **Installation Time**: 30-45 minutes\n- **Manual Steps**: ~25 steps\n- **Error-Prone**: Manual key generation, .env configuration\n- **Documentation**: Scattered across multiple files\n\n### After\n- **Installation Time**: 2-3 minutes ⚡\n- **Manual Steps**: 1 command\n- **Automated**: Key generation, configuration, service startup\n- **Documentation**: Clear quick start guide\n\n## 🔧 Technical Details\n\n### Security Features\n- Automated JWT RS256 2048-bit key generation\n- Secure SECRET_KEY generation (86 characters)\n- Kiosk API key generation and configuration\n- Proper environment variable isolation\n\n### Network Configuration\n- Automatic WiFi IP detection for mobile apps\n- Firewall configuration instructions\n- CORS configuration for all frontends\n\n### Service Management\n- Podman machine auto-start\n- Container health checks\n- Graceful service startup sequencing\n- Database migration automation\n\n## 📱 Mobile App Improvements\n\nClear separation between PC (Windows) and Phone (Android/iOS) setup:\n\n**On PC:**\n```powershell\n.\\setup-mobile.ps1\ncd apps/mobile\nnpm start\n```\n\n**On Phone:**\n- Install Expo Go\n- Scan QR code\n- Test backend connectivity\n\n## 🎓 Usage\n\n### Complete Installation (First Time)\n```powershell\n.\\setup-dev.ps1\n```\n\n### Start Specific Services\n```powershell\n.\\start-kiosk.ps1      # Kiosk tablet app\n.\\start-backoffice.ps1 # HR portal\n.\\setup-mobile.ps1     # Mobile app configuration\n```\n\n## 📚 Documentation\n\n- [QUICK_START.md](QUICK_START.md) - Quick start guide (recommended)\n- [apps/mobile/INSTALLATION.md](apps/mobile/INSTALLATION.md) - Mobile installation guide\n- [docs/GUIDE_DEPLOIEMENT.md](docs/GUIDE_DEPLOIEMENT.md) - Complete deployment guide\n- [CLAUDE.md](CLAUDE.md) - Developer configuration\n\n## 🔗 Links\n\n- **Backend API**: http://localhost:8000\n- **Back-office**: http://localhost:5173\n- **Kiosk**: http://localhost:5174\n- **API Docs**: http://localhost:8000/docs\n\n## 👤 Default Credentials\n\nAfter running `setup-dev.ps1`:\n- **Email**: admin@example.com\n- **Password**: Passw0rd!\n\n## 🐛 Known Issues\n\n- Windows Firewall requires manual configuration for mobile app access (admin rights needed)\n- Mobile app requires same WiFi network as PC for development\n\n## 🙏 Acknowledgments\n\nThis release focuses on developer experience and deployment automation, making it easier for teams to get started with Chrona.\n\n---\n\n**Full Changelog**: Initial automated deployment release\nEOF\n)\")",
-      "Bash(npx create-expo-app@latest kiosk-mobile --template blank-typescript)",
-      "Bash(npm install:*)",
-      "Bash(alembic revision:*)",
-      "Bash(python -m alembic revision:*)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Select-Object -First 20)"
     ],
     "deny": [],
     "ask": []

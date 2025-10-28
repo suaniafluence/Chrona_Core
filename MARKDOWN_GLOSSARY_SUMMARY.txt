@@ -1,0 +1,230 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                   MARKDOWN GLOSSARY - QUICK SUMMARY                          ║
+║                        Chrona Core Documentation                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT'S NEW:
+==============
+
+Created: MARKDOWN_GLOSSARY.md
+A comprehensive reference guide documenting ALL markdown files in the project.
+
+✨ FEATURES:
+- 18 markdown files documented with full descriptions
+- Organized into 8 categories (Project Mgmt, Getting Started, Backend, Mobile, etc.)
+- Cross-reference matrix showing which docs link to which
+- Reading paths optimized for 7 different roles
+- Time estimates for each document (5-30 mins)
+- Quick lookup table with purpose & audience
+
+
+📊 DOCUMENTATION STATS:
+======================
+
+Total Categories: 8
+├─ 🗂️  Project Management (2 docs)
+├─ 🚀 Getting Started (3 docs)
+├─ ⚙️  Backend (2 docs)
+├─ 📱 Mobile (5 docs)
+├─ 🖥️  Kiosk (1 doc)
+├─ 💼 Back-office (1 doc)
+├─ 🏗️  Infrastructure (1 doc)
+└─ 🔒 Security & Compliance (2 docs)
+
+Total Reading Time: ~350 minutes (all docs)
+Recommended First-Time Setup: ~45 minutes (QUICK_START.md → CLAUDE.md → AGENTS.md)
+
+
+🎯 KEY DOCUMENTS BY ROLE:
+==========================
+
+🛠️  Developer → Start with QUICK_START.md (5 min)
+🚀 DevOps → Start with docs/GUIDE_DEPLOIEMENT.md (30 min)
+🔒 Security → Start with docs/SECURITY.md (5 min)
+⚖️  DPO/Legal → Start with docs/RGPD.md (10 min)
+👤 End User → Start with apps/mobile/INSTALLATION.md (10 min)
+
+
+⭐ SOURCE OF TRUTH:
+===================
+
+docs/TODO.md = Authoritative project backlog
+→ Always update BEFORE external trackers
+→ Check here for task status and priorities
+
+
+🔗 CROSS-REFERENCE EXAMPLES:
+=============================
+
+Want to build an APK?
+→ apps/mobile/APK_BUILD.md
+→ Related: EAS_CREDENTIALS_SETUP.md, INSTALLATION.md, docs/GUIDE_DEPLOIEMENT.md
+
+Want to deploy to production?
+→ docs/GUIDE_DEPLOIEMENT.md (Main)
+→ Related: QUICK_START.md, docs/SECURITY.md, docs/RGPD.md
+
+Want to understand API endpoints?
+→ BACKEND_ENDPOINTS_COMPLETE.md (Main)
+→ Related: backend/README.md, CLAUDE.md, apps/backoffice/README.md
+
+Want GDPR compliance info?
+→ docs/RGPD.md (Main)
+→ Related: docs/SECURITY.md, docs/GUIDE_DEPLOIEMENT.md, apps/backoffice/README.md
+
+
+🚀 HOW TO USE THIS GLOSSARY:
+=============================
+
+Option 1: Find document by role
+→ See "Chemins de Lecture par Rôle" section (bottom of MARKDOWN_GLOSSARY.md)
+
+Option 2: Find by topic
+→ See "Matrice de Références Croisées" section
+→ Shows which docs relate to each topic
+
+Option 3: Quick reference
+→ See summary table at top (Time, Audience, Purpose)
+
+Option 4: Search by keyword
+→ Use Ctrl+F to search MARKDOWN_GLOSSARY.md
+
+
+📝 DOCUMENT STRUCTURE:
+======================
+
+Each doc entry includes:
+├─ File path & name
+├─ Main purpose (1-2 sentences)
+├─ Key topics (bullet points)
+├─ When to read (use cases)
+└─ Cross-references (related docs)
+
+
+🔧 ALSO CREATED:
+=================
+
+✅ apps/mobile/EAS_CREDENTIALS_SETUP.md - Enhanced guide with 10-step checklist
+✅ apps/mobile/setup-eas-credentials.ps1 - PowerShell automation script
+✅ apps/mobile/setup-eas-credentials.sh - Bash automation script
+✅ Fixed .github/workflows/build-mobile-apk.yml - Removed --non-interactive flag
+
+
+📚 DOCUMENTATION FILES BY CATEGORY:
+====================================
+
+🗂️  PROJECT MANAGEMENT
+├─ docs/TODO.md (Authoritative backlog)
+└─ DOCUMENTATION_INDEX.md (Navigation hub)
+
+🚀 GETTING STARTED
+├─ QUICK_START.md (3-command installation)
+├─ README.md (Project intro + Docker)
+└─ AGENTS.md (Local dev setup + standards)
+
+⚙️  BACKEND
+├─ backend/README.md (FastAPI setup)
+└─ BACKEND_ENDPOINTS_COMPLETE.md (All endpoints reference)
+
+📱 MOBILE
+├─ apps/mobile/README.md (App overview)
+├─ apps/mobile/INSTALLATION.md (Installation guide)
+├─ apps/mobile/APK_BUILD.md (Build & distribution)
+├─ apps/mobile/EAS_CREDENTIALS_SETUP.md (Credential automation)
+└─ apps/mobile/SECURITY.md (Security implementation)
+
+🖥️  KIOSK
+└─ apps/kiosk/README.md (Tablet app guide)
+
+💼 BACK-OFFICE
+└─ apps/backoffice/README.md (HR portal guide)
+
+🏗️  INFRASTRUCTURE
+└─ docs/GUIDE_DEPLOIEMENT.md (Complete deployment guide)
+
+🔒 SECURITY & COMPLIANCE
+├─ docs/SECURITY.md (Security hardening checklist)
+└─ docs/RGPD.md (GDPR compliance documentation)
+
+
+💡 PRO TIPS:
+=============
+
+1. Always check MARKDOWN_GLOSSARY.md FIRST when looking for documentation
+2. Use the cross-reference matrix to find related documents
+3. Follow the reading path for your role to get up to speed quickly
+4. Keep docs/TODO.md open for current priorities
+5. Link to MARKDOWN_GLOSSARY.md when explaining project to newcomers
+
+
+🎓 LEARNING PATHS:
+===================
+
+45 min: Developer New to Project
+→ QUICK_START.md → CLAUDE.md → AGENTS.md → backend/README.md → apps/mobile/README.md → docs/TODO.md
+
+80 min: DevOps Setup
+→ QUICK_START.md → docs/GUIDE_DEPLOIEMENT.md → docs/SECURITY.md → apps/mobile/APK_BUILD.md → apps/kiosk/README.md
+
+65 min: Security Audit
+→ CLAUDE.md → docs/SECURITY.md → apps/mobile/SECURITY.md → docs/RGPD.md → docs/GUIDE_DEPLOIEMENT.md (security section)
+
+35 min: Legal/DPO Review
+→ docs/RGPD.md → apps/backoffice/README.md → BACKEND_ENDPOINTS_COMPLETE.md → docs/GUIDE_DEPLOIEMENT.md (compliance section)
+
+
+✅ QUICK CHECKLIST:
+====================
+
+Getting started as a developer?
+☐ Read QUICK_START.md (5 min)
+☐ Run .\setup-dev.ps1 (5 min)
+☐ Read CLAUDE.md (15 min)
+☐ Read AGENTS.md (10 min)
+☐ Check docs/TODO.md for tasks
+→ Total: 45 minutes to productive development!
+
+Need to deploy?
+☐ Review docs/GUIDE_DEPLOIEMENT.md (30 min)
+☐ Run deployment checklist
+☐ Verify docs/SECURITY.md hardening (5 min)
+→ Production ready!
+
+Need to understand compliance?
+☐ Read docs/RGPD.md (10 min)
+☐ Review DSR procedures
+☐ Check audit logs features
+→ GDPR compliant!
+
+
+📞 QUICK HELP:
+===============
+
+"How do I start?"
+→ QUICK_START.md
+
+"Where's the task list?"
+→ docs/TODO.md (ALWAYS here!)
+
+"How do I deploy?"
+→ docs/GUIDE_DEPLOIEMENT.md
+
+"What APIs are available?"
+→ BACKEND_ENDPOINTS_COMPLETE.md
+
+"Is this GDPR compliant?"
+→ docs/RGPD.md
+
+"How do I build APK?"
+→ apps/mobile/APK_BUILD.md
+
+"What's the architecture?"
+→ CLAUDE.md
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎉 RESULT: Complete documentation reference with cross-links, reading paths, and
+           quick lookup table. Perfect for onboarding, navigation, and audits!
+
+═══════════════════════════════════════════════════════════════════════════════

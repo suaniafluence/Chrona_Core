@@ -6,7 +6,15 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:e2e:ios": "detox build-ios-framework",
+    "build:e2e:android": "detox build-android-framework",
+    "build:e2e": "detox build-framework-cache",
+    "e2e:ios": "detox test --configuration ios --cleanup",
+    "e2e:android": "detox test --configuration android --cleanup",
+    "e2e": "detox test --cleanup",
+    "e2e:debug": "detox test --configuration ios --debug",
+    "e2e:record": "detox test --configuration ios --record-logs all"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",
@@ -32,7 +40,12 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/react": "~18.3.12",
-    "typescript": "~5.6.2"
+    "@types/jest": "^29.5.0",
+    "typescript": "~5.6.2",
+    "detox": "^20.15.0",
+    "detox-cli": "^20.15.0",
+    "jest": "^29.5.0",
+    "jest-circus": "^29.5.0"
   },
   "private": true
 }
