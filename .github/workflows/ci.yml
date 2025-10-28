@@ -243,7 +243,6 @@ jobs:
             p/javascript
             p/typescript
             p/react
-          generateSarif: true
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3

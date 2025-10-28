@@ -150,6 +150,7 @@ class PunchValidateResponse(BaseModel):
     punched_at: Optional[datetime] = None
     user_id: Optional[int] = None
     device_id: Optional[int] = None
+    punch_type: Optional[PunchType] = None
 
 
 class PunchCreate(BaseModel):

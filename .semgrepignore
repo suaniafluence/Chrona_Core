@@ -1,0 +1,16 @@
+# Semgrep ignore patterns
+# Exclude build scripts that are not part of production runtime
+
+# Docker build script - downloads static Swagger UI files during image build
+# URL is hardcoded and validated, not user-controlled
+backend/download_swagger_ui.py
+
+# Common patterns to exclude
+**/node_modules/
+**/.venv/
+**/__pycache__/
+**/dist/
+**/build/
+**/.git/
+**/*.min.js
+**/*.min.css
