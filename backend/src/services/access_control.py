@@ -2,14 +2,15 @@
 
 from datetime import datetime
 
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from ..models.kiosk import Kiosk
 from ..models.kiosk_access import KioskAccess, KioskAccessMode
 
 
-def check_kiosk_access(
-    user_id: int, kiosk_id: int, session: Session
+async def check_kiosk_access(
+    user_id: int, kiosk_id: int, session: AsyncSession
 ) -> tuple[bool, str]:
     """
     Check if a user has access to a specific kiosk.
@@ -23,12 +24,12 @@ def check_kiosk_access(
         Tuple of (is_authorized: bool, reason: str)
 
     Examples:
-        >>> authorized, reason = check_kiosk_access(5, 1, session)
+        >>> authorized, reason = await check_kiosk_access(5, 1, session)
         >>> if not authorized:
         ...     raise HTTPException(403, reason)
     """
     # Get kiosk
-    kiosk = session.get(Kiosk, kiosk_id)
+    kiosk = await session.get(Kiosk, kiosk_id)
     if not kiosk:
         return False, "Kiosk inexistant"
 
@@ -48,7 +49,8 @@ def check_kiosk_access(
             .where(KioskAccess.user_id == user_id)
             .where(KioskAccess.granted == True)  # noqa: E712
         )
-        access = session.exec(statement).first()
+        result = await session.execute(statement)
+        access = result.first()
 
         if not access:
             return False, "Accès non autorisé pour ce kiosk"
@@ -67,7 +69,8 @@ def check_kiosk_access(
             .where(KioskAccess.user_id == user_id)
             .where(KioskAccess.granted == False)  # noqa: E712
         )
-        access = session.exec(statement).first()
+        result = await session.execute(statement)
+        access = result.first()
 
         if access:
             return False, "Accès bloqué pour ce kiosk"
@@ -78,12 +81,12 @@ def check_kiosk_access(
     return False, f"Mode d'accès inconnu: {kiosk.access_mode}"
 
 
-def grant_kiosk_access(
+async def grant_kiosk_access(
     kiosk_id: int,
     user_id: int,
     granted_by_admin_id: int,
     expires_at: datetime | None,
-    session: Session,
+    session: AsyncSession,
 ) -> KioskAccess:
     """
     Grant access to a user for a specific kiosk.
@@ -104,7 +107,8 @@ def grant_kiosk_access(
         .where(KioskAccess.kiosk_id == kiosk_id)
         .where(KioskAccess.user_id == user_id)
     )
-    access = session.exec(statement).first()
+    result = await session.execute(statement)
+    access = result.first()
 
     if access:
         # Update existing access
@@ -123,13 +127,13 @@ def grant_kiosk_access(
         )
         session.add(access)
 
-    session.commit()
-    session.refresh(access)
+    await session.commit()
+    await session.refresh(access)
     return access
 
 
-def revoke_kiosk_access(
-    kiosk_id: int, user_id: int, session: Session
+async def revoke_kiosk_access(
+    kiosk_id: int, user_id: int, session: AsyncSession
 ) -> bool:
     """
     Revoke access for a user to a specific kiosk.
@@ -147,21 +151,22 @@ def revoke_kiosk_access(
         .where(KioskAccess.kiosk_id == kiosk_id)
         .where(KioskAccess.user_id == user_id)
     )
-    access = session.exec(statement).first()
+    result = await session.execute(statement)
+    access = result.first()
 
     if access:
-        session.delete(access)
-        session.commit()
+        await session.delete(access)
+        await session.commit()
         return True
 
     return False
 
 
-def block_kiosk_access(
+async def block_kiosk_access(
     kiosk_id: int,
     user_id: int,
     blocked_by_admin_id: int,
-    session: Session,
+    session: AsyncSession,
 ) -> KioskAccess:
     """
     Block access to a user for a specific kiosk (for BLACKLIST mode).
@@ -181,7 +186,8 @@ def block_kiosk_access(
         .where(KioskAccess.kiosk_id == kiosk_id)
         .where(KioskAccess.user_id == user_id)
     )
-    access = session.exec(statement).first()
+    result = await session.execute(statement)
+    access = result.first()
 
     if access:
         # Update to blocked
@@ -198,6 +204,6 @@ def block_kiosk_access(
         )
         session.add(access)
 
-    session.commit()
-    session.refresh(access)
+    await session.commit()
+    await session.refresh(access)
     return access

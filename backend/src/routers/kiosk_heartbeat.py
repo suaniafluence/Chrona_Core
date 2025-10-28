@@ -125,7 +125,7 @@ async def get_all_kiosks_status(
     Useful for monitoring dashboard in back-office.
     """
     statement = select(Kiosk).order_by(Kiosk.kiosk_name)
-    kiosks = session.exec(statement).all()
+    kiosks = session.execute(statement).all()
 
     now = datetime.utcnow()
     results = []

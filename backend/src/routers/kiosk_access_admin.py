@@ -101,7 +101,7 @@ async def get_kiosk_access_list(
         .where(KioskAccess.kiosk_id == kiosk_id)
         .order_by(User.email)
     )
-    results = session.exec(statement).all()
+    results = session.execute(statement).all()
 
     authorized_users = [
         UserAccessInfo(
@@ -207,7 +207,7 @@ async def grant_access(
         )
 
     # Grant access
-    access = grant_kiosk_access(
+    access = await grant_kiosk_access(
         kiosk_id=kiosk_id,
         user_id=request.user_id,
         granted_by_admin_id=admin.id,
@@ -261,7 +261,7 @@ async def revoke_access(
         )
 
     # Revoke access
-    revoked = revoke_kiosk_access(kiosk_id=kiosk_id, user_id=user_id, session=session)
+    revoked = await revoke_kiosk_access(kiosk_id=kiosk_id, user_id=user_id, session=session)
 
     if revoked:
         return {
@@ -309,7 +309,7 @@ async def block_access(
         )
 
     # Block access
-    access = block_kiosk_access(
+    access = await block_kiosk_access(
         kiosk_id=kiosk_id,
         user_id=request.user_id,
         blocked_by_admin_id=admin.id,

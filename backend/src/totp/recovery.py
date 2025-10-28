@@ -172,7 +172,7 @@ def use_recovery_code(
     now = datetime.utcnow()
 
     # Find all unused recovery codes for user
-    unused_codes = db.exec(
+    unused_codes = db.execute(
         select(TOTPRecoveryCode).where(
             TOTPRecoveryCode.user_id == user_id,
             TOTPRecoveryCode.is_used == False,  # noqa: E712
@@ -222,7 +222,7 @@ def get_recovery_codes_status(db: Session, user_id: int) -> dict:
     now = datetime.utcnow()
 
     # Get all recovery codes for user
-    all_codes = db.exec(
+    all_codes = db.execute(
         select(TOTPRecoveryCode).where(TOTPRecoveryCode.user_id == user_id)
     ).all()
 
@@ -268,7 +268,7 @@ def regenerate_recovery_codes(
         >>> new_codes = regenerate_recovery_codes(db, user_id=1, totp_secret_id=1)
     """
     # Delete old unused recovery codes
-    old_codes = db.exec(
+    old_codes = db.execute(
         select(TOTPRecoveryCode).where(
             TOTPRecoveryCode.user_id == user_id,
             TOTPRecoveryCode.totp_secret_id == totp_secret_id,

@@ -61,7 +61,7 @@ def initiate_totp_provisioning(
         raise ValueError(f"User {user_id} not found")
 
     # Check if user already has active TOTP
-    existing = db.exec(
+    existing = db.execute(
         select(TOTPSecret).where(
             TOTPSecret.user_id == user_id,
             TOTPSecret.is_active == True,  # noqa: E712

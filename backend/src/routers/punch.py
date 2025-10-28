@@ -240,7 +240,7 @@ async def validate_punch(
         )
 
     # 8.5 CHECK KIOSK ACCESS CONTROL
-    access_ok, access_reason = check_kiosk_access(user_id, kiosk.id, session)
+    access_ok, access_reason = await check_kiosk_access(user_id, kiosk.id, session)
     if not access_ok:
         # Log access denied event
         audit_log = AuditLog(

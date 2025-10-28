@@ -54,7 +54,7 @@ def check_rate_limit(
     window_start = now - timedelta(minutes=window_minutes)
 
     # Count attempts in window
-    attempt_count = db.exec(
+    attempt_count = db.execute(
         select(func.count(TOTPValidationAttempt.id)).where(
             TOTPValidationAttempt.user_id == user_id,
             TOTPValidationAttempt.attempted_at >= window_start,
@@ -84,7 +84,7 @@ def check_account_lockout(db: Session, user_id: int) -> None:
     now = datetime.utcnow()
 
     # Check for active lockout
-    lockout = db.exec(
+    lockout = db.execute(
         select(TOTPLockout).where(
             TOTPLockout.user_id == user_id,
             TOTPLockout.is_active == True,  # noqa: E712
@@ -177,7 +177,7 @@ def trigger_lockout(
 
     # Count recent failed attempts
     window_start = now - timedelta(minutes=10)
-    failed_count = db.exec(
+    failed_count = db.execute(
         select(func.count(TOTPValidationAttempt.id)).where(
             TOTPValidationAttempt.user_id == user_id,
             TOTPValidationAttempt.is_success == False,  # noqa: E712
@@ -186,7 +186,7 @@ def trigger_lockout(
     ).one()
 
     # Deactivate any existing lockouts for this user
-    existing_lockouts = db.exec(
+    existing_lockouts = db.execute(
         select(TOTPLockout).where(
             TOTPLockout.user_id == user_id, TOTPLockout.is_active == True  # noqa: E712
         )
@@ -227,7 +227,7 @@ def is_nonce_blacklisted(db: Session, nonce: str) -> bool:
     Example:
         >>> is_blacklisted = is_nonce_blacklisted(db, "abc123")
     """
-    exists = db.exec(
+    exists = db.execute(
         select(TOTPNonceBlacklist).where(TOTPNonceBlacklist.nonce == nonce)
     ).first()
 
@@ -304,7 +304,7 @@ def cleanup_expired_nonces(db: Session, batch_size: int = 1000) -> int:
     grace_period_hours = 24
     cutoff = now - timedelta(hours=grace_period_hours)
 
-    expired = db.exec(
+    expired = db.execute(
         select(TOTPNonceBlacklist)
         .where(TOTPNonceBlacklist.jwt_expires_at < cutoff)
         .limit(batch_size)
@@ -338,7 +338,7 @@ def get_failed_attempts_count(
     now = datetime.utcnow()
     window_start = now - timedelta(minutes=window_minutes)
 
-    count = db.exec(
+    count = db.execute(
         select(func.count(TOTPValidationAttempt.id)).where(
             TOTPValidationAttempt.user_id == user_id,
             TOTPValidationAttempt.is_success == False,  # noqa: E712

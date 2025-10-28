@@ -258,7 +258,7 @@ def validate_totp_endpoint(
             )
 
         # 4. Get active TOTP secret
-        totp_secret = db.exec(
+        totp_secret = db.execute(
             select(TOTPSecret).where(
                 TOTPSecret.user_id == user_id,
                 TOTPSecret.is_active == True,  # noqa: E712
@@ -429,7 +429,7 @@ def regenerate_recovery_codes_endpoint(
         404: No active TOTP found
     """
     # Get active TOTP secret
-    totp_secret = db.exec(
+    totp_secret = db.execute(
         select(TOTPSecret).where(
             TOTPSecret.user_id == current_user.id,
             TOTPSecret.is_active == True,  # noqa: E712
