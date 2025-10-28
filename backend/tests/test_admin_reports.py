@@ -8,9 +8,9 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.punch import Punch, PunchType
 from src.models.device import Device
 from src.models.kiosk import Kiosk
+from src.models.punch import Punch, PunchType
 from src.models.user import User
 
 

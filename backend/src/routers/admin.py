@@ -1,8 +1,8 @@
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -679,9 +679,9 @@ async def export_attendance_report(
     - user_id: optional filter
     - format: 'json' | 'csv' | 'pdf' (pdf not implemented)
     """
-    from datetime import datetime, timezone
-    import io
     import csv
+    import io
+    from datetime import datetime, timezone
 
     from src.models.punch import Punch
     from src.schemas import PunchRead
@@ -767,11 +767,11 @@ async def export_attendance_report(
             from reportlab.lib.pagesizes import A4
             from reportlab.lib.styles import getSampleStyleSheet
             from reportlab.platypus import (
+                Paragraph,
                 SimpleDocTemplate,
+                Spacer,
                 Table,
                 TableStyle,
-                Paragraph,
-                Spacer,
             )
         except Exception:
             raise HTTPException(status_code=500, detail="reportlab_not_installed")
