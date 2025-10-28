@@ -8,11 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.db import get_session
+from src.dependencies import require_roles
 from src.models.audit_log import AuditLog
 from src.models.device import Device
 from src.models.kiosk import Kiosk
 from src.models.user import User
-from src.routers.auth import require_roles
 from src.routers.kiosk_auth import generate_kiosk_api_key, hash_kiosk_api_key
 from src.schemas import (
     AdminUserCreate,
