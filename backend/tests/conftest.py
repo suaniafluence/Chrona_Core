@@ -39,6 +39,12 @@ async def test_db() -> AsyncSession:
 
 
 @pytest_asyncio.fixture
+async def test_session(test_db: AsyncSession):
+    """Alias for test_db to maintain compatibility with existing tests."""
+    return test_db
+
+
+@pytest_asyncio.fixture
 async def test_user(test_db: AsyncSession):
     from src.models.user import User
     from src.security import get_password_hash
