@@ -20,7 +20,6 @@ from src.totp import (
     initiate_totp_provisioning,
 )
 from src.totp.encryption import decrypt_secret
-from src.totp.provisioning import validate_totp_code
 from src.totp.recovery import (
     create_recovery_codes,
     get_recovery_codes_status,
@@ -369,7 +368,9 @@ def validate_totp_endpoint(
             trigger_reason="rate_limit",
             ip_address=ip_address,
         )
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e)
+        )
 
 
 @router.post("/recovery/use", response_model=RecoveryCodeUseResponse)

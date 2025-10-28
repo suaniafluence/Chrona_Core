@@ -1,4 +1,4 @@
-from typing import Annotated, Callable
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,12 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.db import get_session
-from src.dependencies import get_current_user, oauth2_scheme, require_roles
+from src.dependencies import get_current_user
 from src.models.user import User
 from src.schemas import Token, UserCreate, UserRead
 from src.security import (
     create_access_token,
-    decode_token,
     get_password_hash,
     verify_password,
 )

@@ -1,15 +1,12 @@
 """Tests for kiosk access control system."""
 
 import pytest
-from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.security import hash_password
 from src.models.kiosk import Kiosk
-from src.models.kiosk_access import KioskAccess
 from src.models.user import User
-from src.services.access_control import check_kiosk_access, grant_kiosk_access
 
 
 @pytest.fixture
@@ -156,7 +153,10 @@ def test_inactive_kiosk_denies_all(
 @pytest.mark.skip(reason="Admin fixtures need synchronous Session support")
 @pytest.mark.asyncio
 async def test_admin_can_change_kiosk_access_mode(
-    async_client: AsyncClient, admin_user: User, public_kiosk: Kiosk, admin_headers: dict
+    async_client: AsyncClient,
+    admin_user: User,
+    public_kiosk: Kiosk,
+    admin_headers: dict,
 ):
     """Test that admin can change kiosk access mode."""
     pass
@@ -204,7 +204,10 @@ async def test_admin_can_get_kiosk_access_list(
 @pytest.mark.skip(reason="Admin fixtures need synchronous Session support")
 @pytest.mark.asyncio
 async def test_non_admin_cannot_manage_access(
-    async_client: AsyncClient, regular_user: User, whitelist_kiosk: Kiosk, auth_headers: dict
+    async_client: AsyncClient,
+    regular_user: User,
+    whitelist_kiosk: Kiosk,
+    auth_headers: dict,
 ):
     """Test that non-admin users cannot manage kiosk access."""
     pass

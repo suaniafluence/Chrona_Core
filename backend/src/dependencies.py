@@ -57,6 +57,7 @@ def require_roles(*roles: str) -> Callable[[User], User]:
     Returns:
         Async function that validates user role
     """
+
     async def _dep(current: Annotated[User, Depends(get_current_user)]) -> User:
         if roles and current.role not in roles:
             raise HTTPException(

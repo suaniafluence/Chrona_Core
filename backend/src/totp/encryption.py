@@ -10,7 +10,6 @@ import base64
 import os
 from typing import Tuple
 
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
@@ -80,7 +79,8 @@ class TOTPEncryption:
             Decrypted TOTP secret (Base32 string)
 
         Raises:
-            cryptography.exceptions.InvalidTag: If decryption fails (wrong key/tampered data)
+            cryptography.exceptions.InvalidTag: If decryption fails
+                (wrong key/tampered data)
 
         Example:
             >>> enc = TOTPEncryption()

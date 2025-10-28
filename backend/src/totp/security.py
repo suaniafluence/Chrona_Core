@@ -62,10 +62,11 @@ def check_rate_limit(
     ).one()
 
     if attempt_count >= max_attempts:
-        raise RateLimitExceeded(
-            f"Rate limit exceeded: {attempt_count} attempts in {window_minutes} minutes. "
-            f"Maximum {max_attempts} attempts allowed."
+        msg = (
+            f"Rate limit exceeded: {attempt_count} attempts in "
+            f"{window_minutes} minutes. Maximum {max_attempts} attempts allowed."
         )
+        raise RateLimitExceeded(msg)
 
 
 def check_account_lockout(db: Session, user_id: int) -> None:

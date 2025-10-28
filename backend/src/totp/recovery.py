@@ -7,7 +7,6 @@ Compliant with employee security spec:
 """
 
 import secrets
-import string
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -233,7 +232,9 @@ def get_recovery_codes_status(db: Session, user_id: int) -> dict:
     ]
     used_codes = [code for code in all_codes if code.is_used]
     expired_codes = [
-        code for code in all_codes if not code.is_used and code.expires_at and code.expires_at <= now
+        code
+        for code in all_codes
+        if not code.is_used and code.expires_at and code.expires_at <= now
     ]
 
     return {

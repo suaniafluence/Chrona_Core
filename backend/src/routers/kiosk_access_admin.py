@@ -152,9 +152,10 @@ async def set_kiosk_access_mode(
 
     # Validate access mode
     if update.access_mode not in [mode.value for mode in KioskAccessMode]:
+        modes = [m.value for m in KioskAccessMode]
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid access mode. Must be one of: {[m.value for m in KioskAccessMode]}",
+            detail=f"Invalid access mode. Must be one of: {modes}",
         )
 
     kiosk.access_mode = update.access_mode
@@ -261,7 +262,9 @@ async def revoke_access(
         )
 
     # Revoke access
-    revoked = await revoke_kiosk_access(kiosk_id=kiosk_id, user_id=user_id, session=session)
+    revoked = await revoke_kiosk_access(
+        kiosk_id=kiosk_id, user_id=user_id, session=session
+    )
 
     if revoked:
         return {

@@ -1,7 +1,6 @@
 """Tests for kiosk heartbeat endpoints."""
 
 import pytest
-from fastapi import status
 from httpx import AsyncClient
 
 

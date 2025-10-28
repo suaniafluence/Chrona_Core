@@ -15,7 +15,6 @@ import hmac
 import secrets
 import struct
 import time
-from typing import Literal
 from urllib.parse import quote
 
 
@@ -49,9 +48,7 @@ def generate_totp_secret(entropy_bits: int = 160) -> str:
     return secret_b32.rstrip("=")
 
 
-def _hotp(
-    secret: str, counter: int, digits: int = 6, algorithm: str = "SHA256"
-) -> str:
+def _hotp(secret: str, counter: int, digits: int = 6, algorithm: str = "SHA256") -> str:
     """HOTP (HMAC-based One-Time Password) algorithm (RFC 4226).
 
     Args:

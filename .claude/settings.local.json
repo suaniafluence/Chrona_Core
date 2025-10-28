@@ -6,7 +6,8 @@
       "Bash(echo:*)",
       "Read(//c/Users/suant/Downloads/**)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(black --check:*)"
     ],
     "deny": [],
     "ask": []
