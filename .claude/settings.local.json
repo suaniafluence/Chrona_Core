@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Select-Object -First 20)"
+      "Bash(Select-Object -First 20)",
+      "Bash(echo:*)",
+      "Read(//c/Users/suant/Downloads/**)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

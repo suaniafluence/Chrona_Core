@@ -1,12 +1,13 @@
 from typing import Annotated, Callable
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.db import get_session
+from src.dependencies import get_current_user, oauth2_scheme, require_roles
 from src.models.user import User
 from src.schemas import Token, UserCreate, UserRead
 from src.security import (
@@ -16,7 +17,6 @@ from src.security import (
     verify_password,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -50,36 +50,6 @@ async def login_for_access_token(
         )
     token = create_access_token({"sub": str(user.id), "role": user.role})
     return Token(access_token=token)
-
-
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    session: Annotated[AsyncSession, Depends(get_session)],
-) -> User:
-    payload = decode_token(token)
-    if not payload or "sub" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_token"
-        )
-    user_id = int(payload["sub"])
-    result = await session.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="user_not_found"
-        )
-    return user
-
-
-def require_roles(*roles: str) -> Callable[[User], User]:
-    async def _dep(current: Annotated[User, Depends(get_current_user)]) -> User:
-        if roles and current.role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="forbidden"
-            )
-        return current
-
-    return _dep
 
 
 @router.get("/me", response_model=UserRead)
