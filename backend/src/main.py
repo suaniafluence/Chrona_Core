@@ -16,6 +16,7 @@ from .routers.kiosk_access_admin import router as kiosk_access_admin_router
 from .routers.kiosk_heartbeat import router as kiosk_heartbeat_router
 from .routers.onboarding import router as onboarding_router
 from .routers.punch import router as punch_router
+from .routers.totp import router as totp_router
 
 load_dotenv()
 
@@ -135,6 +136,7 @@ app.include_router(kiosk_access_admin_router)
 app.include_router(kiosk_heartbeat_router)
 app.include_router(onboarding_router)
 app.include_router(punch_router)
+app.include_router(totp_router)
 
 # Mount static files for Swagger UI (downloaded in Dockerfile)
 static_path = Path("/app/static/swagger-ui")

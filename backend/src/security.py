@@ -41,14 +41,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def _get_signing_key() -> str:
     """Get the appropriate signing key based on algorithm."""
-    if settings.ALGORITHM == "RS256":
+    if settings.ALGORITHM in ("RS256", "ES256"):
         return settings.jwt_private_key
     return settings.SECRET_KEY
 
 
 def _get_verification_key() -> str:
     """Get the appropriate verification key based on algorithm."""
-    if settings.ALGORITHM == "RS256":
+    if settings.ALGORITHM in ("RS256", "ES256"):
         return settings.jwt_public_key
     return settings.SECRET_KEY
 

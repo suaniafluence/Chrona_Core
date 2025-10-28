@@ -25,11 +25,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Chrona is a secure attendance and authentication system built with a monorepo structure. The system uses signed QR codes, device attestation, and PostgreSQL persistence for security-focused time tracking.
 
 **Core security features**:
-- **JWT RS256 signatures**: Ephemeral QR codes with nonce, jti (single-use), and device binding
+- **JWT ES256/RS256 signatures**: Ephemeral QR codes with nonce, jti (single-use), and device binding
+- **TOTP Authentication**: Time-based One-Time Password with SHA256, AES-GCM encryption
 - **Device attestation**: Level B onboarding (HR code + OTP + device attestation)
 - **Anti-capture**: Mobile app protections against screenshots and screen recording
 - **Encrypted database**: PostgreSQL with encryption at rest
 - **Immutable audit logs**: Security event tracking for compliance
+- **Rate limiting**: 5 attempts/10min with 15min lockout
+- **Replay protection**: Nonce blacklist with 30s token expiry
 
 **Key architectural components:**
 - **Backend** (`backend/`): FastAPI Python with RS256 JWT signing, secure endpoints, device validation
@@ -59,6 +62,20 @@ Chrona is a secure attendance and authentication system built with a monorepo st
 The backend has two password hashing implementations:
 - `backend/src/security.py`: Uses `passlib.hash.bcrypt_sha256` with 72-byte truncation for bcrypt compatibility
 - `backend/src/core/security.py`: Uses PBKDF2-HMAC with SHA-256 (390,000 iterations) for modern security without bcrypt limitations
+
+**TOTP Authentication (NEW - 2025-04-28):**
+- `backend/src/totp/`: Complete TOTP implementation compliant with RFC 6238
+  - `core.py`: TOTP generation/validation (SHA256, 6 digits, 30s period, ≥160 bits entropy)
+  - `encryption.py`: AES-GCM secret encryption with KMS/HSM support
+  - `provisioning.py`: QR provisioning (300s expiry, single-use)
+  - `security.py`: Rate limiting (5/10min), 15min lockout, nonce blacklist
+  - `recovery.py`: 5 single-use recovery codes per user
+- `backend/src/routers/totp.py`: TOTP API endpoints (/totp/provision, /totp/activate, /totp/validate)
+- `backend/src/models/totp_*.py`: 5 new tables (secrets, recovery_codes, nonce_blacklist, validation_attempts, lockouts)
+- `backend/alembic/versions/0009_add_totp_tables.py`: Database migration
+- JWT Algorithm Support: ES256 (ECDSA P-256, recommended) and RS256 (RSA 2048, legacy)
+- Key Generation: `python tools/generate_ec_keys.py` for ES256, `python tools/generate_keys.py` for RS256
+- Documentation: `docs/TOTP_IMPLEMENTATION.md` - Complete setup and usage guide
 
 ## Essential Commands
 
