@@ -222,6 +222,7 @@ test.describe('Admin Kiosk Management E2E', () => {
   }) => {
     const response = await request.get(`${API_BASE}/admin/kiosks`);
 
-    expect(response.status()).toBe(403);
+    // 401 Unauthorized: No authentication token provided
+    expect(response.status()).toBe(401);
   });
 });
