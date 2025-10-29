@@ -29,10 +29,10 @@ function App() {
     const initializeKiosk = async () => {
       try {
         setIsInitializing(true)
-        
+
         // Try to get IP and fetch kiosk info
         const clientIp = await getClientIp()
-        
+
         if (clientIp) {
           try {
             const kiosk = await getKioskByIp(clientIp)
@@ -41,52 +41,44 @@ function App() {
             console.log(`Kiosk identified by IP ${clientIp}: ${kiosk.kiosk_name}`)
           } catch (ipError) {
             console.warn(`Failed to get kiosk by IP ${clientIp}, falling back to environment variables:`, ipError)
-            
-            // Fallback: use environment variable
-            const envKioskId = import.meta.env.VITE_KIOSK_ID
-            if (envKioskId) {
-              setKioskId(parseInt(envKioskId, 10))
-              // Create a minimal kiosk info object from env
-              setKioskInfo({
-                id: parseInt(envKioskId, 10),
-                kiosk_name: `Kiosk ${envKioskId}`,
-                location: 'Office Entrance',
-                device_fingerprint: '',
-                ip_address: null,
-                public_key: null,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                last_heartbeat_at: null,
-              })
-            } else {
-              setInitError('Could not identify kiosk. Please configure VITE_KIOSK_ID in .env')
-            }
+            initializeFromEnv()
           }
         } else {
           // No IP detected, fall back to environment variable
-          const envKioskId = import.meta.env.VITE_KIOSK_ID
-          if (envKioskId) {
-            setKioskId(parseInt(envKioskId, 10))
-            setKioskInfo({
-              id: parseInt(envKioskId, 10),
-              kiosk_name: `Kiosk ${envKioskId}`,
-              location: 'Office Entrance',
-              device_fingerprint: '',
-              ip_address: null,
-              public_key: null,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              last_heartbeat_at: null,
-            })
-          } else {
-            setInitError('Could not identify kiosk. Please configure VITE_KIOSK_ID in .env')
-          }
+          initializeFromEnv()
         }
       } catch (error) {
         console.error('Error initializing kiosk:', error)
-        setInitError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        // Still try to use environment fallback before showing error
+        try {
+          initializeFromEnv()
+        } catch (fallbackError) {
+          setInitError(`Initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
       } finally {
         setIsInitializing(false)
+      }
+    }
+
+    const initializeFromEnv = () => {
+      const envKioskId = import.meta.env.VITE_KIOSK_ID
+      if (envKioskId) {
+        const kioskId = parseInt(envKioskId, 10)
+        setKioskId(kioskId)
+        setKioskInfo({
+          id: kioskId,
+          kiosk_name: `Kiosk ${envKioskId}`,
+          location: 'Office Entrance',
+          device_fingerprint: '',
+          ip_address: null,
+          public_key: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          last_heartbeat_at: null,
+        })
+        console.log(`Kiosk initialized from environment: Kiosk ${envKioskId}`)
+      } else {
+        throw new Error('Could not identify kiosk. Please configure VITE_KIOSK_ID in .env')
       }
     }
 
@@ -153,7 +145,7 @@ function App() {
   }
 
   return (
-    <div className={`app ${isKioskMode ? 'kiosk-mode-active' : ''}`}>
+    <div className={`app ${isKioskMode ? 'kiosk-mode-active' : ''}`} data-testid="app">
       {/* Always show connection status for visibility in E2E */}
       <div style={{ position: 'fixed', top: 8, right: 8, zIndex: 1000 }}>
         <ConnectionStatus />
@@ -167,7 +159,7 @@ function App() {
       />
 
       {!isKioskMode && (
-        <header className="app-header">
+        <header className="app-header" data-testid="app-header">
           <h1>Chrona Kiosk</h1>
           <p>Scanner le QR code pour pointer</p>
           <div style={{ marginTop: 8 }}>
@@ -176,12 +168,13 @@ function App() {
         </header>
       )}
 
-      <main className="app-main">
+      <main className="app-main" data-testid="app-main">
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
           <button
             className={`btn ${!showCameraTest ? 'btn--active' : ''}`}
             onClick={() => setShowCameraTest(false)}
             disabled={!showCameraTest}
+            data-testid="mode-scan-qr"
           >
             Mode scan QR
           </button>
@@ -189,6 +182,7 @@ function App() {
             className={`btn ${showCameraTest ? 'btn--active' : ''}`}
             onClick={() => setShowCameraTest(true)}
             disabled={showCameraTest}
+            data-testid="mode-test-camera"
           >
             Mode test camera
           </button>
@@ -202,7 +196,7 @@ function App() {
         )}
       </main>
 
-      <footer className="app-footer">
+      <footer className="app-footer" data-testid="app-footer">
         <p>Copyright 2025 Chrona - Systeme de pointage securise</p>
       </footer>
     </div>
