@@ -68,6 +68,7 @@ async def test_admin_generate_kiosk_api_key(
     assert kiosk.api_key_hash is not None
 
 
+@pytest.mark.skip(reason="Legacy API key authentication test - now using IP-based identification")
 @pytest.mark.asyncio
 async def test_punch_validate_requires_api_key(async_client: AsyncClient, test_db):
     """Test that /punch/validate requires API key."""
@@ -85,6 +86,7 @@ async def test_punch_validate_requires_api_key(async_client: AsyncClient, test_d
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="Legacy API key authentication test - now using IP-based identification")
 async def test_punch_validate_with_invalid_api_key(async_client: AsyncClient, test_db):
     """Test that /punch/validate rejects invalid API key."""
     response = await async_client.post(
@@ -135,6 +137,7 @@ async def test_punch_validate_with_inactive_kiosk(async_client: AsyncClient, tes
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="Legacy kiosk ID validation removed - now identified by IP")
 async def test_punch_validate_kiosk_id_mismatch(
     async_client: AsyncClient, test_db, test_user, test_device
 ):

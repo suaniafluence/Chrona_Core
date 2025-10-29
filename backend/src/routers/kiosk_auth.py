@@ -3,12 +3,17 @@
 import secrets
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.db import get_session
+from src.middleware.kiosk_ip import (
+    get_client_ip,
+    get_kiosk_from_ip,
+    get_kiosk_from_ip_or_api_key,
+)
 from src.models.kiosk import Kiosk
 from src.security import get_password_hash, verify_password
 
@@ -50,11 +55,14 @@ def verify_kiosk_api_key(plain_api_key: str, hashed_api_key: str) -> bool:
     return verify_password(plain_api_key, hashed_api_key)
 
 
+# Legacy API key-based authentication (kept for backward compatibility)
 async def get_current_kiosk(
     api_key: Annotated[str | None, Depends(api_key_header)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Kiosk:
-    """Dependency to get the current authenticated kiosk.
+    """Dependency to get the current authenticated kiosk (API key method).
+
+    DEPRECATED: Use get_kiosk_from_ip_or_api_key for new code.
 
     Args:
         api_key: API key from X-Kiosk-API-Key header
@@ -97,3 +105,17 @@ async def get_current_kiosk(
         )
 
     return authenticated_kiosk
+
+
+# Re-export IP-based authentication functions from middleware
+# These are now the primary authentication methods
+__all__ = [
+    "get_current_kiosk",  # Legacy API key method
+    "get_kiosk_from_ip",  # Primary IP-based method
+    "get_kiosk_from_ip_or_api_key",  # Hybrid method (IP primary, API key fallback)
+    "generate_kiosk_api_key",
+    "hash_kiosk_api_key",
+    "verify_kiosk_api_key",
+    "get_client_ip",
+    "api_key_header",
+]

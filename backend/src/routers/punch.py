@@ -15,7 +15,7 @@ from src.models.kiosk import Kiosk
 from src.models.punch import Punch
 from src.models.token_tracking import TokenTracking
 from src.routers.auth import get_current_user
-from src.routers.kiosk_auth import get_current_kiosk
+from src.routers.kiosk_auth import get_kiosk_from_ip_or_api_key
 from src.schemas import (
     PunchRead,
     PunchValidateRequest,
@@ -109,7 +109,7 @@ async def request_qr_token(
 @router.post("/validate", response_model=PunchValidateResponse)
 async def validate_punch(
     validate_data: PunchValidateRequest,
-    current_kiosk: Annotated[Kiosk, Depends(get_current_kiosk)],
+    current_kiosk: Annotated[Kiosk, Depends(get_kiosk_from_ip_or_api_key)],
     session: Annotated[AsyncSession, Depends(get_session)],
     request: Request,
 ) -> PunchValidateResponse:
@@ -222,11 +222,7 @@ async def validate_punch(
 
     # 7. Verify kiosk_id matches authenticated kiosk
     # The current_kiosk is already authenticated and verified as active
-    if validate_data.kiosk_id != current_kiosk.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Kiosk ID in request does not match authenticated kiosk",
-        )
+    # 7. Kiosk is now identified by IP address, no longer by ID
 
     kiosk = current_kiosk
 
