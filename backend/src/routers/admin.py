@@ -268,6 +268,45 @@ async def list_kiosks(
     return [KioskRead.model_validate(kiosk) for kiosk in kiosks]
 
 
+@router.get("/kiosks/by-ip/{ip_address}", response_model=KioskRead)
+async def get_kiosk_by_ip(
+    ip_address: str,
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Get kiosk information by IP address.
+
+    This endpoint is used by kiosk tablets to identify themselves based on
+    their assigned IP address. No authentication required (public endpoint).
+
+    Args:
+        ip_address: IP address of the kiosk (IPv4 or IPv6)
+
+    Returns:
+        KioskRead with kiosk details
+
+    Raises:
+        HTTPException 404: Kiosk not found for this IP address
+    """
+    result = await session.execute(
+        select(Kiosk).where(Kiosk.ip_address == ip_address)
+    )
+    kiosk = result.scalar_one_or_none()
+
+    if not kiosk:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No kiosk found for IP address: {ip_address}",
+        )
+
+    if not kiosk.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kiosk is not active",
+        )
+
+    return KioskRead.model_validate(kiosk)
+
+
 @router.post("/kiosks", response_model=KioskRead, status_code=status.HTTP_201_CREATED)
 async def create_kiosk(
     kiosk_data: KioskCreate,
@@ -307,12 +346,24 @@ async def create_kiosk(
             detail="Kiosk with this fingerprint already exists",
         )
 
+    # Check for duplicate IP address (if provided)
+    if kiosk_data.ip_address:
+        result = await session.execute(
+            select(Kiosk).where(Kiosk.ip_address == kiosk_data.ip_address)
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Kiosk with this IP address already exists",
+            )
+
     # Create kiosk
     kiosk = Kiosk(
         kiosk_name=kiosk_data.kiosk_name,
         location=kiosk_data.location,
         device_fingerprint=kiosk_data.device_fingerprint,
         public_key=kiosk_data.public_key,
+        ip_address=kiosk_data.ip_address,
         is_active=True,
         created_at=datetime.utcnow(),
     )
@@ -357,6 +408,21 @@ async def update_kiosk(
 
     if kiosk_data.location is not None:
         kiosk.location = kiosk_data.location
+
+    if kiosk_data.ip_address is not None:
+        # Check if IP address is already in use by another kiosk
+        if kiosk_data.ip_address != kiosk.ip_address:
+            result = await session.execute(
+                select(Kiosk).where(
+                    (Kiosk.ip_address == kiosk_data.ip_address) & (Kiosk.id != kiosk_id)
+                )
+            )
+            if result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Another kiosk already has this IP address",
+                )
+        kiosk.ip_address = kiosk_data.ip_address
 
     if kiosk_data.is_active is not None:
         kiosk.is_active = kiosk_data.is_active
