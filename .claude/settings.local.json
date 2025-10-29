@@ -21,7 +21,11 @@
       "Bash(DOCUMENTATION_INDEX.md )",
       "Bash(MARKDOWN_GLOSSARY.md )",
       "Bash(KIOSK_ANDROID.md )",
-      "Bash(VPN_QUICK_START.md)"
+      "Bash(VPN_QUICK_START.md)",
+      "Bash(git pull:*)",
+      "Bash(git push)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

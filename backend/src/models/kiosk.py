@@ -22,12 +22,20 @@ class Kiosk(SQLModel, table=True):
     location: str = Field(
         max_length=255, nullable=False, description="Physical location description"
     )
+    ip_address: Optional[str] = Field(
+        default=None,
+        unique=True,
+        index=True,
+        max_length=45,
+        nullable=True,
+        description="Static IP address of kiosk tablet (IPv4 or IPv6)",
+    )
     device_fingerprint: str = Field(
         unique=True,
         index=True,
         max_length=255,
         nullable=False,
-        description="Kiosk hardware identifier",
+        description="Kiosk hardware identifier (Android device ID or IMEI)",
     )
     public_key: Optional[str] = Field(
         default=None,

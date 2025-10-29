@@ -88,7 +88,12 @@ class KioskCreate(BaseModel):
 
     kiosk_name: str = Field(..., max_length=100)
     location: str = Field(..., max_length=255)
-    device_fingerprint: str = Field(..., max_length=255)
+    device_fingerprint: str = Field(
+        ..., max_length=255, description="Android device ID or IMEI"
+    )
+    ip_address: Optional[str] = Field(
+        None, max_length=45, description="Static IP address (IPv4 or IPv6)"
+    )
     public_key: Optional[str] = Field(
         None, description="RSA public key for JWT verification"
     )
@@ -103,9 +108,11 @@ class KioskRead(BaseModel):
     kiosk_name: str
     location: str
     device_fingerprint: str
+    ip_address: Optional[str]
     public_key: Optional[str]
     is_active: bool
     created_at: datetime
+    last_heartbeat_at: Optional[datetime]
 
 
 class KioskUpdate(BaseModel):
@@ -113,6 +120,9 @@ class KioskUpdate(BaseModel):
 
     kiosk_name: Optional[str] = Field(None, max_length=100)
     location: Optional[str] = Field(None, max_length=255)
+    ip_address: Optional[str] = Field(
+        None, max_length=45, description="Update static IP address"
+    )
     is_active: Optional[bool] = None
 
 
