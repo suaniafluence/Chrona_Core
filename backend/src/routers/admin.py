@@ -287,9 +287,7 @@ async def get_kiosk_by_ip(
     Raises:
         HTTPException 404: Kiosk not found for this IP address
     """
-    result = await session.execute(
-        select(Kiosk).where(Kiosk.ip_address == ip_address)
-    )
+    result = await session.execute(select(Kiosk).where(Kiosk.ip_address == ip_address))
     kiosk = result.scalar_one_or_none()
 
     if not kiosk:

@@ -56,9 +56,7 @@ async def get_kiosk_from_ip(
     client_ip = get_client_ip(request)
 
     # Query kiosk by IP address
-    result = await session.execute(
-        select(Kiosk).where(Kiosk.ip_address == client_ip)
-    )
+    result = await session.execute(select(Kiosk).where(Kiosk.ip_address == client_ip))
     kiosk = result.scalar_one_or_none()
 
     if not kiosk:
@@ -107,9 +105,7 @@ async def get_kiosk_from_ip_or_api_key(
     client_ip = get_client_ip(request)
 
     # Try IP-based lookup first
-    result = await session.execute(
-        select(Kiosk).where(Kiosk.ip_address == client_ip)
-    )
+    result = await session.execute(select(Kiosk).where(Kiosk.ip_address == client_ip))
     kiosk = result.scalar_one_or_none()
 
     if kiosk:
@@ -121,7 +117,7 @@ async def get_kiosk_from_ip_or_api_key(
         return kiosk
 
     # Fallback to API key lookup (for backward compatibility)
-    from src.routers.kiosk_auth import api_key_header, verify_kiosk_api_key
+    from src.routers.kiosk_auth import verify_kiosk_api_key
 
     api_key = request.headers.get("x-kiosk-api-key")
     if api_key:
