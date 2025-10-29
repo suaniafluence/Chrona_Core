@@ -7,7 +7,21 @@
       "Read(//c/Users/suant/Downloads/**)",
       "Bash(python:*)",
       "Bash(find:*)",
-      "Bash(black --check:*)"
+      "Bash(black --check:*)",
+      "Bash(awk '{print $9, \"\"\"\"(\"\"\"\" $5 \"\"\"\")\"\"\"\"}')",
+      "Bash(BACKEND_ENDPOINTS_COMPLETE.md )",
+      "Bash(E2E_TESTS_SUMMARY.md )",
+      "Bash(EMPLOYEE_MOBILE_APK_COMPLETE.md )",
+      "Bash(HEARTBEAT_SYSTEM_COMPLETE.md )",
+      "Bash(INTEGRATION_COMPLETE.md )",
+      "Bash(KIOSK_ACCESS_CONTROL_COMPLETE.md )",
+      "Bash(KIOSK_MOBILE_COMPLETE.md )",
+      "Bash(PHASE5_COMPLETION.md )",
+      "Bash(SETUP_EAS_QUICK_START.md )",
+      "Bash(DOCUMENTATION_INDEX.md )",
+      "Bash(MARKDOWN_GLOSSARY.md )",
+      "Bash(KIOSK_ANDROID.md )",
+      "Bash(VPN_QUICK_START.md)"
     ],
     "deny": [],
     "ask": []

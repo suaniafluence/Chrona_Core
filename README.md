@@ -63,58 +63,115 @@ npm start             # Affiche un QR code
 
 - **[QUICK_START.md](QUICK_START.md)** - Guide de démarrage rapide (recommandé)
 - **[docs/GUIDE_DEPLOIEMENT.md](docs/GUIDE_DEPLOIEMENT.md)** - Guide complet d'installation
-- **[CLAUDE.md](CLAUDE.md)** - Configuration pour développeurs
+- **[CLAUDE.md](CLAUDE.md)** - Configuration pour développeurs Claude Code
 - **[docs/TODO.md](docs/TODO.md)** - Roadmap et tâches
 - **[AGENTS.md](AGENTS.md)** - Guide local détaillé
-
-Image GHCR
-- Nom d’image: `ghcr.io/suaniafluence/chrona-core-backend`
-- Pull: `docker pull ghcr.io/suaniafluence/chrona-core-backend:latest`
-- Run: `docker run -p 8000:8000 ghcr.io/suaniafluence/chrona-core-backend:latest`
+- **[docs/](docs/)** - Documentation complète (RGPD, sécurité, threat-model)
 
 ---
-**Démarrage Avec Docker**
-- Prérequis
-  - Docker Desktop en état « Running »
-  - Python installé pour générer les clés JWT côté hôte
 
-- Générer les clés JWT (une fois)
-  - `cd Chrona_Core/backend`
-  - `python -m venv .venv`
-  - `.venv\Scripts\python -m pip install -r requirements.txt`
-  - `.venv\Scripts\python tools\generate_keys.py`
-  - Clés générées: `backend/jwt_private_key.pem`, `backend/jwt_public_key.pem`
+## 🐳 Docker & Déploiement
 
-- Lancer la stack
-  - Depuis la racine: `docker compose up -d --build`
-  - Services exposés: `db` 5432, `backend` 8000, `kiosk` 5174
+**Prérequis:** Docker Desktop + Python 3.11+
 
-- Appliquer les migrations (sur l’hôte)
-  - `cd Chrona_Core/backend`
-  - PowerShell (session courante): `$env:DATABASE_URL="postgresql+asyncpg://chrona:chrona@localhost:5432/chrona"`
-  - Facultatif: `$env:PYTHONPATH=(Get-Location).Path`
-  - `.\.venv\Scripts\alembic upgrade head`
+**Déploiement rapide:**
+```bash
+docker compose up -d --build
+```
 
-- (Optionnel) Seeder un kiosque de test (ID 1)
-  - `.\.venv\Scripts\python tools\seed_kiosk.py`
-  - Configurez le Kiosk avec `VITE_KIOSK_ID=1`
+**Services:**
+- Backend API: `http://localhost:8000`
+- PostgreSQL: `localhost:5432`
+- Kiosk: `http://localhost:5174`
 
-- Accès et vérifications
-  - API santé: `http://localhost:8000/health`
-  - Kiosk: `http://localhost:5174` (proxy `/api` → backend)
-  - Logs backend: `docker compose logs -f backend`
-  - État des services: `docker compose ps`
-  - Arrêt/cleanup: `docker compose down -v`
+**Image Docker:**
+```bash
+docker pull ghcr.io/suaniafluence/chrona-core-backend:latest
+```
 
-- Script E2E (PowerShell)
-  - `pwsh ./backend/tools/e2e-punch.ps1 -Email dev@example.com -Password Passw0rd! -Api http://localhost:8000 -KioskId 1 -DeviceFingerprint e2e-device-001 -PunchType clock_in`
+Voir [docs/GUIDE_DEPLOIEMENT.md](docs/GUIDE_DEPLOIEMENT.md) pour les détails complets.
 
-Notes
-- Le `docker-compose.yml` monte automatiquement les clés JWT dans le conteneur backend et inclut `http://localhost:5174` dans CORS.
-- Un avertissement Passlib/bcrypt peut apparaître dans les logs; il n’empêche pas le fonctionnement de base.
-- Le champ `version:` de Compose est obsolète et ignoré par Docker.
+---
 
-**Alternative Podman (facultatif)**
-- Démarrer la machine: `podman machine start podman-machine-default`
-- Lancer: `podman compose up -d --build`
-- Les étapes de migration et de seed sont identiques (côté hôte).
+## 🛠️ Développement Local
+
+### Backend (FastAPI + PostgreSQL)
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+uvicorn src.main:app --reload --port 8000
+```
+
+### Tests & Linting
+
+```bash
+cd backend
+pytest -q                    # Run tests
+black --check src tests      # Check formatting
+flake8 src tests            # Lint
+isort --check-only backend  # Check imports
+```
+
+### Frontend Apps (Vite)
+
+```bash
+cd apps/backoffice
+npm install
+npm run dev  # Dev server on :5173
+
+# ou
+cd apps/kiosk
+npm install
+npm run dev  # Dev server on :5174
+```
+
+---
+
+## 📋 État du Projet
+
+- ✅ Backend API (FastAPI + PostgreSQL + Alembic)
+- ✅ Kiosk tablet app (React + Vite + TypeScript)
+- ✅ Back-office HR portal (React + Vite + TypeScript)
+- ✅ Mobile app (Expo + React Native + TypeScript)
+- ✅ TOTP 2FA authentication system
+- ✅ QR code generation & JWT validation
+- ✅ RGPD/CNIL compliance
+- ✅ Device attestation & anti-replay protection
+- ✅ CI/CD pipelines (GitHub Actions)
+
+---
+
+## 🔐 Sécurité
+
+- **JWT:** RS256/ES256 signed ephemeral QR tokens
+- **Passwords:** PBKDF2-HMAC-SHA256 (390k iterations)
+- **Database:** PostgreSQL + encryption at rest
+- **Transport:** TLS 1.2+ enforced
+- **Compliance:** GDPR/RGPD compliant
+
+---
+
+## 🤝 Contribution
+
+1. Create feature branch: `git checkout -b feature/description`
+2. Make changes and test locally
+3. Run: `pytest`, `black`, `flake8`, `isort`
+4. Push and create Pull Request
+5. CI/CD will validate automatically
+
+---
+
+## 📝 Licence
+
+Propriétaire - Chrona Time Tracking System 2025
+
+---
+
+## 📞 Support
+
+- **Issues:** [GitHub Issues](https://github.com/suaniafluence/Chrona_Core/issues)
+- **Documentation:** See `docs/` directory
+- **Developer Guide:** [CLAUDE.md](CLAUDE.md)
