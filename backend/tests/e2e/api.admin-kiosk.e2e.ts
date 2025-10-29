@@ -13,9 +13,10 @@ test.describe('Admin Kiosk Management E2E', () => {
   let adminAccessToken: string;
   let kioskId: number;
 
+  // Use the pre-created admin user from CI (see .github/workflows/ci.yml)
   const adminUser = {
-    email: `admin-kiosk-e2e-${Date.now()}@test.com`,
-    password: 'AdminPassword123!',
+    email: 'admin-e2e@local',
+    password: 'Passw0rd!',
   };
 
   const kioskData = {
@@ -27,19 +28,7 @@ test.describe('Admin Kiosk Management E2E', () => {
   };
 
   test.beforeAll(async ({ request }) => {
-    // Create admin user
-    const registerResponse = await request.post(
-      `${API_BASE}/auth/register`,
-      {
-        data: {
-          email: adminUser.email,
-          password: adminUser.password,
-        },
-      },
-    );
-    expect(registerResponse.status()).toBe(201);
-
-    // Login admin user
+    // Login with pre-created admin user from CI
     const loginResponse = await request.post(`${API_BASE}/auth/token`, {
       form: {
         username: adminUser.email,
@@ -50,9 +39,6 @@ test.describe('Admin Kiosk Management E2E', () => {
 
     const body = await loginResponse.json();
     adminAccessToken = body.access_token;
-
-    // Promote to admin (if endpoint exists, or skip for E2E)
-    // This assumes the create_admin_user tool was already run in CI
   });
 
   test('should create a new kiosk successfully', async ({ request }) => {
@@ -236,6 +222,7 @@ test.describe('Admin Kiosk Management E2E', () => {
   }) => {
     const response = await request.get(`${API_BASE}/admin/kiosks`);
 
-    expect(response.status()).toBe(403);
+    // 401 Unauthorized: No authentication token provided
+    expect(response.status()).toBe(401);
   });
 });

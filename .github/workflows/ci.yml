@@ -243,7 +243,6 @@ jobs:
             p/javascript
             p/typescript
             p/react
-          generateSarif: true
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
@@ -292,7 +291,9 @@ jobs:
         if: ${{ hashFiles('apps/mobile/package.json') != '' }}
         working-directory: apps/mobile
         run: |
-          npm ci
+          # Use npm install instead of npm ci to generate package-lock.json
+          # (package-lock.json was removed due to invalid detox-cli reference)
+          npm install --no-audit --no-fund
           npx @cyclonedx/cyclonedx-npm --output-file sbom-mobile.json
 
       - name: Generate Kiosk SBOM

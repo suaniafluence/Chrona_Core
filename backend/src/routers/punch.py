@@ -301,6 +301,7 @@ async def validate_punch(
         punched_at=punch.punched_at,
         user_id=user_id,
         device_id=device_id,
+        punch_type=validate_data.punch_type,
     )
 
 
