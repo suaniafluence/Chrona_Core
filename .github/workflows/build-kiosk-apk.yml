@@ -116,8 +116,10 @@ jobs:
 
       - name: 🚀 Build APK
         working-directory: apps/kiosk-mobile
+        env:
+          CI: true
         run: |
-          eas build --platform android --profile preview --no-wait --clear-credentials-cache
+          eas build --platform android --profile preview --no-wait
 
           # Wait for build to complete and get download URL
           echo "Waiting for build to complete..."
