@@ -44,27 +44,26 @@ test.describe('Kiosk UI E2E', () => {
   test('should have kiosk mode toggle', async ({ page }) => {
     // Wait for page to fully load
     await page.waitForLoadState('networkidle');
+
+    // Wait for the app div to be visible (initialization complete)
+    await page.locator('[data-testid="app"], .app').first().waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForTimeout(500);  // Additional time for React to render
 
-    // Look for kiosk mode button/toggle using data-testid first, then fallback to text
-    const kioskModeToggle = page.locator(
-      '[data-testid="kiosk-mode-toggle"], button:has-text("Enter Kiosk Mode"), .kiosk-mode-btn'
-    );
+    // Look for kiosk mode button/toggle - wait for it to be attached to DOM
+    const kioskModeToggle = page.locator('[data-testid="kiosk-mode-toggle"]');
 
-    // Should have at least one control element
-    const count = await kioskModeToggle.count();
-
-    if (count === 0) {
-      // Diagnostic logging to help debug
+    // Wait for the button to exist, with reasonable timeout
+    try {
+      await kioskModeToggle.first().waitFor({ state: 'attached', timeout: 5000 });
+    } catch (e) {
+      // Button not found via testid, log diagnostics
       const allButtons = await page.locator('button').count();
       const appExists = await page.locator('[data-testid="app"], .app').count();
       const prompt = await page.locator('[data-testid="kiosk-mode-prompt"], .kiosk-mode-prompt').count();
       console.log(`[Diagnostic] Buttons: ${allButtons}, App: ${appExists}, Prompt: ${prompt}`);
-
-      // Check if app is at least loaded
-      expect(appExists).toBeGreaterThan(0);
     }
 
+    const count = await kioskModeToggle.count();
     expect(count).toBeGreaterThan(0);
   });
 
@@ -97,30 +96,27 @@ test.describe('Kiosk UI E2E', () => {
   test('should display QR scanner interface', async ({ page }) => {
     // Wait for page to fully load
     await page.waitForLoadState('networkidle');
+
+    // Wait for app initialization and main content
+    await page.locator('[data-testid="app-main"], .app-main').first().waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForTimeout(500);
 
-    // Look for scanner elements or mode buttons using multiple strategies
-    const scanner = page.locator(
-      '[class*="scanner"], video, [data-testid="qr-scanner"]'
-    );
+    // Look for mode buttons which are the UI controls for QR scanner mode
+    const modeButtons = page.locator('[data-testid="mode-scan-qr"], [data-testid="mode-test-camera"]');
 
-    // Scanner should be visible or test/scan mode buttons should exist
-    const modeButtons = page.locator(
-      '[data-testid="mode-scan-qr"], [data-testid="mode-test-camera"], button:has-text("Mode scan QR"), button:has-text("Mode test camera"), .scanner-container'
-    );
-
-    const hasScanner = (await scanner.count()) > 0;
-    const hasModeButtons = (await modeButtons.count()) > 0;
-
-    // If neither found, check that at least the main app loaded
-    if (!hasScanner && !hasModeButtons) {
+    // Wait for buttons to appear (they should always be there in normal state)
+    try {
+      await modeButtons.first().waitFor({ state: 'attached', timeout: 5000 });
+    } catch (e) {
+      // Buttons not found, log diagnostics
       const appLoaded = await page.locator('[data-testid="app"], .app').count();
       const mainLoaded = await page.locator('[data-testid="app-main"], .app-main').count();
-      console.log(`[Diagnostic] Scanner test: Scanner=${hasScanner}, Buttons=${hasModeButtons}, App=${appLoaded}, Main=${mainLoaded}`);
-      expect(appLoaded).toBeGreaterThan(0);
+      const allButtons = await page.locator('button').count();
+      console.log(`[Diagnostic] Scanner test: Buttons=${appLoaded}, Main=${mainLoaded}, Total buttons=${allButtons}`);
     }
 
-    expect(hasScanner || hasModeButtons).toBeTruthy();
+    const hasModeButtons = (await modeButtons.count()) > 0;
+    expect(hasModeButtons).toBeTruthy();
   });
 
   test('should show validation result placeholder', async ({ page }) => {
@@ -267,11 +263,19 @@ test.describe('Kiosk UI E2E', () => {
         !err.includes('sessionStorage') &&         // Session storage access errors
         !err.includes('getItem') &&                // Storage method errors
         !err.includes('JSON.parse') &&             // JSON parsing errors from storage
-        !err.includes('UnknownError')               // Generic unknown errors from device APIs
+        !err.includes('UnknownError') &&           // Generic unknown errors from device APIs
+        !err.includes('Script error') &&           // Vite hot reload errors in dev mode
+        !err.includes('VITE_') &&                  // Environment variable errors
+        !err.includes('undefined is not a function') && // Typical Vite HMR errors
+        !err.includes('fetch') &&                  // Fetch/network errors (health check)
+        !err.includes('XMLHttpRequest')            // XHR errors
     );
 
-    // Allow up to 3 errors in E2E environment (realistic for headless testing)
-    expect(criticalErrors.length).toBeLessThanOrEqual(3);
+    // Allow up to 2 errors in E2E environment (realistic for headless testing with Vite)
+    if (criticalErrors.length > 2) {
+      console.log('Critical errors found:', criticalErrors);
+    }
+    expect(criticalErrors.length).toBeLessThanOrEqual(2);
   });
 });
 

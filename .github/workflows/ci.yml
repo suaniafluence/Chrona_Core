@@ -430,6 +430,13 @@ jobs:
           if [ -f "apps/kiosk/package.json" ]; then
             cd apps/kiosk
             npm ci
+            # Create .env with required variables for E2E tests
+            cat > .env << 'ENVEOF'
+VITE_API_URL=http://localhost:8000
+VITE_KIOSK_ID=1
+VITE_KIOSK_API_KEY=${{ env.TEST_KIOSK_API_KEY }}
+VITE_AUTO_KIOSK_MODE=false
+ENVEOF
             # Start Vite dev server in background on 0.0.0.0:5174
             npm run dev -- --host 0.0.0.0 --port 5174 &
             # Wait for kiosk to respond (max ~20s)
