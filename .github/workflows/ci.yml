@@ -444,7 +444,13 @@ EOF
             # Wait for kiosk to respond (max ~20s)
             for i in {1..20}; do
               if curl -fsS http://localhost:5174 >/dev/null; then
-                echo "Kiosk UI is up"; break; fi; echo "Waiting kiosk..."; sleep 1; done
+                echo "Kiosk UI is up"
+                break
+              else
+                echo "Waiting kiosk..."
+                sleep 1
+              fi
+            done
           else
             echo "No Kiosk app found; skipping UI startup"
           fi
