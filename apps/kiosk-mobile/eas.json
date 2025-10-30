@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 5.9.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -10,7 +11,13 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "keystore": {
+          "keystorePath": null,
+          "keystorePassword": null,
+          "keyAlias": null,
+          "keyPassword": null
+        }
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "http://YOUR_SERVER_IP:8000",
@@ -20,7 +27,7 @@
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.chrona.com",
