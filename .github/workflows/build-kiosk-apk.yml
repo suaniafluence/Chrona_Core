@@ -1,9 +1,9 @@
-name: Build Mobile APK
+name: Build Kiosk APK
 
 on:
   push:
     tags:
-      - 'mobile-v*.*.*'  # Trigger on tags like mobile-v1.0.0
+      - 'kiosk-v*.*.*'  # Trigger on tags like kiosk-v1.0.0
   workflow_dispatch:
     inputs:
       version:
@@ -14,10 +14,14 @@ on:
         description: 'API URL for the build'
         required: true
         default: 'https://api.chrona.com'
+      kiosk_id:
+        description: 'Kiosk ID for the build'
+        required: true
+        default: '1'
 
 jobs:
   build:
-    name: Build APK with EAS
+    name: Build Kiosk APK with EAS
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +33,7 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-          cache-dependency-path: apps/mobile/package-lock.json
+          cache-dependency-path: apps/kiosk-mobile/package-lock.json
 
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
@@ -38,11 +42,11 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
-        working-directory: apps/mobile
+        working-directory: apps/kiosk-mobile
         run: npm ci
 
       - name: 🔐 Setup EAS credentials (Android keystore)
-        working-directory: apps/mobile
+        working-directory: apps/kiosk-mobile
         env:
           EAS_CLI_LOG_LEVEL: debug
         run: |
@@ -53,11 +57,11 @@ jobs:
           echo "Using pre-configured EAS credentials from your Expo account..."
 
       - name: 🔧 Configure version
-        working-directory: apps/mobile
+        working-directory: apps/kiosk-mobile
         run: |
           # Extract version from tag or use input
           if [ "${{ github.event_name }}" == "push" ]; then
-            VERSION="${GITHUB_REF#refs/tags/mobile-v}"
+            VERSION="${GITHUB_REF#refs/tags/kiosk-v}"
           else
             VERSION="${{ github.event.inputs.version }}"
           fi
@@ -82,30 +86,36 @@ jobs:
             console.log('Updated versionCode to:', appJson.expo.android.versionCode);
           "
 
-      - name: 🔧 Configure API URL
-        working-directory: apps/mobile
+      - name: 🔧 Configure API URL and Kiosk ID
+        working-directory: apps/kiosk-mobile
         run: |
-          # Use API URL from input or default to production
+          # Use API URL and Kiosk ID from input or defaults
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             API_URL="${{ github.event.inputs.api_url }}"
+            KIOSK_ID="${{ github.event.inputs.kiosk_id }}"
           else
             API_URL="https://api.chrona.com"
+            KIOSK_ID="1"
           fi
 
           echo "Configuring API URL: $API_URL"
+          echo "Configuring Kiosk ID: $KIOSK_ID"
 
-          # Update eas.json with API URL for both preview and production
+          # Update eas.json with API URL and Kiosk ID for both preview and production
           node -e "
             const fs = require('fs');
             const easJson = JSON.parse(fs.readFileSync('eas.json', 'utf8'));
             easJson.build.preview.env.EXPO_PUBLIC_API_URL = '$API_URL';
+            easJson.build.preview.env.EXPO_PUBLIC_KIOSK_ID = '$KIOSK_ID';
             easJson.build.production.env.EXPO_PUBLIC_API_URL = '$API_URL';
+            easJson.build.production.env.EXPO_PUBLIC_KIOSK_ID = '$KIOSK_ID';
             fs.writeFileSync('eas.json', JSON.stringify(easJson, null, 2));
             console.log('API URL configured:', '$API_URL');
+            console.log('Kiosk ID configured:', '$KIOSK_ID');
           "
 
       - name: 🚀 Build APK
-        working-directory: apps/mobile
+        working-directory: apps/kiosk-mobile
         run: |
           eas build --platform android --profile preview --no-wait
 
@@ -136,17 +146,17 @@ jobs:
 
       - name: 📥 Download APK
         run: |
-          wget -O chrona-mobile.apk "${{ env.DOWNLOAD_URL }}"
+          wget -O chrona-kiosk.apk "${{ env.DOWNLOAD_URL }}"
 
           # Rename with version
           if [ "${{ github.event_name }}" == "push" ]; then
-            VERSION="${GITHUB_REF#refs/tags/mobile-v}"
+            VERSION="${GITHUB_REF#refs/tags/kiosk-v}"
           else
             VERSION="${{ github.event.inputs.version }}"
           fi
 
-          mv chrona-mobile.apk chrona-mobile-v${VERSION}.apk
-          echo "APK_FILE=chrona-mobile-v${VERSION}.apk" >> $GITHUB_ENV
+          mv chrona-kiosk.apk chrona-kiosk-v${VERSION}.apk
+          echo "APK_FILE=chrona-kiosk-v${VERSION}.apk" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: 📊 Get APK Info
@@ -164,36 +174,33 @@ jobs:
       - name: 📤 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: mobile-v${{ env.VERSION }}
-          name: "Chrona Mobile v${{ env.VERSION }}"
+          tag_name: kiosk-v${{ env.VERSION }}
+          name: "Chrona Kiosk v${{ env.VERSION }}"
           body: |
-            # 📱 Chrona Mobile - Version ${{ env.VERSION }}
+            # 🖥️ Chrona Kiosk - Version ${{ env.VERSION }}
 
             ## 📥 Installation
 
             ### Méthode 1: Téléchargement Direct
 
             1. Télécharger le fichier APK ci-dessous
-            2. Ouvrir le fichier sur votre téléphone Android
+            2. Ouvrir le fichier sur votre tablette Android
             3. Autoriser l'installation depuis sources inconnues
             4. Installer l'application
 
             ### Méthode 2: Scanner le QR Code
 
-            Utilisez l'outil de génération de QR code:
-            ```
-            apps/mobile/tools/generate-apk-qr.html
-            ```
+            Utilisez l'outil de génération de QR code pour faciliter le déploiement sur les tablettes kiosks.
 
-            Entrez l'URL de téléchargement:
+            Lien de téléchargement:
             ```
-            https://github.com/${{ github.repository }}/releases/download/mobile-v${{ env.VERSION }}/chrona-mobile-v${{ env.VERSION }}.apk
+            https://github.com/${{ github.repository }}/releases/download/kiosk-v${{ env.VERSION }}/chrona-kiosk-v${{ env.VERSION }}.apk
             ```
 
             ## 📊 Informations
 
             - **Taille**: ${{ env.APK_SIZE }}
-            - **Package**: `com.chrona.mobile`
+            - **Package**: `com.chrona.kiosk`
             - **Version Code**: Auto-généré
             - **SHA256**: `${{ env.APK_SHA256 }}`
 
@@ -201,13 +208,14 @@ jobs:
 
             Vérifier le checksum SHA256:
             ```bash
-            sha256sum chrona-mobile-v${{ env.VERSION }}.apk
+            sha256sum chrona-kiosk-v${{ env.VERSION }}.apk
             ```
 
             ## 📚 Documentation
 
-            - [Guide d'installation](https://github.com/${{ github.repository }}/blob/main/apps/mobile/INSTALLATION.md)
-            - [Guide de build](https://github.com/${{ github.repository }}/blob/main/apps/mobile/APK_BUILD.md)
+            - [Guide de déploiement Kiosk](https://github.com/${{ github.repository }}/blob/main/apps/kiosk-mobile/DEPLOYMENT.md)
+            - [Guide de configuration QR](https://github.com/${{ github.repository }}/blob/main/apps/kiosk-mobile/QR_CONFIG_GUIDE.md)
+            - [Quick Start Kiosk](https://github.com/${{ github.repository }}/blob/main/apps/kiosk-mobile/QUICK_START.md)
 
             ## 🐛 Support
 
@@ -232,4 +240,4 @@ jobs:
           echo "**SHA256**: \`${{ env.APK_SHA256 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📥 **Download URL**:" >> $GITHUB_STEP_SUMMARY
-          echo "https://github.com/${{ github.repository }}/releases/download/mobile-v${{ env.VERSION }}/chrona-mobile-v${{ env.VERSION }}.apk" >> $GITHUB_STEP_SUMMARY
+          echo "https://github.com/${{ github.repository }}/releases/download/kiosk-v${{ env.VERSION }}/chrona-kiosk-v${{ env.VERSION }}.apk" >> $GITHUB_STEP_SUMMARY
