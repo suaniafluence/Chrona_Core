@@ -41,12 +41,21 @@ export default function KiosksPage() {
   const handleCreateKiosk = async (data: CreateKioskRequest) => {
     try {
       const kiosk = await kiosksAPI.create(data);
+      // Close creation modal first
+      setShowCreateModal(false);
+
       // Generate API key immediately after creation to show QR code
       const configData = await kiosksAPI.generateApiKey(kiosk.id);
-      setQRConfigData(configData);
-      setShowQRModal(true);
+
+      // Reload kiosks list
       await loadKiosks();
-      setShowCreateModal(false);
+
+      // Show QR modal after a brief delay to ensure creation modal is closed
+      setTimeout(() => {
+        setQRConfigData(configData);
+        setShowQRModal(true);
+      }, 100);
+
       setError('');
     } catch (err: any) {
       const status = err?.response?.status;
