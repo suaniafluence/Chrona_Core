@@ -334,11 +334,12 @@ function QRCodeModal({
   onClose: () => void;
 }) {
   const qrData = JSON.stringify({
-    api_url: configData.api_url,
-    kiosk_id: configData.kiosk_id,
-    kiosk_name: configData.kiosk_name,
-    api_key: configData.api_key,
-    device_fingerprint: configData.device_fingerprint,
+    apiBaseUrl: configData.api_url,
+    kioskId: configData.kiosk_id,
+    kioskApiKey: configData.api_key,
+    kioskName: configData.kiosk_name,
+    location: configData.location,
+    punchType: 'clock_in',
   });
 
   const handleCopyConfig = () => {
