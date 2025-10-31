@@ -1,3 +1,4 @@
+import socket
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -29,6 +30,26 @@ from src.security import get_password_hash
 from src.services import device_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+def get_local_ip() -> str:
+    """Get the local network IP address (WiFi/Ethernet, not loopback).
+
+    Returns:
+        str: Local IP address (e.g., "192.168.1.100") or "127.0.0.1" as fallback
+    """
+    try:
+        # Create a socket connection to detect the local IP
+        # We don't actually connect, just use this to find the network interface
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Use Google DNS as a target (8.8.8.8) - we don't send data
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
+    except Exception:
+        # Fallback to localhost if detection fails
+        return "127.0.0.1"
 
 
 @router.get("/ping")
@@ -500,8 +521,15 @@ async def generate_kiosk_api_key_endpoint(
     session.add(kiosk)
     await session.commit()
 
-    # Get API URL from environment or construct from request
-    api_url = os.getenv("API_URL") or str(request.base_url).rstrip("/")
+    # Get API URL from environment or construct from local IP
+    # Priority: API_URL env var > local IP with port 8000 > request base URL
+    if os.getenv("API_URL"):
+        api_url = os.getenv("API_URL")
+    else:
+        local_ip = get_local_ip()
+        # Extract port from request if available, default to 8000
+        port = request.url.port or 8000
+        api_url = f"http://{local_ip}:{port}"
 
     return KioskConfigData(
         kiosk_id=kiosk_id,
