@@ -42,7 +42,7 @@ services:
       context: ./backend
     environment:
       DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://api.localhost,https://api.localhost,https://backoffice.localhost,https://kiosk.localhost,http://backoffice.localhost,http://kiosk.localhost
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://localhost:19006,http://api.localhost,https://api.localhost,https://backoffice.localhost,https://kiosk.localhost,https://mobile.localhost,http://backoffice.localhost,http://kiosk.localhost,http://mobile.localhost
       ALLOW_CREDENTIALS: "false"
       ALLOWED_METHODS: "*"
       ALLOWED_HEADERS: "*"
@@ -128,6 +128,35 @@ services:
       - traefik.http.routers.kiosk-secure.service=kiosk
       # Service backend
       - traefik.http.services.kiosk.loadbalancer.server.port=5174
+    depends_on:
+      - backend
+
+  mobile:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./apps/mobile:/app
+    command: sh -c "if [ -f package.json ]; then npm install -g expo-cli @expo/ngrok && npm ci && npm run web -- --host 0.0.0.0; else echo 'No package.json in mobile; skipping' && sleep 3600; fi"
+    environment:
+      API_BASE_URL: https://api.localhost
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+    ports:
+      - "19006:19006"
+      - "8081:8081"
+    labels:
+      - traefik.enable=true
+      # HTTP → HTTPS redirect
+      - traefik.http.routers.mobile.rule=Host(`mobile.localhost`)
+      - traefik.http.routers.mobile.entrypoints=web
+      - traefik.http.routers.mobile.middlewares=mobile-redirect
+      - traefik.http.middlewares.mobile-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.mobile-redirect.redirectscheme.permanent=true
+      # HTTPS
+      - traefik.http.routers.mobile-secure.rule=Host(`mobile.localhost`)
+      - traefik.http.routers.mobile-secure.entrypoints=websecure
+      - traefik.http.routers.mobile-secure.tls=true
+      - traefik.http.routers.mobile-secure.service=mobile
+      - traefik.http.services.mobile.loadbalancer.server.port=19006
     depends_on:
       - backend
 
