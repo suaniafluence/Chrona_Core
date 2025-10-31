@@ -37,3 +37,11 @@ services:
       - traefik.http.routers.kiosk.tls=true
       - traefik.http.services.kiosk.loadbalancer.server.port=5174
 
+  mobile:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mobile.rule=Host(`mobile.${DOMAIN:-localhost}`)
+      - traefik.http.routers.mobile.entrypoints=websecure
+      - traefik.http.routers.mobile.tls=true
+      - traefik.http.services.mobile.loadbalancer.server.port=8081
+
