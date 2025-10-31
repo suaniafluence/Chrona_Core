@@ -22,6 +22,7 @@ export interface Kiosk {
   device_fingerprint: string;
   is_active: boolean;
   created_at: string;
+  last_heartbeat_at?: string | null;
   api_key?: string;
 }
 
@@ -77,6 +78,15 @@ export interface CreateUserRequest {
 export interface CreateKioskRequest {
   kiosk_name: string;
   location: string;
+  device_fingerprint?: string;
+}
+
+export interface KioskConfigData {
+  kiosk_id: number;
+  kiosk_name: string;
+  location: string;
+  api_url: string;
+  api_key: string;
   device_fingerprint: string;
 }
 
