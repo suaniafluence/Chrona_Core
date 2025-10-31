@@ -7,6 +7,7 @@ import type {
   Device,
   Kiosk,
   CreateKioskRequest,
+  KioskConfigData,
   AuditLog,
   DashboardStats,
 } from '@/types';
@@ -106,8 +107,8 @@ export const kiosksAPI = {
   delete: async (kioskId: number): Promise<void> => {
     await api.delete(`/admin/kiosks/${kioskId}`);
   },
-  generateApiKey: async (kioskId: number): Promise<{ api_key: string }> => {
-    const res = await api.post<{ api_key: string }>(`/admin/kiosks/${kioskId}/generate-api-key`, {});
+  generateApiKey: async (kioskId: number): Promise<KioskConfigData> => {
+    const res = await api.post<KioskConfigData>(`/admin/kiosks/${kioskId}/generate-api-key`, {});
     return res.data;
   },
 };

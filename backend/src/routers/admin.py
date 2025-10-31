@@ -322,6 +322,7 @@ async def create_kiosk(
     Raises:
         HTTPException 409: Kiosk name or fingerprint already exists
     """
+    import uuid
     from datetime import datetime
 
     # Check for duplicate kiosk_name
@@ -334,9 +335,15 @@ async def create_kiosk(
             detail="Kiosk with this name already exists",
         )
 
+    # Generate device_fingerprint if not provided
+    device_fingerprint = kiosk_data.device_fingerprint
+    if not device_fingerprint:
+        # Generate a unique UUID-based fingerprint
+        device_fingerprint = f"kiosk-{uuid.uuid4()}"
+
     # Check for duplicate device_fingerprint
     result = await session.execute(
-        select(Kiosk).where(Kiosk.device_fingerprint == kiosk_data.device_fingerprint)
+        select(Kiosk).where(Kiosk.device_fingerprint == device_fingerprint)
     )
     if result.scalar_one_or_none():
         raise HTTPException(
@@ -359,7 +366,7 @@ async def create_kiosk(
     kiosk = Kiosk(
         kiosk_name=kiosk_data.kiosk_name,
         location=kiosk_data.location,
-        device_fingerprint=kiosk_data.device_fingerprint,
+        device_fingerprint=device_fingerprint,
         public_key=kiosk_data.public_key,
         ip_address=kiosk_data.ip_address,
         is_active=True,
@@ -440,11 +447,23 @@ class KioskAPIKeyResponse(BaseModel):
     message: str
 
 
-@router.post("/kiosks/{kiosk_id}/generate-api-key", response_model=KioskAPIKeyResponse)
+class KioskConfigData(BaseModel):
+    """Response model for kiosk configuration data (for QR code)."""
+
+    kiosk_id: int
+    kiosk_name: str
+    location: str
+    api_url: str
+    api_key: str
+    device_fingerprint: str
+
+
+@router.post("/kiosks/{kiosk_id}/generate-api-key", response_model=KioskConfigData)
 async def generate_kiosk_api_key_endpoint(
     kiosk_id: int,
     _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
+    request: Request,
 ):
     """Generate a new API key for a kiosk (admin only).
 
@@ -456,11 +475,13 @@ async def generate_kiosk_api_key_endpoint(
         kiosk_id: ID of kiosk to generate API key for
 
     Returns:
-        KioskAPIKeyResponse with the plain API key (shown only once)
+        KioskConfigData with the plain API key and configuration data for QR code (shown only once)
 
     Raises:
         HTTPException 404: Kiosk not found
     """
+    import os
+
     result = await session.execute(select(Kiosk).where(Kiosk.id == kiosk_id))
     kiosk = result.scalar_one_or_none()
 
@@ -479,13 +500,16 @@ async def generate_kiosk_api_key_endpoint(
     session.add(kiosk)
     await session.commit()
 
-    return KioskAPIKeyResponse(
+    # Get API URL from environment or construct from request
+    api_url = os.getenv("API_URL") or str(request.base_url).rstrip("/")
+
+    return KioskConfigData(
         kiosk_id=kiosk_id,
+        kiosk_name=kiosk.kiosk_name,
+        location=kiosk.location,
+        api_url=api_url,
         api_key=api_key,
-        message=(
-            "API key generated successfully. "
-            "Store this key securely - it will not be shown again!"
-        ),
+        device_fingerprint=kiosk.device_fingerprint,
     )
 
 
