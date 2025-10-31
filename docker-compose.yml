@@ -136,7 +136,7 @@ services:
     working_dir: /app
     volumes:
       - ./apps/mobile:/app
-    command: sh -c "if [ -f package.json ]; then npm install -g expo-cli @expo/ngrok && npm ci && npm run web -- --host 0.0.0.0; else echo 'No package.json in mobile; skipping' && sleep 3600; fi"
+    command: sh -c "if [ -f package.json ]; then npm install && npm run web -- --host 0.0.0.0; else echo 'No package.json in mobile; skipping' && sleep 3600; fi"
     environment:
       API_BASE_URL: https://api.localhost
       EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
