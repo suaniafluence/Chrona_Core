@@ -114,12 +114,13 @@ async def add_security_headers(request: Request, call_next):
         "geolocation=(), microphone=(), camera=(), payment=()",
     )
     # A permissive CSP to avoid breaking Swagger UI
-    # while still restricting origins
+    # Allow CDN resources for FastAPI's default /docs endpoint
     csp_value = (
         "default-src 'self'; "
-        "img-src 'self' data:; "
-        "style-src 'self' 'unsafe-inline'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        "img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; "
+        "font-src 'self' data: https://cdn.jsdelivr.net https://unpkg.com"
     )
     response.headers.setdefault("Content-Security-Policy", csp_value)
     # Only set HSTS when explicitly enabled (should be served over HTTPS)
