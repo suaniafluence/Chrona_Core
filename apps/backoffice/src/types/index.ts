@@ -93,3 +93,22 @@ export interface KioskConfigData {
 export interface CreateKioskResponse extends Kiosk {
   api_key: string;
 }
+
+export interface HRCode {
+  id: number;
+  code: string;
+  employee_email: string;
+  employee_name: string | null;
+  created_by_admin_id: number | null;
+  created_at: string;
+  expires_at: string | null;
+  is_used: boolean;
+  used_at: string | null;
+  used_by_user_id: number | null;
+}
+
+export interface CreateHRCodeRequest {
+  employee_email: string;
+  employee_name?: string;
+  expires_in_days?: number;
+}

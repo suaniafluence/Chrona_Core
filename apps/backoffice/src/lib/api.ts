@@ -10,6 +10,8 @@ import type {
   KioskConfigData,
   AuditLog,
   DashboardStats,
+  HRCode,
+  CreateHRCodeRequest,
 } from '@/types';
 
 // Determine API base URL.
@@ -155,6 +157,23 @@ export const reportsAPI = {
       return res.data as Blob;
     }
     const res = await api.get('/admin/reports/attendance', { params });
+    return res.data;
+  },
+};
+
+// ---------- HR Codes API ----------
+export const hrCodesAPI = {
+  getAll: async (params?: {
+    include_used?: boolean;
+    include_expired?: boolean;
+    offset?: number;
+    limit?: number;
+  }): Promise<HRCode[]> => {
+    const res = await api.get<HRCode[]>('/admin/hr-codes', { params });
+    return res.data;
+  },
+  create: async (data: CreateHRCodeRequest): Promise<HRCode> => {
+    const res = await api.post<HRCode>('/admin/hr-codes', data);
     return res.data;
   },
 };

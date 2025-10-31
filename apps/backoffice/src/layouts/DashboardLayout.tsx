@@ -6,6 +6,7 @@ import {
   Users,
   Smartphone,
   Monitor,
+  KeyRound,
   FileText,
   Shield,
   LogOut,
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Utilisateurs', href: '/users', icon: Users },
   { name: 'Appareils', href: '/devices', icon: Smartphone },
   { name: 'Kiosques', href: '/kiosks', icon: Monitor },
+  { name: 'Codes RH', href: '/hr-codes', icon: KeyRound },
   { name: 'Rapports', href: '/reports', icon: FileText },
   { name: 'Logs d\'audit', href: '/audit-logs', icon: Shield },
 ];

@@ -596,7 +596,7 @@ async def get_audit_logs(
     return [AuditLogRead.model_validate(log) for log in logs]
 
 
-# ==================== Punches ====================
+# ==================== HR Codes (Onboarding) ====================
 
 
 @router.post(
@@ -605,6 +605,76 @@ async def get_audit_logs(
 async def create_hr_code(
     hr_code_data: HRCodeCreate,
     current_user: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Create a new HR code for employee onboarding (admin only).
+
+    Args:
+        hr_code_data: HR code creation data (email, name, expiration)
+
+    Returns:
+        HRCodeRead with the generated code
+
+    Raises:
+        HTTPException 400: Invalid data
+    """
+    from src.services.hr_code_service import HRCodeService
+
+    hr_code = await HRCodeService.create_hr_code(
+        session=session,
+        employee_email=hr_code_data.employee_email,
+        employee_name=hr_code_data.employee_name,
+        created_by_admin_id=current_user.id,
+        expires_in_days=hr_code_data.expires_in_days,
+    )
+
+    return HRCodeRead.model_validate(hr_code)
+
+
+@router.get("/hr-codes", response_model=list[HRCodeRead])
+async def list_hr_codes(
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    include_used: bool = False,
+    include_expired: bool = False,
+    offset: int = 0,
+    limit: int = 50,
+):
+    """List HR codes with optional filters (admin only).
+
+    Args:
+        include_used: Include used codes (default: False)
+        include_expired: Include expired codes (default: False)
+        offset: Pagination offset
+        limit: Maximum results (max 100)
+
+    Returns:
+        List of HRCodeRead ordered by created_at descending
+    """
+    from src.services.hr_code_service import HRCodeService
+
+    if limit > 100:
+        limit = 100
+
+    hr_codes = await HRCodeService.list_hr_codes(
+        session=session,
+        include_used=include_used,
+        include_expired=include_expired,
+    )
+
+    # Apply pagination
+    return [
+        HRCodeRead.model_validate(code)
+        for code in hr_codes[offset : offset + limit]
+    ]
+
+
+# ==================== Punches ====================
+
+
+@router.get("/punches", response_model=list)
+async def get_punch_history(
+    _current: Annotated[User, Depends(require_roles("admin"))],
     session: Annotated[AsyncSession, Depends(get_session)],
     user_id: Optional[int] = None,
     from_date: Optional[str] = None,
