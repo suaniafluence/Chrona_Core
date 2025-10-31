@@ -7,14 +7,18 @@ import type {
   Device,
   Kiosk,
   CreateKioskRequest,
-  CreateKioskResponse,
   AuditLog,
   DashboardStats,
 } from '@/types';
 
-// Base axios instance using Vite dev proxy
+// Determine API base URL.
+// - In development we rely on the Vite proxy (`/api`).
+// - In production builds (served from the backend) we call the API on the same origin
+//   unless an explicit `VITE_API_URL` is provided.
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL || (import.meta.env.DEV ? '/api' : ''),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
