@@ -664,8 +664,7 @@ async def list_hr_codes(
 
     # Apply pagination
     return [
-        HRCodeRead.model_validate(code)
-        for code in hr_codes[offset : offset + limit]
+        HRCodeRead.model_validate(code) for code in hr_codes[offset : offset + limit]
     ]
 
 
