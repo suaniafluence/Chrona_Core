@@ -44,29 +44,22 @@ function patchExpoScreenCapture() {
       return true;
     }
 
+    // First, remove any existing plugins block to avoid duplication
+    content = content.replace(/^plugins\s*\{[\s\S]*?\}\s*/gm, '');
+
     // Replace old-style apply plugin with plugins DSL
-    const oldPattern = /apply plugin: 'com\.android\.library'/;
+    const oldPattern = /apply plugin: 'com\.android\.library'\s*/;
     const newCode = `plugins {
   id 'com.android.library'
   id 'expo-module-gradle-plugin' version '0.13.1'
-}`;
+}
+
+`;
 
     if (content.match(oldPattern)) {
-      // Remove the old apply plugin line and any existing plugins block
-      content = content.replace(/^plugins\s*\{[\s\S]*?\}\s*/gm, '');
       content = content.replace(oldPattern, newCode);
-
       fs.writeFileSync(buildGradlePath, content, 'utf-8');
       log.info('expo-screen-capture patched successfully');
-      return true;
-    } else if (content.includes("id 'com.android.library'")) {
-      // Already uses plugins DSL but missing version
-      content = content.replace(
-        /id 'com\.android\.library'/,
-        `id 'com.android.library'\n  id 'expo-module-gradle-plugin' version '0.13.1'`
-      );
-      fs.writeFileSync(buildGradlePath, content, 'utf-8');
-      log.info('expo-screen-capture patched (added plugin version)');
       return true;
     }
 
@@ -105,6 +98,7 @@ function patchExpoModulesCore() {
 
     // Fix: Wrap release publication in conditional check
     // Pattern: release(MavenPublication) { ... from components.release ... }
+    // This handles multiline patterns
     const pattern = /release\(MavenPublication\)\s*\{\s*from\s+components\.release\s*\}/;
 
     if (content.match(pattern)) {
