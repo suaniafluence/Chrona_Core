@@ -4,6 +4,7 @@
   "main": "expo/AppEntry.js",
   "scripts": {
     "patch-gradle": "node scripts/patch-expo-gradle.js",
+    "postinstall": "node scripts/patch-expo-gradle.js",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",

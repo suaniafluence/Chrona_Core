@@ -9,8 +9,7 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "postInstallScript": "npm --prefix apps/mobile run patch-gradle"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -21,8 +20,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "http://YOUR_SERVER_IP:8000",
         "EXPO_PUBLIC_ENV": "development"
-      },
-      "postInstallScript": "npm --prefix apps/mobile run patch-gradle"
+      }
     },
     "production": {
       "distribution": "internal",
@@ -33,8 +31,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.chrona.com",
         "EXPO_PUBLIC_ENV": "production"
-      },
-      "postInstallScript": "npm --prefix apps/mobile run patch-gradle"
+      }
     }
   },
   "submit": {
