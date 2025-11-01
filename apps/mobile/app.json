@@ -53,7 +53,6 @@
       "expo-local-authentication",
       "expo-asset",
       "expo-font",
-      "./plugins/expo-screen-capture-fix",
       [
         "expo-build-properties",
         {
