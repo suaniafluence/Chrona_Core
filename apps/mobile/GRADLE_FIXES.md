@@ -24,7 +24,32 @@ plugins {
 
 **Root Cause**: Android Gradle Plugin 8.x changed how library components are registered. The `maven-publish` plugin requires explicit variant configuration.
 
-**Fix**: A postinstall script (`scripts/fix-gradle.js`) automatically wraps the problematic publishing block in a try-catch to gracefully handle the incompatibility.
+**Fix**: A postinstall script (`scripts/fix-gradle.js`) automatically patches the publishing block to conditionally check if the `release` component exists before using it:
+
+**Original code** (fails in AGP 8.x):
+```gradle
+release(MavenPublication) {
+  from components.release
+}
+```
+
+**Fixed code** (AGP 8.x compatible):
+```gradle
+if (project.components.findByName("release") != null) {
+  release(MavenPublication) {
+    from components.release
+  }
+}
+```
+
+### Issue 3: Missing `compileSdkVersion` in expo-modules-core
+**Error**: `compileSdkVersion is not specified. Please add it to build.gradle`
+
+**Location**: `node_modules/expo-modules-core/android/build.gradle`
+
+**Root Cause**: In some EAS build environments, the SDK versions may not propagate correctly from the plugin.
+
+**Fix**: The postinstall script ensures `compileSdkVersion` is explicitly set with a fallback value of 34 in the `android` block.
 
 ## Configuration Changes
 
