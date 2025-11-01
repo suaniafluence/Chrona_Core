@@ -17,7 +17,11 @@ web-build/
 *.mobileprovision
 
 # Generated native code (from expo prebuild)
-android/
+# But keep our gradle configuration files
+android/*
+!android/settings.gradle
+!android/build.gradle
+!android/gradle.properties
 ios/
 
 # Metro
