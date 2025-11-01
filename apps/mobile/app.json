@@ -11,6 +11,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -28,22 +29,16 @@
       }
     },
     "android": {
+      "package": "com.chrona.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#667eea"
       },
-      "package": "com.chrona.mobile",
-      "versionCode": 1,
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "INTERNET",
         "ACCESS_NETWORK_STATE"
-      ],
-      "blockedPermissions": [
-        "RECORD_AUDIO",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
