@@ -18,13 +18,11 @@ The Expo mobile app build was failing with two Gradle errors:
 
 1. **Missing expo-modules-core dependency**: The project was using Expo SDK 52 native modules (expo-screen-capture, expo-local-authentication, etc.) but didn't have `expo-modules-core` installed. This package provides the Gradle plugin system needed to build native Android code.
 
-2. **Incomplete plugin configuration**: `expo-screen-capture` was used as a dependency but wasn't registered in the `app.json` plugins array.
+2. **Missing expo-dev-client**: The `eas.json` configuration had `developmentClient: true` but the `expo-dev-client` package was not installed.
 
-3. **Version consistency**: Some Expo packages used caret (^) versioning instead of tilde (~) which is the standard for Expo SDK packages.
+3. **Missing Android build configuration**: Expo SDK 52 requires explicit Android SDK and build tools configuration via `expo-build-properties`.
 
-4. **Missing expo-dev-client**: The `eas.json` configuration had `developmentClient: true` but the `expo-dev-client` package was not installed.
-
-5. **Missing Android build configuration**: Expo SDK 52 requires explicit Android SDK and build tools configuration via `expo-build-properties`.
+4. **Version consistency**: Some Expo packages used caret (^) versioning instead of tilde (~) which is the standard for Expo SDK packages.
 
 ## Changes Made
 
@@ -70,24 +68,7 @@ Added `expo-build-properties` version ~0.13.2 for SDK 52:
 
 This package allows configuring native build properties like Android SDK versions and iOS deployment targets.
 
-### 4. Added expo-screen-capture to Plugins
-
-**File**: `apps/mobile/app.json`
-
-Added `expo-screen-capture` to the plugins array:
-
-```json
-"plugins": [
-  "expo-local-authentication",
-  "expo-asset",
-  "expo-font",
-  "expo-screen-capture"
-]
-```
-
-Config plugins are required for packages that need native code modifications during the prebuild/build process.
-
-### 5. Configured expo-build-properties Plugin
+### 4. Configured expo-build-properties Plugin
 
 **File**: `apps/mobile/app.json`
 
@@ -115,7 +96,7 @@ Added `expo-build-properties` configuration to explicitly set Android and iOS bu
 - Minimum iOS 15.1 (up from 13.4)
 - Explicit build configuration to avoid Gradle compatibility issues
 
-### 6. Standardized Package Versions
+### 5. Standardized Package Versions
 
 **File**: `apps/mobile/package.json`
 
