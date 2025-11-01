@@ -89,7 +89,9 @@ class KioskCreate(BaseModel):
     kiosk_name: str = Field(..., max_length=100)
     location: str = Field(..., max_length=255)
     device_fingerprint: Optional[str] = Field(
-        None, max_length=255, description="Android device ID or IMEI (auto-generated if not provided)"
+        None,
+        max_length=255,
+        description="Android device ID or IMEI (auto-generated if not provided)",
     )
     ip_address: Optional[str] = Field(
         None, max_length=45, description="Static IP address (IPv4 or IPv6)"
