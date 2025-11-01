@@ -47,7 +47,8 @@
     "plugins": [
       "expo-local-authentication",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-build-properties"
     ]
   }
 }

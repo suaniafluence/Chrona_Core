@@ -41,7 +41,10 @@
       "Bash(git -C:*)",
       "Bash(npm install)",
       "Bash(eas build:*)",
-      "WebFetch(domain:expo.dev)"
+      "WebFetch(domain:expo.dev)",
+      "Bash(npx expo doctor)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(npx expo install:*)"
     ],
     "deny": [],
     "ask": []
