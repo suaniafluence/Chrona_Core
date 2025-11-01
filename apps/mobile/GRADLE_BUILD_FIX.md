@@ -22,6 +22,10 @@ The Expo mobile app build was failing with two Gradle errors:
 
 3. **Version consistency**: Some Expo packages used caret (^) versioning instead of tilde (~) which is the standard for Expo SDK packages.
 
+4. **Missing expo-dev-client**: The `eas.json` configuration had `developmentClient: true` but the `expo-dev-client` package was not installed.
+
+5. **Missing Android build configuration**: Expo SDK 52 requires explicit Android SDK and build tools configuration via `expo-build-properties`.
+
 ## Changes Made
 
 ### 1. Added expo-modules-core Dependency
@@ -39,7 +43,34 @@ This package provides:
 - Native module auto-linking for Android/iOS
 - Build configuration infrastructure for Expo modules
 
-### 2. Added expo-screen-capture to Plugins
+### 2. Added expo-dev-client Dependency
+
+**File**: `apps/mobile/package.json`
+
+Added `expo-dev-client` version ~5.0.4 for SDK 52 compatibility:
+
+```json
+"expo-dev-client": "~5.0.4"
+```
+
+This package is **required** when using `developmentClient: true` in `eas.json`. It provides:
+- Custom development client builds
+- Development menu and tools
+- Native debugging capabilities
+
+### 3. Added expo-build-properties Dependency
+
+**File**: `apps/mobile/package.json`
+
+Added `expo-build-properties` version ~0.13.2 for SDK 52:
+
+```json
+"expo-build-properties": "~0.13.2"
+```
+
+This package allows configuring native build properties like Android SDK versions and iOS deployment targets.
+
+### 4. Added expo-screen-capture to Plugins
 
 **File**: `apps/mobile/app.json`
 
@@ -56,7 +87,35 @@ Added `expo-screen-capture` to the plugins array:
 
 Config plugins are required for packages that need native code modifications during the prebuild/build process.
 
-### 3. Standardized Package Versions
+### 5. Configured expo-build-properties Plugin
+
+**File**: `apps/mobile/app.json`
+
+Added `expo-build-properties` configuration to explicitly set Android and iOS build settings:
+
+```json
+[
+  "expo-build-properties",
+  {
+    "android": {
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "minSdkVersion": 24,
+      "buildToolsVersion": "35.0.0"
+    },
+    "ios": {
+      "deploymentTarget": "15.1"
+    }
+  }
+]
+```
+
+**Why?** Expo SDK 52 requires:
+- Minimum Android SDK 24 (up from 23)
+- Minimum iOS 15.1 (up from 13.4)
+- Explicit build configuration to avoid Gradle compatibility issues
+
+### 6. Standardized Package Versions
 
 **File**: `apps/mobile/package.json`
 
