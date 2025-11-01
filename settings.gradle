@@ -1,0 +1,28 @@
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+    mavenCentral()
+    google()
+  }
+
+  plugins {
+    id 'com.android.application' version '8.1.0'
+    id 'com.android.library' version '8.1.0'
+    id 'org.jetbrains.kotlin.android' version '1.9.24'
+    id 'expo-module-gradle-plugin' version '0.13.1'
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    google()
+    maven {
+      url 'https://www.jitpack.io'
+    }
+  }
+}
+
+rootProject.name = 'chrona'
