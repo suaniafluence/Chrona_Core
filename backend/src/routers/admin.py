@@ -475,7 +475,8 @@ async def generate_kiosk_api_key_endpoint(
         kiosk_id: ID of kiosk to generate API key for
 
     Returns:
-        KioskConfigData with the plain API key and configuration data for QR code (shown only once)
+        KioskConfigData with the plain API key and configuration data
+        for QR code (shown only once)
 
     Raises:
         HTTPException 404: Kiosk not found

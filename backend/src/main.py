@@ -117,9 +117,12 @@ async def add_security_headers(request: Request, call_next):
     # Allow CDN resources for FastAPI's default /docs endpoint
     csp_value = (
         "default-src 'self'; "
-        "img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; "
+        "img-src 'self' data: https://cdn.jsdelivr.net "
+        "https://fastapi.tiangolo.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net "
+        "https://unpkg.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+        "https://cdn.jsdelivr.net https://unpkg.com; "
         "font-src 'self' data: https://cdn.jsdelivr.net https://unpkg.com"
     )
     response.headers.setdefault("Content-Security-Policy", csp_value)
