@@ -120,9 +120,17 @@ jobs:
             # Install docker-compose if not present (standalone binary)
             if ! command -v docker-compose &> /dev/null; then
               echo "Installing docker-compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-              docker-compose --version
+              DOCKER_COMPOSE_URL="https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
+              echo "Downloading from: $DOCKER_COMPOSE_URL"
+              if sudo curl -L "$DOCKER_COMPOSE_URL" -o /usr/local/bin/docker-compose 2>&1; then
+                sudo chmod +x /usr/local/bin/docker-compose
+                echo "docker-compose installed successfully:"
+                docker-compose --version
+              else
+                echo "ERROR: Failed to download docker-compose from $DOCKER_COMPOSE_URL"
+                echo "See MANUAL_EC2_SETUP.md for manual installation instructions"
+                exit 1
+              fi
             fi
 
             # Ensure docker is running
@@ -142,8 +150,13 @@ jobs:
             # Build and start services using standard docker-compose.yml
             # Environment variables from .env will be automatically loaded
             echo "Starting services with docker-compose..."
-            docker-compose -f docker-compose.yml up -d --build 2>&1 || \
-            sudo docker-compose -f docker-compose.yml up -d --build
+            # Try without sudo first, then with sudo if it fails
+            if docker-compose -f docker-compose.yml up -d --build 2>&1; then
+              echo "Services started successfully"
+            else
+              echo "Trying with sudo..."
+              sudo docker-compose -f docker-compose.yml up -d --build
+            fi
 
             # Wait for services to be healthy
             echo "Waiting for services to start..."
