@@ -7,10 +7,17 @@ on:
         description: "Deployment target (staging|prod)"
         required: true
         default: "prod"
-      backend_url:
-        description: "Backend URL (e.g., api.example.com or IP:PORT)"
+      ec2_host:
+        description: "EC2 instance IP or domain (e.g., 13.37.245.222 or api.example.com)"
+        required: true
+      ec2_port:
+        description: "Backend API port"
         required: false
-        default: "http://localhost:8000"
+        default: "8000"
+      backoffice_port:
+        description: "Backoffice port"
+        required: false
+        default: "5173"
 
 jobs:
   deploy:
@@ -42,15 +49,16 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         env:
-          BACKEND_URL: ${{ inputs.backend_url }}
+          EC2_HOST: ${{ inputs.ec2_host }}
+          EC2_PORT: ${{ inputs.ec2_port }}
+          BACKOFFICE_PORT: ${{ inputs.backoffice_port }}
           DB_URL: ${{ secrets.DATABASE_URL }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: BACKEND_URL,DB_URL,SECRET_KEY,ALLOWED_ORIGINS
+          envs: EC2_HOST,EC2_PORT,BACKOFFICE_PORT,DB_URL,SECRET_KEY
           script: |
             set -euo pipefail
 
@@ -66,52 +74,22 @@ jobs:
 
             # Create .env file for backend
             cat > .env <<EOF
+            EC2_HOST=$EC2_HOST
+            EC2_PORT=$EC2_PORT
+            BACKOFFICE_PORT=$BACKOFFICE_PORT
             DATABASE_URL=$DB_URL
             SECRET_KEY=$SECRET_KEY
-            ALLOWED_ORIGINS=$ALLOWED_ORIGINS
+            ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
+            VITE_API_URL=http://$EC2_HOST:$EC2_PORT
+            ALLOW_CREDENTIALS=false
+            ALLOWED_METHODS=*
+            ALLOWED_HEADERS=*
             ACCESS_TOKEN_EXPIRE_MINUTES=60
-            BACKEND_URL=$BACKEND_URL
-            EOF
-
-            # Create docker-compose.prod.yml for production
-            cat > docker-compose.prod.yml <<EOF
-            version: '3.8'
-            services:
-              backend:
-                build:
-                  context: ./backend
-                  dockerfile: Dockerfile
-                container_name: chrona-backend
-                ports:
-                  - "8000:8000"
-                environment:
-                  - DATABASE_URL=\${DATABASE_URL}
-                  - SECRET_KEY=\${SECRET_KEY}
-                  - ALLOWED_ORIGINS=\${ALLOWED_ORIGINS}
-                  - ACCESS_TOKEN_EXPIRE_MINUTES=60
-                restart: unless-stopped
-                healthcheck:
-                  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-                  interval: 30s
-                  timeout: 10s
-                  retries: 3
-                  start_period: 40s
-
-              backoffice:
-                build:
-                  context: ./apps/backoffice
-                  dockerfile: Dockerfile
-                  args:
-                    VITE_API_URL: \${BACKEND_URL}
-                container_name: chrona-backoffice
-                ports:
-                  - "5173:5173"
-                environment:
-                  - VITE_API_URL=\${BACKEND_URL}
-                restart: unless-stopped
-                depends_on:
-                  backend:
-                    condition: service_healthy
+            JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
+            JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
+            POSTGRES_DB=chrona
+            POSTGRES_USER=chrona
+            POSTGRES_PASSWORD=chrona
             EOF
 
             # Install Docker if not present
@@ -122,23 +100,32 @@ jobs:
               sudo usermod -aG docker $USER
             fi
 
-            # Build and start services
-            docker compose -f docker-compose.prod.yml up -d --build
+            # Ensure docker group is available
+            sudo usermod -aG docker $USER 2>/dev/null || true
+            newgrp docker 2>/dev/null || true
+
+            # Build and start services using standard docker-compose.yml
+            # Environment variables from .env will be automatically loaded
+            docker compose up -d --build
 
             # Wait for services to be healthy
             echo "Waiting for services to start..."
-            sleep 10
+            sleep 15
 
             # Check service status
             echo "Service status:"
-            docker compose -f docker-compose.prod.yml ps
+            docker compose ps
 
             # Show logs
             echo "Backend logs (last 20 lines):"
-            docker compose -f docker-compose.prod.yml logs --tail=20 backend
+            docker compose logs --tail=20 backend
 
             echo ""
+            echo "=========================================="
             echo "Deployment completed successfully!"
-            echo "Backend: $BACKEND_URL"
-            echo "Backoffice: http://$(hostname -I | awk '{print $1}'):5173"
+            echo "=========================================="
+            echo "Backend API: http://$EC2_HOST:$EC2_PORT"
+            echo "Swagger UI: http://$EC2_HOST:$EC2_PORT/docs"
+            echo "Backoffice: http://$EC2_HOST:$BACKOFFICE_PORT"
+            echo "=========================================="
 

@@ -22,12 +22,11 @@ Allez dans **Settings → Secrets and variables → Actions** et ajoutez :
 
 | Secret | Description | Exemple |
 |--------|-------------|---------|
-| `EC2_HOST` | Adresse IP publique de l'instance EC2 | `54.123.456.789` |
+| `EC2_HOST` | Adresse IP publique de l'instance EC2 | `13.37.245.222` |
 | `EC2_USER` | Utilisateur SSH (ubuntu pour Ubuntu, ec2-user pour Amazon Linux) | `ubuntu` |
 | `EC2_SSH_KEY` | Contenu du fichier `.pem` (voir section ci-dessous) | `-----BEGIN RSA PRIVATE KEY-----...` |
 | `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql+asyncpg://user:pass@db-host:5432/chrona` |
-| `SECRET_KEY` | Clé secrète pour JWT (doit être aléatoire et sécurisé) | `your-secure-random-key-here` |
-| `ALLOWED_ORIGINS` | Origines CORS autorisées (séparées par virgules) | `http://54.123.456.789:5173,http://api.example.com` |
+| `SECRET_KEY` | Clé secrète pour JWT (doit être aléatoire et sécurisé) | `openssl rand -hex 32` |
 
 ### Ajouter la clé SSH en secret
 
@@ -62,8 +61,12 @@ openssl rand -hex 32
 2. Cliquez sur **Run workflow**
 3. Choisissez :
    - **Environment** : `prod` (ou `staging`)
-   - **Backend URL** : `http://54.123.456.789:8000` (remplacez par votre IP EC2)
+   - **EC2 Host** : `13.37.245.222` (votre adresse IP ou domaine EC2)
+   - **Backend API port** : `8000` (optionnel, défaut: 8000)
+   - **Backoffice port** : `5173` (optionnel, défaut: 5173)
 4. Cliquez sur **Run workflow**
+
+La configuration est appliquée automatiquement à partir des variables d'environnement.
 
 ### Manuellement via SSH
 
@@ -71,22 +74,33 @@ Si vous préférez déployer manuellement :
 
 ```bash
 # Connexion à l'instance
-ssh -i /path/to/your-key.pem ubuntu@54.123.456.789
+ssh -i /path/to/your-key.pem ubuntu@13.37.245.222
 
 # Sur l'instance EC2
 cd /opt/chrona
 
-# Créer le fichier .env
+# Créer le fichier .env avec votre configuration
 cat > .env <<EOF
+EC2_HOST=13.37.245.222
+EC2_PORT=8000
+BACKOFFICE_PORT=5173
 DATABASE_URL=postgresql+asyncpg://user:pass@db-host:5432/chrona
 SECRET_KEY=your-secure-random-key
-ALLOWED_ORIGINS=http://54.123.456.789:5173,http://54.123.456.789:8000
+ALLOWED_ORIGINS=http://13.37.245.222:5173,http://13.37.245.222:8000
+VITE_API_URL=http://13.37.245.222:8000
+ALLOW_CREDENTIALS=false
+ALLOWED_METHODS=*
+ALLOWED_HEADERS=*
 ACCESS_TOKEN_EXPIRE_MINUTES=60
-BACKEND_URL=http://54.123.456.789:8000
+JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
+JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
+POSTGRES_DB=chrona
+POSTGRES_USER=chrona
+POSTGRES_PASSWORD=chrona
 EOF
 
-# Démarrer les services
-docker compose -f docker-compose.prod.yml up -d --build
+# Démarrer les services avec docker-compose.yml standard
+docker compose up -d --build
 ```
 
 ## Vérifier le déploiement
@@ -95,14 +109,14 @@ Une fois le workflow terminé, vérifiez que tout fonctionne :
 
 ```bash
 # SSH dans l'instance
-ssh -i /path/to/your-key.pem ubuntu@54.123.456.789
+ssh -i /path/to/your-key.pem ubuntu@13.37.245.222
 
 # Vérifier l'état des services
-docker compose -f /opt/chrona/docker-compose.prod.yml ps
+docker compose -f /opt/chrona ps
 
 # Voir les logs
-docker compose -f /opt/chrona/docker-compose.prod.yml logs -f backend
-docker compose -f /opt/chrona/docker-compose.prod.yml logs -f backoffice
+docker compose -f /opt/chrona logs -f backend
+docker compose -f /opt/chrona logs -f backoffice
 
 # Tester le backend
 curl http://localhost:8000/docs
@@ -113,9 +127,10 @@ curl http://localhost:5173
 
 ## Accéder à l'application
 
-- **Backend (API)** : `http://54.123.456.789:8000`
-  - Swagger UI : `http://54.123.456.789:8000/docs`
-- **Backoffice** : `http://54.123.456.789:5173`
+- **Backend (API)** : `http://13.37.245.222:8000`
+  - Swagger UI : `http://13.37.245.222:8000/docs`
+  - API JSON Schema : `http://13.37.245.222:8000/openapi.json`
+- **Backoffice** : `http://13.37.245.222:5173`
 
 ## Dépannage
 
@@ -163,7 +178,8 @@ Pour redéployer après des changements :
 
 1. Poussez vos modifications sur `main` (ou votre branche)
 2. Allez à **Actions → Deploy** et lancez le workflow
-3. Les services vont redémarrer automatiquement
+3. Spécifiez à nouveau votre **EC2 Host** (13.37.245.222) et ports
+4. Les services vont redémarrer automatiquement avec les nouveaux code/configuration
 
 ## Production Checklist
 
