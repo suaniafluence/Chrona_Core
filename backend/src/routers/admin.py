@@ -19,6 +19,7 @@ from src.schemas import (
     AuditLogRead,
     DeviceRead,
     HRCodeCreate,
+    HRCodeQRData,
     HRCodeRead,
     KioskCreate,
     KioskRead,
@@ -667,6 +668,50 @@ async def list_hr_codes(
     return [
         HRCodeRead.model_validate(code) for code in hr_codes[offset : offset + limit]
     ]
+
+
+@router.get("/hr-codes/{hr_code_id}/qr-data", response_model=HRCodeQRData)
+async def get_hr_code_qr_data(
+    hr_code_id: int,
+    _current: Annotated[User, Depends(require_roles("admin"))],
+    session: Annotated[AsyncSession, Depends(get_session)],
+):
+    """Generate QR code data for employee onboarding (admin only).
+
+    Args:
+        hr_code_id: HR code ID
+
+    Returns:
+        HRCodeQRData with API URL, HR code, and employee info
+
+    Raises:
+        HTTPException 404: HR code not found
+    """
+    import os
+
+    from sqlmodel import select
+
+    from src.models.hr_code import HRCode
+
+    # Fetch HR code
+    result = await session.execute(select(HRCode).where(HRCode.id == hr_code_id))
+    hr_code = result.scalar_one_or_none()
+
+    if not hr_code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Code RH introuvable",
+        )
+
+    # Get API URL from environment (fallback to localhost)
+    api_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+    return HRCodeQRData(
+        api_url=api_url,
+        hr_code=hr_code.code,
+        employee_email=hr_code.employee_email,
+        employee_name=hr_code.employee_name,
+    )
 
 
 # ==================== Punches ====================
