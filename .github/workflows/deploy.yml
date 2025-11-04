@@ -7,12 +7,10 @@ on:
         description: "Deployment target (staging|prod)"
         required: true
         default: "prod"
-      domain:
-        description: "Base domain (e.g., example.com)"
-        required: true
-      traefik_email:
-        description: "ACME email for Let's Encrypt"
-        required: true
+      backend_url:
+        description: "Backend URL (e.g., api.example.com or IP:PORT)"
+        required: false
+        default: "http://localhost:8000"
 
 jobs:
   deploy:
@@ -27,41 +25,120 @@ jobs:
           echo "Preparing deployment bundle"
           tar -czf app.tar.gz \
             docker-compose.yml \
-            docker-compose.https.prod.yml \
-            infra/traefik/traefik.prod.yml \
             .env.example \
             backend \
-            apps \
+            apps/backoffice \
             docs
 
       - name: Copy bundle to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           source: "app.tar.gz"
-          target: ${{ secrets.SSH_TARGET_DIR }}
+          target: "/tmp"
 
-      - name: Deploy over SSH
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         env:
-          DOMAIN: ${{ inputs.domain }}
-          TRAEFIK_ACME_EMAIL: ${{ inputs.traefik_email }}
+          BACKEND_URL: ${{ inputs.backend_url }}
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: BACKEND_URL,DB_URL,SECRET_KEY,ALLOWED_ORIGINS
           script: |
             set -euo pipefail
-            cd ${{ secrets.SSH_TARGET_DIR }}
-            mkdir -p app && mv app.tar.gz app/ && cd app
-            tar -xzf app.tar.gz && rm -f app.tar.gz
-            echo "DOMAIN=$DOMAIN" > .env
-            echo "TRAEFIK_ACME_EMAIL=$TRAEFIK_ACME_EMAIL" >> .env
-            # Create ACME storage directory
-            mkdir -p infra/traefik/acme
-            chmod 700 infra/traefik/acme || true
-            # Start/Update stack with HTTPS overlay
-            docker compose -f docker-compose.yml -f docker-compose.https.prod.yml up -d --build
+
+            # Navigate to deployment directory
+            DEPLOY_DIR="/opt/chrona"
+            sudo mkdir -p $DEPLOY_DIR
+            sudo chown $USER:$USER $DEPLOY_DIR
+
+            # Extract bundle
+            cd $DEPLOY_DIR
+            tar -xzf /tmp/app.tar.gz
+            rm -f /tmp/app.tar.gz
+
+            # Create .env file for backend
+            cat > .env <<EOF
+            DATABASE_URL=$DB_URL
+            SECRET_KEY=$SECRET_KEY
+            ALLOWED_ORIGINS=$ALLOWED_ORIGINS
+            ACCESS_TOKEN_EXPIRE_MINUTES=60
+            BACKEND_URL=$BACKEND_URL
+            EOF
+
+            # Create docker-compose.prod.yml for production
+            cat > docker-compose.prod.yml <<EOF
+            version: '3.8'
+            services:
+              backend:
+                build:
+                  context: ./backend
+                  dockerfile: Dockerfile
+                container_name: chrona-backend
+                ports:
+                  - "8000:8000"
+                environment:
+                  - DATABASE_URL=\${DATABASE_URL}
+                  - SECRET_KEY=\${SECRET_KEY}
+                  - ALLOWED_ORIGINS=\${ALLOWED_ORIGINS}
+                  - ACCESS_TOKEN_EXPIRE_MINUTES=60
+                restart: unless-stopped
+                healthcheck:
+                  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 40s
+
+              backoffice:
+                build:
+                  context: ./apps/backoffice
+                  dockerfile: Dockerfile
+                  args:
+                    VITE_API_URL: \${BACKEND_URL}
+                container_name: chrona-backoffice
+                ports:
+                  - "5173:5173"
+                environment:
+                  - VITE_API_URL=\${BACKEND_URL}
+                restart: unless-stopped
+                depends_on:
+                  backend:
+                    condition: service_healthy
+            EOF
+
+            # Install Docker if not present
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io docker-compose
+              sudo usermod -aG docker $USER
+            fi
+
+            # Build and start services
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            # Wait for services to be healthy
+            echo "Waiting for services to start..."
+            sleep 10
+
+            # Check service status
+            echo "Service status:"
+            docker compose -f docker-compose.prod.yml ps
+
+            # Show logs
+            echo "Backend logs (last 20 lines):"
+            docker compose -f docker-compose.prod.yml logs --tail=20 backend
+
+            echo ""
+            echo "Deployment completed successfully!"
+            echo "Backend: $BACKEND_URL"
+            echo "Backoffice: http://$(hostname -I | awk '{print $1}'):5173"
 
