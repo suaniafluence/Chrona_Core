@@ -13,9 +13,9 @@ services:
       - --certificatesresolvers.letsencrypt.acme.email=admin@chrona.local
       - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_certs:/acme:rw
@@ -41,20 +41,28 @@ services:
     build:
       context: ./backend
     environment:
-      DATABASE_URL: postgresql+asyncpg://chrona:chrona@db:5432/chrona
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174,http://localhost:19006,http://api.localhost,https://api.localhost,https://backoffice.localhost,https://kiosk.localhost,https://mobile.localhost,http://backoffice.localhost,http://kiosk.localhost,http://mobile.localhost
-      ALLOW_CREDENTIALS: "false"
-      ALLOWED_METHODS: "*"
-      ALLOWED_HEADERS: "*"
-      JWT_PRIVATE_KEY_PATH: /app/jwt_private_key.pem
-      JWT_PUBLIC_KEY_PATH: /app/jwt_public_key.pem
+      DATABASE_URL: ${DATABASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      ALLOW_CREDENTIALS: ${ALLOW_CREDENTIALS}
+      ALLOWED_METHODS: ${ALLOWED_METHODS}
+      ALLOWED_HEADERS: ${ALLOWED_HEADERS}
+      JWT_PRIVATE_KEY_PATH: ${JWT_PRIVATE_KEY_PATH}
+      JWT_PUBLIC_KEY_PATH: ${JWT_PUBLIC_KEY_PATH}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     volumes:
       - ./backend/jwt_private_key.pem:/app/jwt_private_key.pem:ro
       - ./backend/jwt_public_key.pem:/app/jwt_public_key.pem:ro
     labels:
       - traefik.enable=true
+      
+      # ✅ NOUVEAU : Accès direct par IP sur port 80 (sans HTTPS)
+      - traefik.http.routers.backend-ip.rule=HostRegexp(`{ip:.*}`)
+      - traefik.http.routers.backend-ip.entrypoints=web
+      - traefik.http.routers.backend-ip.service=backend
+      - traefik.http.routers.backend-ip.priority=1
       # HTTP → HTTPS redirect
       - traefik.http.routers.backend.rule=Host(`api.localhost`)
       - traefik.http.routers.backend.entrypoints=web
@@ -78,7 +86,7 @@ services:
       - ./apps/backoffice:/app
     command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in backoffice; skipping' && sleep 3600; fi"
     environment:
-      VITE_API_URL: https://api.localhost
+      VITE_API_URL: ${VITE_API_URL:-http://${EC2_HOST}:${EC2_PORT}}
     ports:
       - "5173:5173"
     labels:
@@ -95,68 +103,6 @@ services:
       - traefik.http.routers.backoffice-secure.tls=true
       - traefik.http.routers.backoffice-secure.service=backoffice
       - traefik.http.services.backoffice.loadbalancer.server.port=5173
-    depends_on:
-      - backend
-
-  kiosk:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./apps/kiosk:/app
-      - ./apps/kiosk/.env:/app/.env:ro
-    command: sh -c "if [ -f package.json ]; then npm ci && npm run dev -- --host 0.0.0.0; else echo 'No package.json in kiosk; skipping' && sleep 3600; fi"
-    env_file:
-      - ./apps/kiosk/.env
-    ports:
-      - "5174:5174"
-    labels:
-      - traefik.enable=true
-      # HTTP on port 80 for IP-based access (Android tablets on port 80)
-      - traefik.http.routers.kiosk-ipv4.rule=Host(`192.168.211.14`,`192.168.211.1`)
-      - traefik.http.routers.kiosk-ipv4.entrypoints=web
-      - traefik.http.routers.kiosk-ipv4.service=kiosk
-      # HTTP → HTTPS redirect for localhost/hostname
-      - traefik.http.routers.kiosk.rule=Host(`kiosk.localhost`)
-      - traefik.http.routers.kiosk.entrypoints=web
-      - traefik.http.routers.kiosk.middlewares=kiosk-redirect
-      - traefik.http.middlewares.kiosk-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.kiosk-redirect.redirectscheme.permanent=true
-      # HTTPS for localhost
-      - traefik.http.routers.kiosk-secure.rule=Host(`kiosk.localhost`)
-      - traefik.http.routers.kiosk-secure.entrypoints=websecure
-      - traefik.http.routers.kiosk-secure.tls=true
-      - traefik.http.routers.kiosk-secure.service=kiosk
-      # Service backend
-      - traefik.http.services.kiosk.loadbalancer.server.port=5174
-    depends_on:
-      - backend
-
-  mobile:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./apps/mobile:/app
-    command: sh -c "if [ -f package.json ]; then npm install -g expo-cli @expo/ngrok && npm ci && npm run web -- --host localhost; else echo 'No package.json in mobile; skipping' && sleep 3600; fi"
-    environment:
-      API_BASE_URL: https://api.localhost
-      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
-    ports:
-      - "8081:8081"
-      - "19006:19006"
-    labels:
-      - traefik.enable=true
-      # HTTP → HTTPS redirect
-      - traefik.http.routers.mobile.rule=Host(`mobile.localhost`)
-      - traefik.http.routers.mobile.entrypoints=web
-      - traefik.http.routers.mobile.middlewares=mobile-redirect
-      - traefik.http.middlewares.mobile-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.mobile-redirect.redirectscheme.permanent=true
-      # HTTPS
-      - traefik.http.routers.mobile-secure.rule=Host(`mobile.localhost`)
-      - traefik.http.routers.mobile-secure.entrypoints=websecure
-      - traefik.http.routers.mobile-secure.tls=true
-      - traefik.http.routers.mobile-secure.service=mobile
-      - traefik.http.services.mobile.loadbalancer.server.port=8081
     depends_on:
       - backend
 

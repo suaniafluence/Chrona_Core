@@ -38,7 +38,13 @@
       "Bash(git -C \"C:\\Gemini_CLI\\Chrona_Core\" status)",
       "Bash(git -C \"C:\\Gemini_CLI\\Chrona_Core\" diff HEAD)",
       "Bash(git -C \"C:\\Gemini_CLI\\Chrona_Core\" checkout -b fix/expo-screen-capture-gradle-plugin)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(npm install)",
+      "Bash(eas build:*)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(npx expo doctor)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(npx expo install:*)"
     ],
     "deny": [],
     "ask": []
