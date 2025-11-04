@@ -72,41 +72,75 @@ jobs:
             tar -xzf /tmp/app.tar.gz
             rm -f /tmp/app.tar.gz
 
-            # Create .env file for backend
-            cat > .env <<EOF
-            EC2_HOST=$EC2_HOST
-            EC2_PORT=$EC2_PORT
-            BACKOFFICE_PORT=$BACKOFFICE_PORT
-            DATABASE_URL=$DB_URL
-            SECRET_KEY=$SECRET_KEY
-            ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
-            VITE_API_URL=http://$EC2_HOST:$EC2_PORT
-            ALLOW_CREDENTIALS=false
-            ALLOWED_METHODS=*
-            ALLOWED_HEADERS=*
-            ACCESS_TOKEN_EXPIRE_MINUTES=60
-            JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
-            JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
-            POSTGRES_DB=chrona
-            POSTGRES_USER=chrona
-            POSTGRES_PASSWORD=chrona
-            EOF
+            # List extracted files
+            echo "Extracted files:"
+            ls -la
+            echo ""
+
+            # Verify docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "ERROR: docker-compose.yml not found in $DEPLOY_DIR"
+              exit 1
+            fi
+
+            # Create .env file for backend (no leading whitespace)
+            cat > .env <<'ENVEOF'
+EC2_HOST=$EC2_HOST
+EC2_PORT=$EC2_PORT
+BACKOFFICE_PORT=$BACKOFFICE_PORT
+DATABASE_URL=$DB_URL
+SECRET_KEY=$SECRET_KEY
+ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
+VITE_API_URL=http://$EC2_HOST:$EC2_PORT
+ALLOW_CREDENTIALS=false
+ALLOWED_METHODS=*
+ALLOWED_HEADERS=*
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
+JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
+POSTGRES_DB=chrona
+POSTGRES_USER=chrona
+POSTGRES_PASSWORD=chrona
+ENVEOF
+
+            # Substitute environment variables
+            sed -i "s|\$EC2_HOST|$EC2_HOST|g" .env
+            sed -i "s|\$EC2_PORT|$EC2_PORT|g" .env
+            sed -i "s|\$BACKOFFICE_PORT|$BACKOFFICE_PORT|g" .env
+            sed -i "s|\$DB_URL|${DB_URL//&/\\&}|g" .env
+            sed -i "s|\$SECRET_KEY|${SECRET_KEY//&/\\&}|g" .env
+
+            # Show .env file for debugging
+            echo "Generated .env file:"
+            cat .env
+            echo ""
 
             # Install Docker if not present
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               sudo apt-get update
               sudo apt-get install -y docker.io docker-compose
+              sudo systemctl start docker
               sudo usermod -aG docker $USER
             fi
 
+            # Ensure docker is running
+            sudo systemctl start docker 2>/dev/null || true
+            sudo systemctl enable docker 2>/dev/null || true
+
             # Ensure docker group is available
             sudo usermod -aG docker $USER 2>/dev/null || true
-            newgrp docker 2>/dev/null || true
+
+            # Check Docker version and availability
+            echo "Docker version:"
+            docker --version
+            echo ""
 
             # Build and start services using standard docker-compose.yml
             # Environment variables from .env will be automatically loaded
-            docker compose up -d --build
+            echo "Starting services with docker-compose..."
+            sudo -u $USER docker-compose -f docker-compose.yml up -d --build 2>&1 || \
+            sudo docker-compose -f docker-compose.yml up -d --build
 
             # Wait for services to be healthy
             echo "Waiting for services to start..."
@@ -114,11 +148,11 @@ jobs:
 
             # Check service status
             echo "Service status:"
-            docker compose ps
+            sudo docker-compose ps
 
             # Show logs
             echo "Backend logs (last 20 lines):"
-            docker compose logs --tail=20 backend
+            sudo docker-compose logs --tail=20 backend
 
             echo ""
             echo "=========================================="
