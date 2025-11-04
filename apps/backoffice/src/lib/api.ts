@@ -12,6 +12,7 @@ import type {
   DashboardStats,
   HRCode,
   CreateHRCodeRequest,
+  HRCodeQRData,
 } from '@/types';
 
 // Determine API base URL.
@@ -174,6 +175,10 @@ export const hrCodesAPI = {
   },
   create: async (data: CreateHRCodeRequest): Promise<HRCode> => {
     const res = await api.post<HRCode>('/admin/hr-codes', data);
+    return res.data;
+  },
+  getQRData: async (hrCodeId: number): Promise<HRCodeQRData> => {
+    const res = await api.get<HRCodeQRData>(`/admin/hr-codes/${hrCodeId}/qr-data`);
     return res.data;
   },
 };

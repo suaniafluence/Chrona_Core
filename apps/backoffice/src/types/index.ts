@@ -112,3 +112,10 @@ export interface CreateHRCodeRequest {
   employee_name?: string;
   expires_in_days?: number;
 }
+
+export interface HRCodeQRData {
+  api_url: string;
+  hr_code: string;
+  employee_email: string;
+  employee_name: string | null;
+}

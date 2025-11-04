@@ -290,3 +290,12 @@ class OnboardingCompleteResponse(BaseModel):
     user_id: Optional[int] = None
     device_id: Optional[int] = None
     access_token: Optional[str] = Field(None, description="JWT access token")
+
+
+class HRCodeQRData(BaseModel):
+    """Schema for HR code QR code payload (for employee onboarding)."""
+
+    api_url: str = Field(..., description="Backend API base URL")
+    hr_code: str = Field(..., description="HR code")
+    employee_email: EmailStr = Field(..., description="Employee email")
+    employee_name: Optional[str] = Field(None, description="Employee name")
