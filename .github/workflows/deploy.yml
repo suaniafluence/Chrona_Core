@@ -83,32 +83,25 @@ jobs:
               exit 1
             fi
 
-            # Create .env file for backend (no leading whitespace)
-            cat > .env <<'ENVEOF'
-EC2_HOST=$EC2_HOST
-EC2_PORT=$EC2_PORT
-BACKOFFICE_PORT=$BACKOFFICE_PORT
-DATABASE_URL=$DB_URL
-SECRET_KEY=$SECRET_KEY
-ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
-VITE_API_URL=http://$EC2_HOST:$EC2_PORT
-ALLOW_CREDENTIALS=false
-ALLOWED_METHODS=*
-ALLOWED_HEADERS=*
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
-JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
-POSTGRES_DB=chrona
-POSTGRES_USER=chrona
-POSTGRES_PASSWORD=chrona
-ENVEOF
-
-            # Substitute environment variables
-            sed -i "s|\$EC2_HOST|$EC2_HOST|g" .env
-            sed -i "s|\$EC2_PORT|$EC2_PORT|g" .env
-            sed -i "s|\$BACKOFFICE_PORT|$BACKOFFICE_PORT|g" .env
-            sed -i "s|\$DB_URL|${DB_URL//&/\\&}|g" .env
-            sed -i "s|\$SECRET_KEY|${SECRET_KEY//&/\\&}|g" .env
+            # Create .env file with environment variables using tee
+            tee .env > /dev/null <<'ENVMARK'
+            EC2_HOST=$EC2_HOST
+            EC2_PORT=$EC2_PORT
+            BACKOFFICE_PORT=$BACKOFFICE_PORT
+            DATABASE_URL=$DB_URL
+            SECRET_KEY=$SECRET_KEY
+            ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
+            VITE_API_URL=http://$EC2_HOST:$EC2_PORT
+            ALLOW_CREDENTIALS=false
+            ALLOWED_METHODS=*
+            ALLOWED_HEADERS=*
+            ACCESS_TOKEN_EXPIRE_MINUTES=60
+            JWT_PRIVATE_KEY_PATH=/app/jwt_private_key.pem
+            JWT_PUBLIC_KEY_PATH=/app/jwt_public_key.pem
+            POSTGRES_DB=chrona
+            POSTGRES_USER=chrona
+            POSTGRES_PASSWORD=chrona
+            ENVMARK
 
             # Show .env file for debugging
             echo "Generated .env file:"
