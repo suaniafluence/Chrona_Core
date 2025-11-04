@@ -108,6 +108,27 @@ jobs:
             cat .env
             echo ""
 
+            # Generate JWT keys if they don't exist
+            echo "Checking for JWT keys..."
+            if [ ! -f "backend/jwt_private_key.pem" ] || [ ! -f "backend/jwt_public_key.pem" ]; then
+              echo "JWT keys not found, generating..."
+
+              # Create backend directory if it doesn't exist
+              mkdir -p backend
+
+              # Generate EC private key (ES256)
+              openssl ecparam -name prime256v1 -genkey -noout -out backend/jwt_private_key.pem
+
+              # Extract public key from private key
+              openssl ec -in backend/jwt_private_key.pem -pubout -out backend/jwt_public_key.pem
+
+              echo "JWT keys generated:"
+              ls -la backend/jwt_*.pem
+            else
+              echo "JWT keys already exist"
+            fi
+            echo ""
+
             # Install Docker and docker-compose if not present
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
