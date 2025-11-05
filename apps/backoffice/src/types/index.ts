@@ -112,3 +112,15 @@ export interface CreateHRCodeRequest {
   employee_name?: string;
   expires_in_days?: number;
 }
+
+export interface CreateDeviceRequest {
+  device_fingerprint: string;
+  device_name: string;
+  attestation_data?: Record<string, unknown> | null;
+}
+
+export interface QRCodeToken {
+  qr_token: string;
+  expires_in: number;
+  expires_at: string;
+}

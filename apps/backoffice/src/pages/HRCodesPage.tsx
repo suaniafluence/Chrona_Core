@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { hrCodesAPI } from '@/lib/api';
 import type { HRCode, CreateHRCodeRequest } from '@/types';
-import { KeyRound, Plus, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { KeyRound, Plus, CheckCircle, XCircle, Clock, QrCode } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import HRCodeQRDisplay from '@/components/HRCodeQRDisplay';
 
 export default function HRCodesPage() {
   const [hrCodes, setHRCodes] = useState<HRCode[]>([]);
@@ -12,6 +13,7 @@ export default function HRCodesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [includeUsed, setIncludeUsed] = useState(false);
   const [includeExpired, setIncludeExpired] = useState(false);
+  const [selectedQRCode, setSelectedQRCode] = useState<HRCode | null>(null);
 
   useEffect(() => {
     loadHRCodes();
@@ -157,12 +159,15 @@ export default function HRCodesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Statut
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {hrCodes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     Aucun code RH trouvé
                   </td>
                 </tr>
@@ -203,6 +208,18 @@ export default function HRCodesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(code)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      {!code.is_used && code.expires_at && !isPast(parseISO(code.expires_at)) && (
+                        <button
+                          onClick={() => setSelectedQRCode(code)}
+                          className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition"
+                          title="Générer QR code pour cet employé"
+                        >
+                          <QrCode className="w-4 h-4" />
+                          <span className="hidden sm:inline">QR</span>
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -216,6 +233,17 @@ export default function HRCodesPage() {
         <CreateHRCodeModal
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreateHRCode}
+        />
+      )}
+
+      {/* QR Code Display Modal */}
+      {selectedQRCode && (
+        <HRCodeQRDisplay
+          hrCode={selectedQRCode.code}
+          employeeEmail={selectedQRCode.employee_email}
+          employeeName={selectedQRCode.employee_name}
+          expiresAt={selectedQRCode.expires_at}
+          onClose={() => setSelectedQRCode(null)}
         />
       )}
     </div>

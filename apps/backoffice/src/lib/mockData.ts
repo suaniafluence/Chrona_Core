@@ -1,0 +1,401 @@
+import type { User, Device, Kiosk, Punch, AuditLog, DashboardStats, HRCode } from '@/types';
+
+// Mock Users Data
+export const mockUsers: User[] = [
+  {
+    id: 1,
+    email: 'alice.martin@company.com',
+    role: 'admin',
+    created_at: '2024-01-15T10:30:00Z',
+  },
+  {
+    id: 2,
+    email: 'bob.dupont@company.com',
+    role: 'user',
+    created_at: '2024-01-15T11:45:00Z',
+  },
+  {
+    id: 3,
+    email: 'carol.bernard@company.com',
+    role: 'user',
+    created_at: '2024-01-16T08:20:00Z',
+  },
+  {
+    id: 4,
+    email: 'david.robert@company.com',
+    role: 'user',
+    created_at: '2024-01-16T09:15:00Z',
+  },
+  {
+    id: 5,
+    email: 'eve.thomas@company.com',
+    role: 'admin',
+    created_at: '2024-01-17T07:00:00Z',
+  },
+  {
+    id: 6,
+    email: 'frank.moreau@company.com',
+    role: 'user',
+    created_at: '2024-01-17T14:30:00Z',
+  },
+  {
+    id: 7,
+    email: 'grace.lefevre@company.com',
+    role: 'user',
+    created_at: '2024-01-18T10:00:00Z',
+  },
+  {
+    id: 8,
+    email: 'henry.leclerc@company.com',
+    role: 'user',
+    created_at: '2024-01-18T11:20:00Z',
+  },
+];
+
+// Mock Devices Data
+export const mockDevices: Device[] = [
+  {
+    id: 1,
+    user_id: 1,
+    device_fingerprint: 'device_fp_alice_001',
+    device_name: 'iPhone 14 Pro',
+    registered_at: '2024-01-15T10:35:00Z',
+    last_seen_at: '2024-11-04T14:22:15Z',
+    is_revoked: false,
+  },
+  {
+    id: 2,
+    user_id: 2,
+    device_fingerprint: 'device_fp_bob_001',
+    device_name: 'Samsung Galaxy S23',
+    registered_at: '2024-01-15T11:50:00Z',
+    last_seen_at: '2024-11-04T13:45:30Z',
+    is_revoked: false,
+  },
+  {
+    id: 3,
+    user_id: 3,
+    device_fingerprint: 'device_fp_carol_001',
+    device_name: 'Pixel 7',
+    registered_at: '2024-01-16T08:25:00Z',
+    last_seen_at: '2024-11-04T14:18:00Z',
+    is_revoked: false,
+  },
+  {
+    id: 4,
+    user_id: 4,
+    device_fingerprint: 'device_fp_david_001',
+    device_name: 'iPhone 13',
+    registered_at: '2024-01-16T09:20:00Z',
+    last_seen_at: '2024-11-03T16:55:20Z',
+    is_revoked: false,
+  },
+  {
+    id: 5,
+    user_id: 5,
+    device_fingerprint: 'device_fp_eve_001',
+    device_name: 'OnePlus 11',
+    registered_at: '2024-01-17T07:05:00Z',
+    last_seen_at: '2024-11-04T09:10:45Z',
+    is_revoked: false,
+  },
+  {
+    id: 6,
+    user_id: 1,
+    device_fingerprint: 'device_fp_alice_002',
+    device_name: 'iPad Air',
+    registered_at: '2024-02-10T10:00:00Z',
+    last_seen_at: '2024-11-02T15:30:00Z',
+    is_revoked: true,
+  },
+];
+
+// Mock Kiosks Data
+export const mockKiosks: Kiosk[] = [
+  {
+    id: 1,
+    kiosk_name: 'Entrance-Floor1',
+    location: 'Main entrance - Floor 1',
+    device_fingerprint: 'kiosk_fp_entrance_001',
+    is_active: true,
+    created_at: '2024-01-10T08:00:00Z',
+    last_heartbeat_at: '2024-11-04T14:25:30Z',
+  },
+  {
+    id: 2,
+    kiosk_name: 'Exit-Floor1',
+    location: 'Main exit - Floor 1',
+    device_fingerprint: 'kiosk_fp_exit_001',
+    is_active: true,
+    created_at: '2024-01-10T08:15:00Z',
+    last_heartbeat_at: '2024-11-04T14:24:45Z',
+  },
+  {
+    id: 3,
+    kiosk_name: 'Cafeteria-Floor2',
+    location: 'Cafeteria - Floor 2',
+    device_fingerprint: 'kiosk_fp_cafeteria_001',
+    is_active: true,
+    created_at: '2024-01-10T08:30:00Z',
+    last_heartbeat_at: '2024-11-04T14:23:10Z',
+  },
+  {
+    id: 4,
+    kiosk_name: 'Meeting-Floor3',
+    location: 'Meeting room - Floor 3',
+    device_fingerprint: 'kiosk_fp_meeting_001',
+    is_active: false,
+    created_at: '2024-01-10T08:45:00Z',
+    last_heartbeat_at: '2024-11-03T18:30:00Z',
+  },
+];
+
+// Mock Punches Data
+export const mockPunches: Punch[] = [
+  {
+    id: 1,
+    user_id: 1,
+    device_id: 1,
+    kiosk_id: 1,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T08:15:00Z',
+    jwt_jti: 'jti_20241104_001',
+    created_at: '2024-11-04T08:15:05Z',
+  },
+  {
+    id: 2,
+    user_id: 2,
+    device_id: 2,
+    kiosk_id: 1,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T08:30:15Z',
+    jwt_jti: 'jti_20241104_002',
+    created_at: '2024-11-04T08:30:20Z',
+  },
+  {
+    id: 3,
+    user_id: 3,
+    device_id: 3,
+    kiosk_id: 2,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T08:45:30Z',
+    jwt_jti: 'jti_20241104_003',
+    created_at: '2024-11-04T08:45:35Z',
+  },
+  {
+    id: 4,
+    user_id: 4,
+    device_id: 4,
+    kiosk_id: 1,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T09:00:00Z',
+    jwt_jti: 'jti_20241104_004',
+    created_at: '2024-11-04T09:00:05Z',
+  },
+  {
+    id: 5,
+    user_id: 5,
+    device_id: 5,
+    kiosk_id: 3,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T07:30:00Z',
+    jwt_jti: 'jti_20241104_005',
+    created_at: '2024-11-04T07:30:05Z',
+  },
+  {
+    id: 6,
+    user_id: 1,
+    device_id: 1,
+    kiosk_id: 2,
+    punch_type: 'clock_out',
+    punched_at: '2024-11-04T12:15:00Z',
+    jwt_jti: 'jti_20241104_006',
+    created_at: '2024-11-04T12:15:05Z',
+  },
+  {
+    id: 7,
+    user_id: 2,
+    device_id: 2,
+    kiosk_id: 2,
+    punch_type: 'clock_out',
+    punched_at: '2024-11-04T12:30:45Z',
+    jwt_jti: 'jti_20241104_007',
+    created_at: '2024-11-04T12:30:50Z',
+  },
+  {
+    id: 8,
+    user_id: 6,
+    device_id: 3,
+    kiosk_id: 1,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T09:15:30Z',
+    jwt_jti: 'jti_20241104_008',
+    created_at: '2024-11-04T09:15:35Z',
+  },
+  {
+    id: 9,
+    user_id: 7,
+    device_id: 3,
+    kiosk_id: 1,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T10:00:00Z',
+    jwt_jti: 'jti_20241104_009',
+    created_at: '2024-11-04T10:00:05Z',
+  },
+  {
+    id: 10,
+    user_id: 8,
+    device_id: 4,
+    kiosk_id: 3,
+    punch_type: 'clock_in',
+    punched_at: '2024-11-04T08:00:00Z',
+    jwt_jti: 'jti_20241104_010',
+    created_at: '2024-11-04T08:00:05Z',
+  },
+];
+
+// Mock Audit Logs Data
+export const mockAuditLogs: AuditLog[] = [
+  {
+    id: 1,
+    event_type: 'punch_validated',
+    user_id: 1,
+    device_id: 1,
+    kiosk_id: 1,
+    event_data: { punch_type: 'clock_in', status: 'success' },
+    ip_address: '192.168.1.100',
+    user_agent: 'Mozilla/5.0 (iPad)',
+    created_at: '2024-11-04T08:15:05Z',
+  },
+  {
+    id: 2,
+    event_type: 'punch_validated',
+    user_id: 2,
+    device_id: 2,
+    kiosk_id: 1,
+    event_data: { punch_type: 'clock_in', status: 'success' },
+    ip_address: '192.168.1.101',
+    user_agent: 'Mozilla/5.0 (iPad)',
+    created_at: '2024-11-04T08:30:20Z',
+  },
+  {
+    id: 3,
+    event_type: 'punch_validated',
+    user_id: 3,
+    device_id: 3,
+    kiosk_id: 2,
+    event_data: { punch_type: 'clock_in', status: 'success' },
+    ip_address: '192.168.1.102',
+    user_agent: 'Mozilla/5.0 (iPad)',
+    created_at: '2024-11-04T08:45:35Z',
+  },
+  {
+    id: 4,
+    event_type: 'device_revoked',
+    user_id: 1,
+    device_id: 6,
+    kiosk_id: null,
+    event_data: { reason: 'Lost device', revoked_by: 'admin' },
+    ip_address: '192.168.1.50',
+    user_agent: 'Mozilla/5.0 (Windows)',
+    created_at: '2024-11-04T10:30:00Z',
+  },
+  {
+    id: 5,
+    event_type: 'login_successful',
+    user_id: 1,
+    device_id: null,
+    kiosk_id: null,
+    event_data: { method: 'password' },
+    ip_address: '192.168.1.50',
+    user_agent: 'Mozilla/5.0 (Windows)',
+    created_at: '2024-11-04T10:00:00Z',
+  },
+];
+
+// Mock Dashboard Stats
+export const mockDashboardStats: DashboardStats = {
+  total_users: mockUsers.length,
+  total_devices: mockDevices.filter(d => !d.is_revoked).length,
+  total_kiosks: mockKiosks.length,
+  active_kiosks: mockKiosks.filter(k => k.is_active).length,
+  today_punches: mockPunches.filter(p => {
+    const today = new Date();
+    const punchDate = new Date(p.punched_at);
+    return punchDate.toDateString() === today.toDateString();
+  }).length,
+  today_users: new Set(
+    mockPunches
+      .filter(p => {
+        const today = new Date();
+        const punchDate = new Date(p.punched_at);
+        return punchDate.toDateString() === today.toDateString();
+      })
+      .map(p => p.user_id)
+  ).size,
+  recent_punches: mockPunches.slice(0, 10),
+};
+
+// Mock HR Codes Data
+export const mockHRCodes: HRCode[] = [
+  {
+    id: 1,
+    code: 'HR-2024-001',
+    employee_email: 'alice.martin@company.com',
+    employee_name: 'Alice Martin',
+    created_by_admin_id: 1,
+    created_at: '2024-01-15T10:00:00Z',
+    expires_at: '2024-02-15T10:00:00Z',
+    is_used: true,
+    used_at: '2024-01-15T10:30:00Z',
+    used_by_user_id: 1,
+  },
+  {
+    id: 2,
+    code: 'HR-2024-002',
+    employee_email: 'bob.dupont@company.com',
+    employee_name: 'Bob Dupont',
+    created_by_admin_id: 1,
+    created_at: '2024-01-15T10:05:00Z',
+    expires_at: '2024-02-15T10:05:00Z',
+    is_used: true,
+    used_at: '2024-01-15T11:45:00Z',
+    used_by_user_id: 2,
+  },
+  {
+    id: 3,
+    code: 'HR-2024-003',
+    employee_email: 'carol.bernard@company.com',
+    employee_name: 'Carol Bernard',
+    created_by_admin_id: 1,
+    created_at: '2024-01-16T08:00:00Z',
+    expires_at: '2024-02-16T08:00:00Z',
+    is_used: true,
+    used_at: '2024-01-16T08:20:00Z',
+    used_by_user_id: 3,
+  },
+  {
+    id: 4,
+    code: 'HR-2024-004',
+    employee_email: 'david.robert@company.com',
+    employee_name: 'David Robert',
+    created_by_admin_id: 5,
+    created_at: '2024-01-16T09:00:00Z',
+    expires_at: '2024-02-16T09:00:00Z',
+    is_used: true,
+    used_at: '2024-01-16T09:15:00Z',
+    used_by_user_id: 4,
+  },
+  {
+    id: 5,
+    code: 'HR-2024-005',
+    employee_email: 'frank.moreau@company.com',
+    employee_name: 'Frank Moreau',
+    created_by_admin_id: 1,
+    created_at: '2024-01-17T14:00:00Z',
+    expires_at: '2024-02-17T14:00:00Z',
+    is_used: false,
+    used_at: null,
+    used_by_user_id: null,
+  },
+];
