@@ -107,6 +107,40 @@ run_migrations() {
     fi
 }
 
+# Create admin user
+create_admin() {
+    log_info "Creating admin user..."
+
+    check_environment
+
+    # Set default credentials if not provided
+    ADMIN_EMAIL_DEFAULT="admin@chrona.local"
+    ADMIN_PASSWORD_DEFAULT="ChangeMe123!"
+
+    ADMIN_EMAIL_FINAL="${ADMIN_EMAIL:-$ADMIN_EMAIL_DEFAULT}"
+    ADMIN_PASSWORD_FINAL="${ADMIN_PASSWORD:-$ADMIN_PASSWORD_DEFAULT}"
+
+    # Allow overriding via command line arguments
+    if [ -n "${1:-}" ]; then
+        ADMIN_EMAIL_FINAL="$1"
+    fi
+    if [ -n "${2:-}" ]; then
+        ADMIN_PASSWORD_FINAL="$2"
+    fi
+
+    log_info "Email: $ADMIN_EMAIL_FINAL"
+
+    if docker-compose exec -T backend python tools/create_admin_user.py \
+      --email "$ADMIN_EMAIL_FINAL" \
+      --password "$ADMIN_PASSWORD_FINAL" \
+      --role admin; then
+      log_info "✓ Admin user created/updated successfully!"
+    else
+      log_error "Failed to create admin user"
+      return 1
+    fi
+}
+
 # Full deployment process
 deploy() {
     log_info "Starting deployment process..."
@@ -129,6 +163,33 @@ deploy() {
     run_migrations
 
     echo ""
+    log_info "Creating admin user..."
+
+    # Set default credentials if not provided
+    ADMIN_EMAIL_DEFAULT="admin@chrona.local"
+    ADMIN_PASSWORD_DEFAULT="ChangeMe123!"
+
+    ADMIN_EMAIL_FINAL="${ADMIN_EMAIL:-$ADMIN_EMAIL_DEFAULT}"
+    ADMIN_PASSWORD_FINAL="${ADMIN_PASSWORD:-$ADMIN_PASSWORD_DEFAULT}"
+
+    if docker-compose exec -T backend python tools/create_admin_user.py \
+      --email "$ADMIN_EMAIL_FINAL" \
+      --password "$ADMIN_PASSWORD_FINAL" \
+      --role admin; then
+      log_info "✓ Admin user created/updated successfully!"
+      if [ -z "$ADMIN_EMAIL" ]; then
+        log_warn "Using default admin credentials:"
+        echo "  Email: $ADMIN_EMAIL_DEFAULT"
+        echo "  Password: $ADMIN_PASSWORD_DEFAULT"
+        echo ""
+        log_warn "CHANGE THESE CREDENTIALS IMMEDIATELY!"
+      fi
+    else
+      log_error "Failed to create admin user"
+      log_info "Create manually: docker-compose exec backend python tools/create_admin_user.py --email admin@example.com --password 'YourPassword' --role admin"
+    fi
+
+    echo ""
     log_info "=========================================="
     log_info "Deployment completed!"
     log_info "=========================================="
@@ -148,20 +209,29 @@ deploy() {
 # Show usage
 usage() {
     cat <<EOF
-Usage: $0 [command]
+Usage: $0 [command] [options]
 
 Commands:
-    check       Check environment and database connection
-    migrate     Run Alembic migrations to head
-    status      Show current migration status
-    deploy      Full deployment (restart services + migrate)
-    help        Show this help message
+    check               Check environment and database connection
+    migrate             Run Alembic migrations to head
+    status              Show current migration status
+    create-admin [email] [password]
+                        Create or update admin user (uses defaults if not provided)
+    deploy              Full deployment (restart services + migrate + create admin)
+    help                Show this help message
 
 Examples:
-    $0 check           # Verify environment and database
-    $0 status          # Show current migration version
-    $0 migrate         # Run pending migrations
-    $0 deploy          # Full deployment with migrations
+    $0 check            # Verify environment and database
+    $0 status           # Show current migration version
+    $0 migrate          # Run pending migrations
+    $0 create-admin     # Create admin with default credentials
+    $0 create-admin admin@company.com SecureP@ss123
+                        # Create admin with custom credentials
+    $0 deploy           # Full deployment with migrations and admin creation
+
+Environment variables (optional):
+    ADMIN_EMAIL         Admin email (default: admin@chrona.local)
+    ADMIN_PASSWORD      Admin password (default: ChangeMe123!)
 
 Note: This script should be run on the EC2 instance in /opt/chrona
 EOF
@@ -183,6 +253,10 @@ main() {
         migrate)
             check_environment
             run_migrations
+            ;;
+        create-admin)
+            shift
+            create_admin "$@"
             ;;
         deploy)
             deploy

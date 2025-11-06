@@ -54,11 +54,13 @@ jobs:
           BACKOFFICE_PORT: ${{ inputs.backoffice_port }}
           DB_URL: ${{ secrets.DATABASE_URL }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: EC2_HOST,EC2_PORT,BACKOFFICE_PORT,DB_URL,SECRET_KEY
+          envs: EC2_HOST,EC2_PORT,BACKOFFICE_PORT,DB_URL,SECRET_KEY,ADMIN_EMAIL,ADMIN_PASSWORD
           script: |
             set -euo pipefail
 
@@ -200,6 +202,44 @@ jobs:
               echo "  ssh to EC2 and run: cd /opt/chrona && docker-compose exec backend alembic upgrade head"
             fi
 
+            # Create admin user
+            echo ""
+            echo "=========================================="
+            echo "Creating admin user..."
+            echo "=========================================="
+
+            # Set default credentials if not provided in secrets
+            ADMIN_EMAIL_DEFAULT="admin@chrona.local"
+            ADMIN_PASSWORD_DEFAULT="ChangeMe123!"
+
+            ADMIN_EMAIL_FINAL="${ADMIN_EMAIL:-$ADMIN_EMAIL_DEFAULT}"
+            ADMIN_PASSWORD_FINAL="${ADMIN_PASSWORD:-$ADMIN_PASSWORD_DEFAULT}"
+
+            if sudo docker-compose exec -T backend python tools/create_admin_user.py \
+              --email "$ADMIN_EMAIL_FINAL" \
+              --password "$ADMIN_PASSWORD_FINAL" \
+              --role admin; then
+              echo "✓ Admin user created/updated successfully!"
+              echo ""
+              if [ -z "$ADMIN_EMAIL" ]; then
+                echo "⚠️  WARNING: Using default admin credentials!"
+                echo "   Email: $ADMIN_EMAIL_DEFAULT"
+                echo "   Password: $ADMIN_PASSWORD_DEFAULT"
+                echo ""
+                echo "   🔐 IMPORTANT: Change these credentials immediately after first login!"
+                echo "   To use custom credentials, add ADMIN_EMAIL and ADMIN_PASSWORD to GitHub Secrets"
+              else
+                echo "✓ Using credentials from GitHub Secrets"
+                echo "   Email: $ADMIN_EMAIL_FINAL"
+              fi
+            else
+              echo "WARNING: Failed to create admin user. You can create it manually:"
+              echo "  ssh to EC2 and run:"
+              echo "  cd /opt/chrona"
+              echo "  docker-compose exec backend python tools/create_admin_user.py \\"
+              echo "    --email admin@example.com --password 'YourPassword' --role admin"
+            fi
+
             # Show logs
             echo ""
             echo "Backend logs (last 30 lines):"
@@ -214,5 +254,6 @@ jobs:
             echo "Backoffice: http://$EC2_HOST:$BACKOFFICE_PORT"
             echo "=========================================="
             echo ""
+            echo "Admin credentials: Check deployment logs above"
             echo "Database migrations status: Run 'docker-compose exec backend alembic current' to verify"
 
