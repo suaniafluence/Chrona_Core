@@ -25,8 +25,42 @@ Allez dans **Settings → Secrets and variables → Actions** et ajoutez :
 | `EC2_HOST` | Adresse IP publique de l'instance EC2 | `13.37.245.222` |
 | `EC2_USER` | Utilisateur SSH (ubuntu pour Ubuntu, ec2-user pour Amazon Linux) | `ubuntu` |
 | `EC2_SSH_KEY` | Contenu du fichier `.pem` (voir section ci-dessous) | `-----BEGIN RSA PRIVATE KEY-----...` |
-| `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql+asyncpg://user:pass@db-host:5432/chrona` |
+| `DATABASE_URL` | ⚠️ **CRITIQUE** URL de connexion PostgreSQL (voir ci-dessous) | `postgresql+asyncpg://user:pass@db-host:5432/chrona` |
 | `SECRET_KEY` | Clé secrète pour JWT (doit être aléatoire et sécurisé) | `openssl rand -hex 32` |
+
+### ⚠️ Configuration critique : DATABASE_URL
+
+Le `DATABASE_URL` est **la configuration la plus importante** pour le déploiement. Il doit pointer vers votre base de données PostgreSQL :
+
+**Format requis :**
+```
+postgresql+asyncpg://username:password@hostname:port/database_name
+```
+
+**Exemples selon votre configuration :**
+
+1. **Base de données locale sur EC2** (si PostgreSQL tourne dans docker-compose) :
+   ```
+   postgresql+asyncpg://chrona:chrona@db:5432/chrona
+   ```
+   Note : `db` est le nom du service dans docker-compose.yml
+
+2. **Base de données AWS RDS** (recommandé pour production) :
+   ```
+   postgresql+asyncpg://admin:MySecurePass123@chrona-db.c9akrzq9zqxb.eu-west-1.rds.amazonaws.com:5432/chrona
+   ```
+
+3. **Base de données externe** (autre serveur PostgreSQL) :
+   ```
+   postgresql+asyncpg://chrona_user:password@192.168.1.50:5432/chrona
+   ```
+
+**⚠️ Points importants :**
+- Utilisez **toujours** le driver `asyncpg` : `postgresql+asyncpg://...`
+- Pour les bases de données locales dans docker-compose, utilisez le nom du service (`db`) comme hostname
+- Pour AWS RDS ou bases externes, utilisez le hostname complet
+- Vérifiez que l'utilisateur PostgreSQL a les droits pour créer/modifier des tables
+- Assurez-vous que le Security Group/Firewall autorise les connexions depuis votre EC2
 
 ### Ajouter la clé SSH en secret
 
@@ -111,18 +145,61 @@ Une fois le workflow terminé, vérifiez que tout fonctionne :
 # SSH dans l'instance
 ssh -i /path/to/your-key.pem ubuntu@13.37.245.222
 
+# Aller dans le répertoire de déploiement
+cd /opt/chrona
+
 # Vérifier l'état des services
-docker compose -f /opt/chrona ps
+docker compose ps
+
+# Vérifier les migrations Alembic (IMPORTANT!)
+docker compose exec backend alembic current
 
 # Voir les logs
-docker compose -f /opt/chrona logs -f backend
-docker compose -f /opt/chrona logs -f backoffice
+docker compose logs -f backend
+docker compose logs -f backoffice
 
 # Tester le backend
 curl http://localhost:8000/docs
 
 # Tester le backoffice
 curl http://localhost:5173
+```
+
+### Vérifier les migrations de base de données
+
+Le workflow exécute automatiquement `alembic upgrade head` après le démarrage des services. Pour vérifier manuellement :
+
+```bash
+cd /opt/chrona
+
+# Vérifier la version actuelle de la migration
+docker compose exec backend alembic current
+
+# Voir l'historique des migrations
+docker compose exec backend alembic history
+
+# Lancer les migrations manuellement si nécessaire
+docker compose exec backend alembic upgrade head
+```
+
+### Script de déploiement automatique
+
+Un script helper est disponible dans `scripts/deploy-ec2.sh` :
+
+```bash
+cd /opt/chrona
+
+# Vérifier l'environnement et la connexion DB
+./scripts/deploy-ec2.sh check
+
+# Vérifier le statut des migrations
+./scripts/deploy-ec2.sh status
+
+# Lancer uniquement les migrations
+./scripts/deploy-ec2.sh migrate
+
+# Déploiement complet (restart + migrations)
+./scripts/deploy-ec2.sh deploy
 ```
 
 ## Accéder à l'application
@@ -167,9 +244,98 @@ sudo lsof -i :5173
 ### Erreur de connexion à la base de données
 
 Vérifiez que `DATABASE_URL` est correct et accessible :
+
 ```bash
-# Test de connexion (si psql est installé)
-psql "postgresql://user:pass@db-host:5432/chrona"
+# 1. Vérifier que DATABASE_URL est bien configuré dans le backend
+docker compose exec backend env | grep DATABASE_URL
+
+# 2. Tester la connexion depuis le backend container
+docker compose exec backend python3 -c "
+from sqlalchemy.ext.asyncio import create_async_engine
+import asyncio
+import os
+
+async def test_db():
+    url = os.getenv('DATABASE_URL')
+    print(f'Testing connection to: {url}')
+    engine = create_async_engine(url)
+    async with engine.connect() as conn:
+        print('✓ Connection successful!')
+    await engine.dispose()
+
+asyncio.run(test_db())
+"
+
+# 3. Si PostgreSQL tourne dans docker-compose, vérifier son statut
+docker compose exec db pg_isready -U chrona
+
+# 4. Test de connexion avec psql (si installé)
+# Pour base locale :
+docker compose exec db psql -U chrona -d chrona -c "SELECT version();"
+
+# Pour base externe :
+psql "postgresql://user:pass@db-host:5432/chrona" -c "SELECT version();"
+```
+
+**Erreurs courantes :**
+
+- **"could not translate host name"** → Hostname incorrect dans DATABASE_URL
+- **"password authentication failed"** → Mauvais username/password
+- **"database does not exist"** → La base de données n'a pas été créée
+- **"connection refused"** → PostgreSQL n'est pas démarré ou port incorrect
+- **"no route to host"** → Problème réseau/firewall
+
+**Solutions :**
+```bash
+# Si vous utilisez la base locale (docker-compose) :
+DATABASE_URL=postgresql+asyncpg://chrona:chrona@db:5432/chrona
+
+# Vérifier que le service db est démarré
+docker compose ps db
+
+# Redémarrer PostgreSQL si nécessaire
+docker compose restart db
+```
+
+### Erreur lors des migrations Alembic
+
+Si `alembic upgrade head` échoue :
+
+```bash
+cd /opt/chrona
+
+# 1. Vérifier la version actuelle
+docker compose exec backend alembic current
+
+# 2. Vérifier l'historique des migrations
+docker compose exec backend alembic history --verbose
+
+# 3. Vérifier les logs du backend
+docker compose logs backend | grep -i alembic
+
+# 4. Tester la connexion DB depuis Alembic
+docker compose exec backend alembic upgrade head --sql > migration.sql
+cat migration.sql  # Voir le SQL qui serait exécuté
+
+# 5. Si les migrations sont corrompues, réinitialiser (ATTENTION: perte de données!)
+# Option 1 : Stamp to head (marquer comme à jour sans exécuter)
+docker compose exec backend alembic stamp head
+
+# Option 2 : Réinitialisation complète (DESTRUCTIF!)
+docker compose exec db psql -U chrona -d chrona -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker compose exec backend alembic upgrade head
+```
+
+**Migrations partielles :**
+```bash
+# Voir quelle migration a échoué
+docker compose logs backend | tail -50
+
+# Revenir à une migration spécifique
+docker compose exec backend alembic downgrade <revision_id>
+
+# Puis réessayer
+docker compose exec backend alembic upgrade head
 ```
 
 ## Mise à jour de l'application

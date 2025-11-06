@@ -187,9 +187,23 @@ jobs:
             echo "Service status:"
             sudo docker-compose ps
 
+            # Run Alembic migrations to head
+            echo ""
+            echo "=========================================="
+            echo "Running Alembic migrations..."
+            echo "=========================================="
+            if sudo docker-compose exec -T backend alembic upgrade head; then
+              echo "Migrations completed successfully!"
+            else
+              echo "WARNING: Migrations failed or backend not ready. Check logs."
+              echo "You may need to run migrations manually:"
+              echo "  ssh to EC2 and run: cd /opt/chrona && docker-compose exec backend alembic upgrade head"
+            fi
+
             # Show logs
-            echo "Backend logs (last 20 lines):"
-            sudo docker-compose logs --tail=20 backend
+            echo ""
+            echo "Backend logs (last 30 lines):"
+            sudo docker-compose logs --tail=30 backend
 
             echo ""
             echo "=========================================="
@@ -199,4 +213,6 @@ jobs:
             echo "Swagger UI: http://$EC2_HOST:$EC2_PORT/docs"
             echo "Backoffice: http://$EC2_HOST:$BACKOFFICE_PORT"
             echo "=========================================="
+            echo ""
+            echo "Database migrations status: Run 'docker-compose exec backend alembic current' to verify"
 
