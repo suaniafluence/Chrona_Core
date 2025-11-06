@@ -59,7 +59,11 @@ echo "$(openssl rand -hex 32)" | gh secret set SECRET_KEY --repo your-org/Chrona
    - **Backoffice port**: `5173` (par défaut)
 5. Cliquez sur **Run workflow**
 
-Le déploiement prendra environ 3-5 minutes.
+Le déploiement prendra environ 3-5 minutes et effectuera automatiquement :
+- ✅ Construction et démarrage des services Docker
+- ✅ Vérification de la connexion à la base de données
+- ✅ **Exécution des migrations Alembic vers la dernière version (head)**
+- ✅ Vérification de l'état des services
 
 ### Vérifier le déploiement
 
