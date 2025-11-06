@@ -4,9 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Users,
-  Smartphone,
   Monitor,
-  KeyRound,
   FileText,
   Shield,
   LogOut,
@@ -17,10 +15,8 @@ import clsx from 'clsx';
 
 const navigation = [
   { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Utilisateurs', href: '/users', icon: Users },
-  { name: 'Appareils', href: '/devices', icon: Smartphone },
+  { name: 'Employés', href: '/employees', icon: Users },
   { name: 'Kiosques', href: '/kiosks', icon: Monitor },
-  { name: 'Codes RH', href: '/hr-codes', icon: KeyRound },
   { name: 'Rapports', href: '/reports', icon: FileText },
   { name: 'Logs d\'audit', href: '/audit-logs', icon: Shield },
 ];

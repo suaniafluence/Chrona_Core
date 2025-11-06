@@ -12,8 +12,10 @@ import type {
   DashboardStats,
   HRCode,
   CreateHRCodeRequest,
-  HRCodeQRData,
+  CreateDeviceRequest,
+  QRCodeToken,
 } from '@/types';
+import { mockService, isMockServiceEnabled } from './mockService';
 
 // Determine API base URL.
 // - In development we rely on the Vite proxy (`/api`).
@@ -59,17 +61,21 @@ export const authAPI = {
 // ---------- Users API ----------
 export const usersAPI = {
   getAll: async (params?: { offset?: number; limit?: number }): Promise<User[]> => {
+    if (isMockServiceEnabled()) return mockService.getUsers();
     const res = await api.get<User[]>('/admin/users', { params });
     return res.data;
   },
   create: async (data: CreateUserRequest): Promise<User> => {
+    if (isMockServiceEnabled()) return mockService.createUser(data);
     const res = await api.post<User>('/admin/users', data);
     return res.data;
   },
   updateRole: async (userId: number, role: 'user' | 'admin'): Promise<void> => {
+    if (isMockServiceEnabled()) return mockService.updateUserRole(userId, role);
     await api.patch(`/admin/users/${userId}/role`, { role });
   },
   delete: async (userId: number): Promise<void> => {
+    if (isMockServiceEnabled()) return mockService.deleteUser(userId);
     await api.delete(`/admin/users/${userId}`);
   },
 };
@@ -82,21 +88,35 @@ export const devicesAPI = {
     offset?: number;
     limit?: number;
   }): Promise<Device[]> => {
+    if (isMockServiceEnabled()) return mockService.getDevices(params);
     const res = await api.get<Device[]>('/admin/devices', { params });
     return res.data;
   },
+  create: async (data: CreateDeviceRequest): Promise<Device> => {
+    if (isMockServiceEnabled()) return mockService.createDevice(data);
+    const res = await api.post<Device>('/devices/register', data);
+    return res.data;
+  },
   revoke: async (deviceId: number): Promise<void> => {
+    if (isMockServiceEnabled()) return mockService.revokeDevice(deviceId);
     await api.post(`/admin/devices/${deviceId}/revoke`, {});
+  },
+  generateQRToken: async (deviceId: number): Promise<QRCodeToken> => {
+    if (isMockServiceEnabled()) return mockService.generateQRToken(deviceId);
+    const res = await api.post<QRCodeToken>('/punch/request-token', { device_id: deviceId });
+    return res.data;
   },
 };
 
 // ---------- Kiosks API ----------
 export const kiosksAPI = {
   getAll: async (params?: { is_active?: boolean; offset?: number; limit?: number }): Promise<Kiosk[]> => {
+    if (isMockServiceEnabled()) return mockService.getKiosks(params);
     const res = await api.get<Kiosk[]>('/admin/kiosks', { params });
     return res.data;
   },
   create: async (data: CreateKioskRequest): Promise<Kiosk> => {
+    if (isMockServiceEnabled()) return mockService.createKiosk(data);
     const res = await api.post<Kiosk>('/admin/kiosks', data);
     return res.data;
   },
@@ -104,10 +124,12 @@ export const kiosksAPI = {
     kioskId: number,
     data: Partial<Pick<Kiosk, 'kiosk_name' | 'location' | 'is_active'>>,
   ): Promise<Kiosk> => {
+    if (isMockServiceEnabled()) return mockService.updateKiosk(kioskId, data);
     const res = await api.patch<Kiosk>(`/admin/kiosks/${kioskId}`, data);
     return res.data;
   },
   delete: async (kioskId: number): Promise<void> => {
+    if (isMockServiceEnabled()) return mockService.deleteKiosk(kioskId);
     await api.delete(`/admin/kiosks/${kioskId}`);
   },
   generateApiKey: async (kioskId: number): Promise<KioskConfigData> => {
@@ -128,6 +150,7 @@ export const auditLogsAPI = {
     offset?: number;
     limit?: number;
   }): Promise<AuditLog[]> => {
+    if (isMockServiceEnabled()) return mockService.getAuditLogs(params);
     const res = await api.get<AuditLog[]>('/admin/audit-logs', { params });
     return res.data;
   },
@@ -136,6 +159,7 @@ export const auditLogsAPI = {
 // ---------- Dashboard API ----------
 export const dashboardAPI = {
   getStats: async (): Promise<DashboardStats> => {
+    if (isMockServiceEnabled()) return mockService.getDashboardStats();
     const res = await api.get<DashboardStats>('/admin/dashboard/stats');
     return res.data;
   },
@@ -170,10 +194,12 @@ export const hrCodesAPI = {
     offset?: number;
     limit?: number;
   }): Promise<HRCode[]> => {
+    if (isMockServiceEnabled()) return mockService.getHRCodes(params);
     const res = await api.get<HRCode[]>('/admin/hr-codes', { params });
     return res.data;
   },
   create: async (data: CreateHRCodeRequest): Promise<HRCode> => {
+    if (isMockServiceEnabled()) return mockService.createHRCode(data);
     const res = await api.post<HRCode>('/admin/hr-codes', data);
     return res.data;
   },
@@ -182,6 +208,9 @@ export const hrCodesAPI = {
     return res.data;
   },
 };
+
+// Export mock service utilities for development
+export { isMockServiceEnabled, toggleMockService } from './mockService';
 
 export default api;
 
