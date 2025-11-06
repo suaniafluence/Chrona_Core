@@ -27,6 +27,8 @@ Allez dans **Settings → Secrets and variables → Actions** et ajoutez :
 | `EC2_SSH_KEY` | Contenu du fichier `.pem` (voir section ci-dessous) | `-----BEGIN RSA PRIVATE KEY-----...` |
 | `DATABASE_URL` | ⚠️ **CRITIQUE** URL de connexion PostgreSQL (voir ci-dessous) | `postgresql+asyncpg://user:pass@db-host:5432/chrona` |
 | `SECRET_KEY` | Clé secrète pour JWT (doit être aléatoire et sécurisé) | `openssl rand -hex 32` |
+| `ADMIN_EMAIL` | 🔐 Email du compte admin (optionnel, défaut: admin@chrona.local) | `admin@yourcompany.com` |
+| `ADMIN_PASSWORD` | 🔐 Mot de passe du compte admin (optionnel, défaut: ChangeMe123!) | Un mot de passe fort |
 
 ### ⚠️ Configuration critique : DATABASE_URL
 
@@ -61,6 +63,31 @@ postgresql+asyncpg://username:password@hostname:port/database_name
 - Pour AWS RDS ou bases externes, utilisez le hostname complet
 - Vérifiez que l'utilisateur PostgreSQL a les droits pour créer/modifier des tables
 - Assurez-vous que le Security Group/Firewall autorise les connexions depuis votre EC2
+
+### 🔐 Configuration des credentials admin (Optionnel mais RECOMMANDÉ)
+
+Le workflow crée automatiquement un utilisateur admin lors du déploiement. Vous pouvez personnaliser les credentials :
+
+**Secrets optionnels pour l'admin :**
+- `ADMIN_EMAIL` : Email du compte administrateur (défaut: `admin@chrona.local`)
+- `ADMIN_PASSWORD` : Mot de passe du compte admin (défaut: `ChangeMe123!`)
+
+**⚠️ Si vous ne configurez pas ces secrets :**
+Le système utilisera les credentials par défaut :
+- Email: `admin@chrona.local`
+- Password: `ChangeMe123!`
+
+**🔒 IMPORTANT pour la sécurité :**
+1. **Configurez toujours** `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans les secrets GitHub pour la production
+2. Si vous utilisez les credentials par défaut, **changez-les immédiatement** après le premier déploiement
+3. Utilisez un mot de passe fort (12+ caractères, majuscules, minuscules, chiffres, symboles)
+
+**Configuration via GitHub CLI :**
+```bash
+# Configurer les credentials admin personnalisés
+echo "admin@yourcompany.com" | gh secret set ADMIN_EMAIL --repo your-org/Chrona_Core
+echo "YourSecureP@ssw0rd!" | gh secret set ADMIN_PASSWORD --repo your-org/Chrona_Core
+```
 
 ### Ajouter la clé SSH en secret
 
@@ -163,6 +190,57 @@ curl http://localhost:8000/docs
 
 # Tester le backoffice
 curl http://localhost:5173
+```
+
+### Vérifier la création de l'utilisateur admin
+
+Le workflow crée automatiquement un utilisateur admin après les migrations. Pour vérifier :
+
+```bash
+cd /opt/chrona
+
+# Se connecter à la base de données et vérifier les utilisateurs
+docker compose exec db psql -U chrona -d chrona -c "SELECT id, email, role FROM users;"
+
+# Ou via le backend
+docker compose exec backend python -c "
+import asyncio
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
+import os
+
+async def check_admin():
+    from src.models.user import User
+    db_url = os.getenv('DATABASE_URL', 'sqlite+aiosqlite:///./app.db')
+    engine = create_async_engine(db_url)
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async with async_session() as session:
+        result = await session.execute(select(User).where(User.role == 'admin'))
+        admins = result.scalars().all()
+        for admin in admins:
+            print(f'Admin: {admin.email} (ID: {admin.id})')
+
+asyncio.run(check_admin())
+"
+```
+
+**Se connecter au backoffice avec l'admin :**
+1. Allez sur : http://13.37.245.222:5173
+2. Connectez-vous avec les credentials :
+   - Email: `admin@chrona.local` (ou votre email personnalisé)
+   - Password: `ChangeMe123!` (ou votre mot de passe personnalisé)
+
+**Créer manuellement un admin si nécessaire :**
+```bash
+cd /opt/chrona
+
+docker compose exec backend python tools/create_admin_user.py \
+  --email "admin@example.com" \
+  --password "Passw0rd!" \
+  --role admin
 ```
 
 ### Vérifier les migrations de base de données
