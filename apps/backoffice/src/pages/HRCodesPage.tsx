@@ -11,8 +11,6 @@ export default function HRCodesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [qrData, setQRData] = useState<HRCodeQRData | null>(null);
   const [includeUsed, setIncludeUsed] = useState(false);
   const [includeExpired, setIncludeExpired] = useState(false);
   const [selectedQRCode, setSelectedQRCode] = useState<HRCode | null>(null);
@@ -46,18 +44,6 @@ export default function HRCodesPage() {
       setError('');
     } catch (err) {
       setError('Erreur lors de la création du code RH');
-      console.error(err);
-    }
-  };
-
-  const handleGenerateQR = async (hrCodeId: number) => {
-    try {
-      const data = await hrCodesAPI.getQRData(hrCodeId);
-      setQRData(data);
-      setShowQRModal(true);
-      setError('');
-    } catch (err) {
-      setError('Erreur lors de la génération du QR code');
       console.error(err);
     }
   };
@@ -365,139 +351,6 @@ function CreateHRCodeModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-function HRCodeQRModal({
-  qrData,
-  onClose,
-}: {
-  qrData: HRCodeQRData;
-  onClose: () => void;
-}) {
-  const qrPayload = JSON.stringify({
-    type: 'employee_onboarding',
-    api_url: qrData.api_url,
-    hr_code: qrData.hr_code,
-    employee_email: qrData.employee_email,
-    employee_name: qrData.employee_name,
-  });
-
-  const handleCopyConfig = () => {
-    navigator.clipboard.writeText(qrPayload);
-    alert('Configuration copiée dans le presse-papiers !');
-  };
-
-  const handleDownloadQR = () => {
-    const svg = document.getElementById('hr-code-qr-code');
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-      const pngFile = canvas.toDataURL('image/png');
-
-      const downloadLink = document.createElement('a');
-      downloadLink.download = `onboarding-${qrData.hr_code}-qr.png`;
-      downloadLink.href = pngFile;
-      downloadLink.click();
-    };
-
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">QR Code Onboarding Employé</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800 font-medium mb-2">
-            📱 QR Code d'onboarding
-          </p>
-          <p className="text-sm text-blue-700">
-            Scannez ce QR code avec l'application mobile Chrona pour démarrer le processus d'onboarding automatiquement.
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center space-y-4 mb-6">
-          <div className="bg-white p-6 rounded-lg border-2 border-gray-200">
-            <QRCodeSVG
-              id="hr-code-qr-code"
-              value={qrPayload}
-              size={300}
-              level="H"
-              includeMargin={true}
-            />
-          </div>
-
-          <div className="flex space-x-3">
-            <button
-              onClick={handleDownloadQR}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-            >
-              <QrCode className="w-4 h-4" />
-              <span>Télécharger QR Code</span>
-            </button>
-            <button
-              onClick={handleCopyConfig}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-            >
-              <span>Copier la configuration</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-3 text-sm">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Informations de l'employé</h3>
-            <dl className="space-y-2">
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Code RH:</dt>
-                <dd className="font-medium text-gray-900">{qrData.hr_code}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Email:</dt>
-                <dd className="font-medium text-gray-900">{qrData.employee_email}</dd>
-              </div>
-              {qrData.employee_name && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-600">Nom:</dt>
-                  <dd className="font-medium text-gray-900">{qrData.employee_name}</dd>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <dt className="text-gray-600">URL API:</dt>
-                <dd className="font-medium text-gray-900 break-all">{qrData.api_url}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            Fermer
-          </button>
-        </div>
       </div>
     </div>
   );
