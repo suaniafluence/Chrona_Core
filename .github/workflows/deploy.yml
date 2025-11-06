@@ -85,12 +85,15 @@ jobs:
               exit 1
             fi
 
+            # Set default DATABASE_URL if not provided (use local PostgreSQL in docker-compose)
+            DB_URL_FINAL="${DB_URL:-postgresql+asyncpg://chrona:chrona@db:5432/chrona}"
+
             # Create .env file with environment variables (with variable substitution)
             cat > .env <<ENVMARK
             EC2_HOST=$EC2_HOST
             EC2_PORT=$EC2_PORT
             BACKOFFICE_PORT=$BACKOFFICE_PORT
-            DATABASE_URL=$DB_URL
+            DATABASE_URL=$DB_URL_FINAL
             SECRET_KEY=$SECRET_KEY
             ALLOWED_ORIGINS=http://$EC2_HOST:$BACKOFFICE_PORT,http://$EC2_HOST:$EC2_PORT
             VITE_API_URL=http://$EC2_HOST:$EC2_PORT
