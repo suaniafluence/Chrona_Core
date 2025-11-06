@@ -25,14 +25,23 @@ Allez dans **Settings → Secrets and variables → Actions** et ajoutez :
 | `EC2_HOST` | Adresse IP publique de l'instance EC2 | `13.37.245.222` |
 | `EC2_USER` | Utilisateur SSH (ubuntu pour Ubuntu, ec2-user pour Amazon Linux) | `ubuntu` |
 | `EC2_SSH_KEY` | Contenu du fichier `.pem` (voir section ci-dessous) | `-----BEGIN RSA PRIVATE KEY-----...` |
-| `DATABASE_URL` | ⚠️ **CRITIQUE** URL de connexion PostgreSQL (voir ci-dessous) | `postgresql+asyncpg://user:pass@db-host:5432/chrona` |
+| `DATABASE_URL` | URL de connexion PostgreSQL (optionnel, voir ci-dessous) | `postgresql+asyncpg://chrona:chrona@db:5432/chrona` |
 | `SECRET_KEY` | Clé secrète pour JWT (doit être aléatoire et sécurisé) | `openssl rand -hex 32` |
 | `ADMIN_EMAIL` | 🔐 Email du compte admin (optionnel, défaut: admin@chrona.local) | `admin@yourcompany.com` |
 | `ADMIN_PASSWORD` | 🔐 Mot de passe du compte admin (optionnel, défaut: ChangeMe123!) | Un mot de passe fort |
 
-### ⚠️ Configuration critique : DATABASE_URL
+### 🗄️ Configuration de la base de données (DATABASE_URL)
 
-Le `DATABASE_URL` est **la configuration la plus importante** pour le déploiement. Il doit pointer vers votre base de données PostgreSQL :
+**Par défaut :** Si vous ne configurez PAS ce secret, le système utilise automatiquement la base PostgreSQL locale définie dans `docker-compose.yml` :
+
+```
+postgresql+asyncpg://chrona:chrona@db:5432/chrona
+```
+
+**⚠️ Vous devez SEULEMENT configurer ce secret si :**
+- Vous utilisez AWS RDS
+- Vous utilisez une base de données PostgreSQL externe
+- Vous voulez modifier les credentials par défaut
 
 **Format requis :**
 ```
@@ -41,28 +50,31 @@ postgresql+asyncpg://username:password@hostname:port/database_name
 
 **Exemples selon votre configuration :**
 
-1. **Base de données locale sur EC2** (si PostgreSQL tourne dans docker-compose) :
-   ```
-   postgresql+asyncpg://chrona:chrona@db:5432/chrona
+1. **Base de données locale sur EC2** (par défaut, RIEN À FAIRE) :
+   ```bash
+   # Ne configurez PAS ce secret, la valeur par défaut fonctionne
+   # Valeur automatique : postgresql+asyncpg://chrona:chrona@db:5432/chrona
    ```
    Note : `db` est le nom du service dans docker-compose.yml
 
-2. **Base de données AWS RDS** (recommandé pour production) :
-   ```
-   postgresql+asyncpg://admin:MySecurePass123@chrona-db.c9akrzq9zqxb.eu-west-1.rds.amazonaws.com:5432/chrona
+2. **Base de données AWS RDS** (production) :
+   ```bash
+   echo "postgresql+asyncpg://admin:MySecurePass123@chrona-db.c9akrzq9zqxb.eu-west-1.rds.amazonaws.com:5432/chrona" | \
+     gh secret set DATABASE_URL --repo your-org/Chrona_Core
    ```
 
 3. **Base de données externe** (autre serveur PostgreSQL) :
-   ```
-   postgresql+asyncpg://chrona_user:password@192.168.1.50:5432/chrona
+   ```bash
+   echo "postgresql+asyncpg://chrona_user:password@192.168.1.50:5432/chrona" | \
+     gh secret set DATABASE_URL --repo your-org/Chrona_Core
    ```
 
-**⚠️ Points importants :**
-- Utilisez **toujours** le driver `asyncpg` : `postgresql+asyncpg://...`
-- Pour les bases de données locales dans docker-compose, utilisez le nom du service (`db`) comme hostname
-- Pour AWS RDS ou bases externes, utilisez le hostname complet
+**✅ Points importants :**
+- **Utilisez toujours le driver `asyncpg`** : `postgresql+asyncpg://...`
+- **Pour la base locale** : utilisez le nom du service `db` comme hostname
+- **Pour AWS RDS/externe** : utilisez le hostname complet (endpoint AWS ou IP)
 - Vérifiez que l'utilisateur PostgreSQL a les droits pour créer/modifier des tables
-- Assurez-vous que le Security Group/Firewall autorise les connexions depuis votre EC2
+- Pour AWS RDS : assurez-vous que le Security Group autorise les connexions depuis votre EC2
 
 ### 🔐 Configuration des credentials admin (Optionnel mais RECOMMANDÉ)
 

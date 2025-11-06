@@ -6,22 +6,29 @@ Ce guide explique comment déployer Chrona sur votre instance EC2.
 
 - Instance EC2 Ubuntu 22.04 LTS avec au moins 2GB RAM
 - Fichier `.pem` pour la connexion SSH
-- Secrets GitHub configurés
+- **Secrets GitHub requis** : `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `SECRET_KEY`
+- **Secrets optionnels** : `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (ont des valeurs par défaut)
 - Accès à GitHub (pour les Actions)
+
+**Note importante sur DATABASE_URL :**
+- Par défaut, le système utilise PostgreSQL local : `postgresql+asyncpg://chrona:chrona@db:5432/chrona`
+- Ne configurez ce secret que si vous utilisez AWS RDS ou une base externe
 
 ## 🔐 Configuration des Secrets GitHub
 
 Les secrets suivants doivent être configurés dans **Settings → Secrets and variables → Actions** :
 
-| Secret | Valeur | Exemple |
-|--------|--------|---------|
-| `EC2_HOST` | Adresse IP publique de l'instance | `13.37.245.222` |
-| `EC2_USER` | Utilisateur SSH | `ubuntu` |
-| `EC2_SSH_KEY` | Contenu du fichier `.pem` | `-----BEGIN RSA...` |
-| `DATABASE_URL` | URL PostgreSQL | `postgresql+asyncpg://user:pass@db:5432/chrona` |
-| `SECRET_KEY` | Clé secrète JWT (32 caractères min) | Généré via `openssl rand -hex 32` |
-| `ADMIN_EMAIL` | Email admin (optionnel) | `admin@yourcompany.com` |
-| `ADMIN_PASSWORD` | Password admin (optionnel) | Un mot de passe fort |
+| Secret | Valeur | Exemple | Requis |
+|--------|--------|---------|--------|
+| `EC2_HOST` | Adresse IP publique de l'instance | `13.37.245.222` | ✅ Oui |
+| `EC2_USER` | Utilisateur SSH | `ubuntu` | ✅ Oui |
+| `EC2_SSH_KEY` | Contenu du fichier `.pem` | `-----BEGIN RSA...` | ✅ Oui |
+| `SECRET_KEY` | Clé secrète JWT (32 caractères min) | `openssl rand -hex 32` | ✅ Oui |
+| `DATABASE_URL` | URL PostgreSQL (défaut: base locale) | `postgresql+asyncpg://chrona:chrona@db:5432/chrona` | ⚠️ Non* |
+| `ADMIN_EMAIL` | Email admin (défaut: admin@chrona.local) | `admin@yourcompany.com` | ⚠️ Non* |
+| `ADMIN_PASSWORD` | Password admin (défaut: ChangeMe123!) | Un mot de passe fort | ⚠️ Non* |
+
+**\* Non requis** : Ces secrets ont des valeurs par défaut. Configurez-les pour la production.
 
 ### Comment configurer les secrets rapidement :
 
