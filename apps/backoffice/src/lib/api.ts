@@ -203,6 +203,10 @@ export const hrCodesAPI = {
     const res = await api.post<HRCode>('/admin/hr-codes', data);
     return res.data;
   },
+  getQRData: async (hrCodeId: number): Promise<HRCodeQRData> => {
+    const res = await api.get<HRCodeQRData>(`/admin/hr-codes/${hrCodeId}/qr-data`);
+    return res.data;
+  },
 };
 
 // Export mock service utilities for development
