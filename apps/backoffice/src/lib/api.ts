@@ -12,6 +12,7 @@ import type {
   DashboardStats,
   HRCode,
   CreateHRCodeRequest,
+  HRCodeQRData,
   CreateDeviceRequest,
   QRCodeToken,
 } from '@/types';
