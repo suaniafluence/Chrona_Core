@@ -20,6 +20,8 @@ Les secrets suivants doivent être configurés dans **Settings → Secrets and v
 | `EC2_SSH_KEY` | Contenu du fichier `.pem` | `-----BEGIN RSA...` |
 | `DATABASE_URL` | URL PostgreSQL | `postgresql+asyncpg://user:pass@db:5432/chrona` |
 | `SECRET_KEY` | Clé secrète JWT (32 caractères min) | Généré via `openssl rand -hex 32` |
+| `ADMIN_EMAIL` | Email admin (optionnel) | `admin@yourcompany.com` |
+| `ADMIN_PASSWORD` | Password admin (optionnel) | Un mot de passe fort |
 
 ### Comment configurer les secrets rapidement :
 
@@ -63,7 +65,20 @@ Le déploiement prendra environ 3-5 minutes et effectuera automatiquement :
 - ✅ Construction et démarrage des services Docker
 - ✅ Vérification de la connexion à la base de données
 - ✅ **Exécution des migrations Alembic vers la dernière version (head)**
+- ✅ **Création de l'utilisateur admin** (email: `admin@chrona.local` / password: `ChangeMe123!` par défaut)
 - ✅ Vérification de l'état des services
+
+**🔒 Sécurité : Credentials admin**
+
+Par défaut, l'admin créé a :
+- Email: `admin@chrona.local`
+- Password: `ChangeMe123!`
+
+**IMPORTANT:** Pour la production, configurez `ADMIN_EMAIL` et `ADMIN_PASSWORD` dans les GitHub Secrets :
+```bash
+echo "admin@yourcompany.com" | gh secret set ADMIN_EMAIL --repo your-org/Chrona_Core
+echo "YourSecureP@ssw0rd!" | gh secret set ADMIN_PASSWORD --repo your-org/Chrona_Core
+```
 
 ### Vérifier le déploiement
 
@@ -73,8 +88,14 @@ Après le workflow:
 # SSH dans l'instance
 ssh -i ~/key.pem ubuntu@13.37.245.222
 
+# Aller dans le répertoire de déploiement
+cd /opt/chrona
+
 # Vérifier les services
 docker-compose ps
+
+# Vérifier que l'admin a été créé
+docker-compose exec db psql -U chrona -d chrona -c "SELECT email, role FROM users WHERE role='admin';"
 
 # Voir les logs du backend
 docker-compose logs -f backend
@@ -82,6 +103,10 @@ docker-compose logs -f backend
 # Tester le backend
 curl http://localhost:8000/docs
 ```
+
+**Se connecter au backoffice:**
+1. Allez sur : http://13.37.245.222:5173
+2. Utilisez les credentials admin (voir les logs du déploiement ou les valeurs par défaut)
 
 ## 📍 Accéder à l'application
 
