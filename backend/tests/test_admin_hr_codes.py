@@ -11,6 +11,7 @@ from src.main import app
 
 def _promote_to_admin(email: str) -> None:
     """Promote user to admin role in database."""
+
     async def _run():
         async with engine.begin() as conn:
             await conn.execute(

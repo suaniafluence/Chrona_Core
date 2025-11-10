@@ -4,8 +4,6 @@ This tests that QR codes are correctly generated and exposed
 via the API for frontends to display.
 """
 
-import json
-
 import pytest
 from fastapi import status
 from httpx import AsyncClient
