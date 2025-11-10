@@ -16,10 +16,11 @@ def pytest_configure() -> None:
     os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
     os.environ.setdefault("ALLOWED_ORIGINS", "http://localhost:3000")
 
-    # Set JWT key paths for tests
+    # Set JWT key paths for tests (project root / backend directory)
+    # Force override of any pre-existing JWT_*_KEY_PATH env vars (e.g., from system)
     project_root = Path(__file__).parent.parent.parent
-    os.environ.setdefault("JWT_PRIVATE_KEY_PATH", str(project_root / "jwt_private_key.pem"))
-    os.environ.setdefault("JWT_PUBLIC_KEY_PATH", str(project_root / "jwt_public_key.pem"))
+    os.environ["JWT_PRIVATE_KEY_PATH"] = str(project_root / "jwt_private_key.pem")
+    os.environ["JWT_PUBLIC_KEY_PATH"] = str(project_root / "jwt_public_key.pem")
 
 
 @pytest_asyncio.fixture
