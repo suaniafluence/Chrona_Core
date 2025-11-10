@@ -14,9 +14,11 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  QrCode,
 } from 'lucide-react';
 import { isPast, parseISO } from 'date-fns';
 import DeviceManager from '@/components/DeviceManager';
+import HRCodeQRDisplay from '@/components/HRCodeQRDisplay';
 
 interface EmployeeRecord {
   email: string;
@@ -35,6 +37,7 @@ export default function EmployeesPage() {
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedEmails, setExpandedEmails] = useState<Set<string>>(new Set());
+  const [selectedQRCode, setSelectedQRCode] = useState<HRCode | null>(null);
 
   useEffect(() => {
     loadAllData();
@@ -197,6 +200,7 @@ export default function EmployeesPage() {
                   onToggleExpand={() => toggleExpanded(emp.email)}
                   onDeleteUser={handleDeleteUser}
                   onDevicesChange={loadAllData}
+                  onShowQRCode={setSelectedQRCode}
                 />
               ))}
             </tbody>
@@ -214,6 +218,17 @@ export default function EmployeesPage() {
           }}
         />
       )}
+
+      {/* HR Code QR Display Modal */}
+      {selectedQRCode && (
+        <HRCodeQRDisplay
+          hrCode={selectedQRCode.code}
+          employeeEmail={selectedQRCode.employee_email}
+          employeeName={selectedQRCode.employee_name}
+          expiresAt={selectedQRCode.expires_at}
+          onClose={() => setSelectedQRCode(null)}
+        />
+      )}
     </div>
   );
 }
@@ -224,6 +239,7 @@ interface EmployeeRowProps {
   onToggleExpand: () => void;
   onDeleteUser: (userId: number) => void;
   onDevicesChange: () => void;
+  onShowQRCode: (hrCode: HRCode) => void;
 }
 
 function EmployeeRow({
@@ -232,6 +248,7 @@ function EmployeeRow({
   onToggleExpand,
   onDeleteUser,
   onDevicesChange,
+  onShowQRCode,
 }: EmployeeRowProps) {
   const accountStatus = employee.user
     ? { status: 'created', user: employee.user }
@@ -263,7 +280,10 @@ function EmployeeRow({
         {/* Code RH */}
         <td className="px-6 py-4">
           {employee.hrCode ? (
-            <HRCodeBadge hrCode={employee.hrCode} />
+            <HRCodeBadge
+              hrCode={employee.hrCode}
+              onShowQRCode={() => onShowQRCode(employee.hrCode!)}
+            />
           ) : (
             <span className="text-xs text-gray-400">Aucun code</span>
           )}
@@ -371,12 +391,29 @@ function getHRCodeStatus(hrCode: HRCode | null) {
   );
 }
 
-function HRCodeBadge({ hrCode }: { hrCode: HRCode }) {
+function HRCodeBadge({
+  hrCode,
+  onShowQRCode,
+}: {
+  hrCode: HRCode;
+  onShowQRCode: () => void;
+}) {
+  const isValid = !hrCode.is_used && hrCode.expires_at && !isPast(parseISO(hrCode.expires_at));
+
   return (
     <div className="flex items-center space-x-2">
       <KeyRound className="w-4 h-4 text-blue-600" />
       <code className="px-2 py-1 text-xs font-mono bg-gray-100 rounded">{hrCode.code}</code>
       {getHRCodeStatus(hrCode)}
+      {isValid && (
+        <button
+          onClick={onShowQRCode}
+          className="ml-2 p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition"
+          title="Voir le code QR"
+        >
+          <QrCode className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
